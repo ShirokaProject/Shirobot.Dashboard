@@ -8,10 +8,12 @@
       </span>
     </button>
 
-    <div v-if="menuOpen" class="session-menu">
-      <button type="button" @click="goLogin">切换登录</button>
-      <button type="button" class="danger" @click="logout">退出登录</button>
-    </div>
+    <Transition name="session-menu-fade">
+      <div v-if="menuOpen" class="session-menu">
+        <button type="button" @click="goLogin">切换登录</button>
+        <button type="button" class="danger" @click="logout">退出登录</button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -113,16 +115,43 @@ onBeforeUnmount(() => {
 .session-menu {
   position: absolute;
   z-index: 40;
-  top: calc(100% + var(--md-space-2));
+  top: calc(100% + var(--md-space-3));
   right: 0;
   min-width: 168px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: var(--md-space-2);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 54%, transparent);
   border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-surface-container-lowest);
-  box-shadow: var(--md-sys-elevation-level2), inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 38%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 94%, white 6%);
+  box-shadow:
+    0 18px 48px color-mix(in srgb, var(--md-sys-color-shadow) 18%, transparent),
+    0 8px 18px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  transform-origin: top right;
+}
+
+.session-menu-fade-enter-active,
+.session-menu-fade-leave-active {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    filter 160ms ease;
+}
+
+.session-menu-fade-enter-from,
+.session-menu-fade-leave-to {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateY(-6px) scale(0.98);
+}
+
+.session-menu-fade-enter-to,
+.session-menu-fade-leave-from {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0) scale(1);
 }
 
 .session-menu button {

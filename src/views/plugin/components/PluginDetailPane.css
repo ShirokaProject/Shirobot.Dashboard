@@ -3,7 +3,7 @@
   top: 0;
   display: flex;
   height: var(--plugin-panel-height, calc(100vh - 224px));
-  min-height: 520px;
+  min-height: 0;
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-extra-large);

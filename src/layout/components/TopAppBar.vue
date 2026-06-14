@@ -21,13 +21,22 @@ defineProps<{
 
 <style scoped>
 .md3-top-app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  isolation: isolate;
   min-height: 96px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--md-space-6);
   padding: var(--md-space-6) var(--md-space-8) var(--md-space-4);
-  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 42%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-surface) 46%, transparent);
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  box-shadow:
+    0 12px 32px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
 }
 
 .title-block {

@@ -77,13 +77,14 @@
 .version-panel {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--md-space-2);
-  padding: var(--md-space-3);
+  gap: var(--md-space-4);
+  padding: var(--md-space-5);
 }
 
 .version-item {
   min-width: 0;
-  padding: var(--md-space-3);
+  min-height: 100px;
+  padding: var(--md-space-5);
   border-radius: var(--md-sys-shape-corner-medium);
   background: var(--md-sys-color-surface-container-low);
 }
@@ -93,21 +94,21 @@
   align-items: center;
   gap: var(--md-space-2);
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-medium);
+  font: var(--md-sys-typescale-label-large);
 }
 
 .version-item span svg {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
   stroke-width: 2;
 }
 
 .version-item strong {
   display: block;
-  margin-top: var(--md-space-1);
+  margin-top: var(--md-space-2);
   overflow: hidden;
   color: var(--md-sys-color-on-surface);
-  font: var(--md-sys-typescale-title-small);
+  font: var(--md-sys-typescale-title-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

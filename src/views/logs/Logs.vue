@@ -69,14 +69,9 @@
           <div class="terminal-tab active">
             <span class="terminal-tab-icon">▣</span>
             <strong>{{ activeSource === 'ALL' ? 'runtime.log' : `${activeSource}.log` }}</strong>
-            <span class="terminal-tab-close">×</span>
           </div>
-          <button type="button" class="terminal-icon-button">+</button>
-          <button type="button" class="terminal-icon-button">⌄</button>
           <div class="terminal-window-spacer"></div>
-          <span class="terminal-window-control">─</span>
-          <span class="terminal-window-control">□</span>
-          <span class="terminal-window-control">×</span>
+          <span class="terminal-stream-status">{{ filteredLogs.length }} lines</span>
         </div>
 
         <div class="terminal-body">

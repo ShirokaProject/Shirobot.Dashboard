@@ -1,11 +1,13 @@
 .installed-panel {
   display: flex;
   height: var(--plugin-panel-height, calc(100vh - 224px));
-  min-height: 520px;
+  min-height: 0;
   flex-direction: column;
   gap: var(--md-space-2);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0;
+  scrollbar-gutter: stable;
   background: transparent;
 }
 

@@ -133,7 +133,8 @@ function triggerAvatarSpin() {
 
 <style scoped>
 .md3-drawer {
-  --drawer-motion-easing: cubic-bezier(0.16, 0.78, 0.34, 0.96);
+  --drawer-motion-duration: 0.24s;
+  --drawer-motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
   position: sticky;
   top: 0;
   box-sizing: border-box;
@@ -146,17 +147,28 @@ function triggerAvatarSpin() {
   flex-direction: column;
   background: color-mix(in srgb, var(--md-sys-color-surface) 78%, var(--md-sys-color-surface-container-low));
   transition:
-    width var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    flex-basis var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    padding var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing);
+    width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    flex-basis var(--drawer-motion-duration) var(--drawer-motion-easing),
+    padding var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .md3-drawer.collapsed {
-  --drawer-motion-easing: var(--md-sys-motion-easing-emphasized-accelerate);
   width: 88px;
   flex-basis: 88px;
   align-items: center;
   padding-inline: var(--md-space-2);
+}
+
+.md3-drawer.collapsed .drawer-top {
+  width: 56px;
+  gap: 0;
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.md3-drawer.collapsed .drawer-menu-button {
+  width: 56px;
+  height: 56px;
 }
 
 .drawer-top {
@@ -166,7 +178,7 @@ function triggerAvatarSpin() {
   align-items: center;
   gap: var(--md-space-3);
   padding: 0 var(--md-space-2) var(--md-space-4);
-  transition: gap var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing);
+  transition: gap var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .drawer-menu-button {
@@ -239,6 +251,24 @@ function triggerAvatarSpin() {
 
 .brand-info {
   min-width: 0;
+  overflow: hidden;
+  transition:
+    max-width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    opacity 140ms ease,
+    transform var(--drawer-motion-duration) var(--drawer-motion-easing);
+}
+
+.md3-drawer.collapsed .brand-info {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition-duration: 0ms;
+}
+
+.md3-drawer:not(.collapsed) .brand-info {
+  max-width: 180px;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .brand-name {
@@ -267,6 +297,7 @@ function triggerAvatarSpin() {
 
 .drawer-footer {
   flex: 0 0 auto;
+  align-self: stretch;
   margin-top: auto;
   padding: var(--md-space-3) var(--md-space-2) var(--md-space-1);
 }
@@ -274,7 +305,9 @@ function triggerAvatarSpin() {
 .brand-link {
   height: 48px;
   display: flex;
+  align-self: flex-start;
   align-items: center;
+  box-sizing: border-box;
   gap: var(--md-space-3);
   min-width: 0;
   overflow: hidden;
@@ -286,26 +319,38 @@ function triggerAvatarSpin() {
   text-decoration: none;
   white-space: nowrap;
   transition:
-    width var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    padding var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
+    width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
+    padding var(--drawer-motion-duration) var(--drawer-motion-easing),
     background var(--md-sys-motion-duration-short4),
     color var(--md-sys-motion-duration-short4);
 }
 
 .md3-drawer.collapsed .brand-link {
   width: 48px;
-  justify-content: center;
-  padding: 0;
+  gap: 0;
+  margin-left: 4px;
+  padding: 0 0 0 15px;
 }
 
 .md3-drawer.collapsed .brand-link span {
-  display: none;
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition-duration: 0ms;
 }
 
 .brand-link span {
   min-width: 0;
+  max-width: 180px;
   overflow: hidden;
+  opacity: 1;
   text-overflow: ellipsis;
+  transform: translateX(0);
+  transition:
+    max-width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    opacity 140ms ease,
+    transform var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .github-icon {
@@ -324,11 +369,14 @@ function triggerAvatarSpin() {
   width: 172px;
   height: 64px;
   display: inline-flex;
+  align-self: flex-start;
+  box-sizing: border-box;
   flex: 0 0 auto;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--md-space-3);
   margin: 0 0 var(--md-space-4);
+  padding: 0 0 0 40px;
   border: 0;
   border-radius: 20px;
   background: var(--md-sys-color-primary-container);
@@ -337,9 +385,11 @@ function triggerAvatarSpin() {
   font: var(--md-sys-typescale-title-small);
   box-shadow: var(--md-sys-elevation-level1);
   transition:
-    width var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    height var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    border-radius var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
+    width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    height var(--drawer-motion-duration) var(--drawer-motion-easing),
+    margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
+    padding var(--drawer-motion-duration) var(--drawer-motion-easing),
+    border-radius var(--drawer-motion-duration) var(--drawer-motion-easing),
     box-shadow var(--md-sys-motion-duration-short4);
 }
 
@@ -354,11 +404,29 @@ function triggerAvatarSpin() {
 .md3-drawer.collapsed .drawer-primary-action {
   width: 56px;
   height: 56px;
+  margin-left: 8px;
+  gap: 0;
+  padding-left: 16px;
   border-radius: var(--md-sys-shape-corner-large);
 }
 
 .md3-drawer.collapsed .drawer-primary-action span {
-  display: none;
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition-duration: 0ms;
+}
+
+.drawer-primary-action span {
+  max-width: 96px;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+  transform: translateX(0);
+  transition:
+    max-width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    opacity 140ms ease,
+    transform var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .drawer-tree {
@@ -372,13 +440,13 @@ function triggerAvatarSpin() {
   margin-left: calc(-1 * var(--md-space-3));
   padding: var(--md-space-1) 0;
   transition:
-    margin-left var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    width var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing);
+    margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
+    width var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .md3-drawer.collapsed .drawer-tree {
   width: 100%;
-  align-items: center;
+  align-items: flex-start;
   margin-left: 0;
 }
 
@@ -393,9 +461,10 @@ function triggerAvatarSpin() {
 .drawer-item {
   width: calc(100% - 8px);
   height: 40px;
+  margin-left: 0;
   border-radius: 0 var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) 0;
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) auto;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
   align-items: center;
   padding: 0 var(--md-space-3) 0 0;
   font: var(--md-sys-typescale-title-small);
@@ -404,16 +473,17 @@ function triggerAvatarSpin() {
   transition:
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     color var(--md-sys-motion-duration-short4),
-    width var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    height var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    padding var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    border-radius var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing);
+    width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    height var(--drawer-motion-duration) var(--drawer-motion-easing),
+    margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
+    padding var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .md3-drawer.collapsed .drawer-item {
   width: 56px;
   height: 56px;
-  grid-template-columns: 1fr;
+  margin-left: 8px;
+  grid-template-columns: 56px;
   justify-items: center;
   padding: 0;
   border-radius: var(--md-sys-shape-corner-large);
@@ -421,19 +491,37 @@ function triggerAvatarSpin() {
 
 .drawer-label {
   min-width: 0;
+  max-width: 160px;
   overflow: hidden;
+  opacity: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transform: translateX(0);
+  transition:
+    max-width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    opacity 140ms ease,
+    transform var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .md3-drawer.collapsed .drawer-label,
 .md3-drawer.collapsed .drawer-count {
-  display: none;
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition-duration: 0ms;
 }
 
 .drawer-count {
+  max-width: 40px;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateX(0);
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-label-medium);
+  transition:
+    max-width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    opacity 140ms ease,
+    transform var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .drawer-item.active .drawer-count {
@@ -456,17 +544,21 @@ function triggerAvatarSpin() {
 }
 
 .nav-icon {
-  width: 64px;
+  width: 56px;
+  height: 40px;
   display: grid;
   place-items: center;
   font-size: 21px;
   transition:
-    width var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing),
-    font-size var(--md-sys-motion-duration-medium2) var(--drawer-motion-easing);
+    width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    height var(--drawer-motion-duration) var(--drawer-motion-easing),
+    font-size var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .md3-drawer.collapsed .nav-icon {
-  width: auto;
+  justify-self: center;
+  width: 56px;
+  height: 56px;
   font-size: 23px;
 }
 

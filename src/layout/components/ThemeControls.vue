@@ -10,36 +10,38 @@
       >
         <span class="font-action-label">Aa</span>
       </button>
-      <div
-        v-if="fontPanelOpen"
-        class="expand-panel font-panel"
-        @mouseleave="restoreActiveFont"
-      >
-        <section v-for="group in fontGroups" :key="group.title" class="font-group">
-          <div class="font-group-header">
-            <span>{{ group.title }}</span>
-            <small>{{ group.subtitle }}</small>
-          </div>
-          <div class="font-choice-row">
-            <button
-              v-for="font in group.options"
-              :key="font.key"
-              type="button"
-              class="font-choice"
-              :class="[{ active: activeFont === font.key, secondary: font.secondary }, font.key]"
-              @pointerenter="previewFont(font.key)"
-              @focus="previewFont(font.key)"
-              @click="setFont(font.key)"
-            >
-              <span class="font-choice-sample">{{ font.sample }}</span>
-              <span class="font-choice-main">
-                <strong>{{ font.label }}</strong>
-                <small v-if="font.meta">{{ font.meta }}</small>
-              </span>
-            </button>
-          </div>
-        </section>
-      </div>
+      <Transition name="expand-panel-fade">
+        <div
+          v-if="fontPanelOpen"
+          class="expand-panel font-panel"
+          @mouseleave="restoreActiveFont"
+        >
+          <section v-for="group in fontGroups" :key="group.title" class="font-group">
+            <div class="font-group-header">
+              <span>{{ group.title }}</span>
+              <small>{{ group.subtitle }}</small>
+            </div>
+            <div class="font-choice-row">
+              <button
+                v-for="font in group.options"
+                :key="font.key"
+                type="button"
+                class="font-choice"
+                :class="[{ active: activeFont === font.key, secondary: font.secondary }, font.key]"
+                @pointerenter="previewFont(font.key)"
+                @focus="previewFont(font.key)"
+                @click="setFont(font.key)"
+              >
+                <span class="font-choice-sample">{{ font.sample }}</span>
+                <span class="font-choice-main">
+                  <strong>{{ font.label }}</strong>
+                  <small v-if="font.meta">{{ font.meta }}</small>
+                </span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </Transition>
     </div>
 
     <div class="expand-control">
@@ -59,55 +61,57 @@
         </svg>
       </button>
 
-      <div v-if="appearancePanelOpen" class="expand-panel appearance-panel" @mouseleave="restoreAppearance">
-        <section class="appearance-section">
-          <div class="appearance-section-head">
-            <span>主题色</span>
-            <small>Color</small>
-          </div>
-          <div class="theme-grid">
-            <button
-              v-for="theme in themes"
-              :key="theme.key"
-              type="button"
-              class="theme-option"
-              :class="[{ active: activeColor === theme.key }, theme.key]"
-              @pointerenter="previewColor(theme.key)"
-              @focus="previewColor(theme.key)"
-              @click="setColor(theme.key)"
-            >
-              <span class="theme-swatch" aria-hidden="true"></span>
-              <span>{{ theme.label }}</span>
-            </button>
-          </div>
-        </section>
+      <Transition name="expand-panel-fade">
+        <div v-if="appearancePanelOpen" class="expand-panel appearance-panel" @mouseleave="restoreAppearance">
+          <section class="appearance-section">
+            <div class="appearance-section-head">
+              <span>主题色</span>
+              <small>Color</small>
+            </div>
+            <div class="theme-grid">
+              <button
+                v-for="theme in themes"
+                :key="theme.key"
+                type="button"
+                class="theme-option"
+                :class="[{ active: activeColor === theme.key }, theme.key]"
+                @pointerenter="previewColor(theme.key)"
+                @focus="previewColor(theme.key)"
+                @click="setColor(theme.key)"
+              >
+                <span class="theme-swatch" aria-hidden="true"></span>
+                <span>{{ theme.label }}</span>
+              </button>
+            </div>
+          </section>
 
-        <section class="appearance-section">
-          <div class="appearance-section-head">
-            <span>明暗模式</span>
-            <small>Mode</small>
-          </div>
-          <div class="mode-grid">
-            <button
-              v-for="mode in modes"
-              :key="mode.key"
-              type="button"
-              class="mode-choice"
-              :class="[{ active: activeMode === mode.key }, mode.key]"
-              @pointerenter="previewMode(mode.key)"
-              @focus="previewMode(mode.key)"
-              @click="setMode(mode.key)"
-            >
-              <span class="mode-choice-icon" aria-hidden="true">
-                <svg v-if="mode.key === 'dark'" viewBox="0 0 24 24" focusable="false"><path d="M21 14.2A7.8 7.8 0 0 1 9.8 3a9 9 0 1 0 11.2 11.2Z" /></svg>
-                <svg v-else-if="mode.key === 'light'" viewBox="0 0 24 24" focusable="false"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2m-2.34-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41" /><circle cx="12" cy="12" r="4" /></svg>
-                <svg v-else viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8m-4-4v4" /></svg>
-              </span>
-              <span>{{ mode.label }}</span>
-            </button>
-          </div>
-        </section>
-      </div>
+          <section class="appearance-section">
+            <div class="appearance-section-head">
+              <span>明暗模式</span>
+              <small>Mode</small>
+            </div>
+            <div class="mode-grid">
+              <button
+                v-for="mode in modes"
+                :key="mode.key"
+                type="button"
+                class="mode-choice"
+                :class="[{ active: activeMode === mode.key }, mode.key]"
+                @pointerenter="previewMode(mode.key)"
+                @focus="previewMode(mode.key)"
+                @click="setMode(mode.key)"
+              >
+                <span class="mode-choice-icon" aria-hidden="true">
+                  <svg v-if="mode.key === 'dark'" viewBox="0 0 24 24" focusable="false"><path d="M21 14.2A7.8 7.8 0 0 1 9.8 3a9 9 0 1 0 11.2 11.2Z" /></svg>
+                  <svg v-else-if="mode.key === 'light'" viewBox="0 0 24 24" focusable="false"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2m-2.34-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41" /><circle cx="12" cy="12" r="4" /></svg>
+                  <svg v-else viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8m-4-4v4" /></svg>
+                </span>
+                <span>{{ mode.label }}</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -305,12 +309,34 @@ onBeforeUnmount(() => {
   height: 44px;
   display: grid;
   place-items: center;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 46%, transparent);
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-lowest);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 88%, white 12%);
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 42%, transparent);
+  box-shadow:
+    0 8px 20px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 62%, transparent);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.top-action-icon:hover,
+.top-action-icon:focus-visible {
+  border-color: color-mix(in srgb, currentColor 24%, var(--md-sys-color-outline-variant));
+  box-shadow:
+    0 14px 32px color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
+  transform: translateY(-1px);
+  outline: 0;
+}
+
+.top-action-icon:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .top-action-icon svg {
@@ -326,22 +352,22 @@ onBeforeUnmount(() => {
 .font-action,
 .appearance-action {
   color: var(--md-sys-color-primary);
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 62%, var(--md-sys-color-surface-container-lowest));
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 72%, var(--md-sys-color-surface-container-lowest));
 }
 
 .appearance-action.rose {
   color: #94425f;
-  background: #ffd9e5;
+  background: color-mix(in srgb, #ffd9e5 88%, white 12%);
 }
 
 .appearance-action.lavender {
   color: #6750a4;
-  background: #eaddff;
+  background: color-mix(in srgb, #eaddff 88%, white 12%);
 }
 
 .appearance-action.blue {
   color: #365f91;
-  background: #d3e4ff;
+  background: color-mix(in srgb, #d3e4ff 88%, white 12%);
 }
 
 .font-action-label {
@@ -352,27 +378,54 @@ onBeforeUnmount(() => {
 .expand-panel {
   position: absolute;
   z-index: 20;
-  top: calc(100% + var(--md-space-2));
+  top: calc(100% + var(--md-space-3));
   right: 0;
   display: flex;
   align-items: stretch;
-  gap: var(--md-space-2);
-  padding: var(--md-space-2);
+  gap: var(--md-space-3);
+  padding: var(--md-space-3);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 54%, transparent);
   border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-surface-container-lowest);
-  box-shadow: var(--md-sys-elevation-level2), inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 38%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 94%, white 6%);
+  box-shadow:
+    0 18px 48px color-mix(in srgb, var(--md-sys-color-shadow) 18%, transparent),
+    0 8px 18px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  transform-origin: top right;
+}
+
+.expand-panel-fade-enter-active,
+.expand-panel-fade-leave-active {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    filter 160ms ease;
+}
+
+.expand-panel-fade-enter-from,
+.expand-panel-fade-leave-to {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateY(-6px) scale(0.98);
+}
+
+.expand-panel-fade-enter-to,
+.expand-panel-fade-leave-from {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0) scale(1);
 }
 
 .appearance-panel {
   width: min(82vw, 520px);
   flex-direction: column;
-  gap: var(--md-space-3);
+  gap: var(--md-space-4);
 }
 
 .appearance-section {
   display: grid;
-  gap: var(--md-space-2);
-  padding: var(--md-space-2);
+  gap: var(--md-space-3);
+  padding: var(--md-space-3);
   border-radius: var(--md-sys-shape-corner-large);
   background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 64%, transparent);
 }

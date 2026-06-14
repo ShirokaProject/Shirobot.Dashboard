@@ -1,29 +1,39 @@
 .plugins-page {
   --plugin-page-max-width: 1440px;
-  --plugin-panel-height: calc(100vh - 224px);
+  --plugin-panel-height: 100%;
+  height: calc(100vh - 96px - var(--md-space-8));
   display: flex;
   width: min(100%, var(--plugin-page-max-width));
   margin-inline: auto;
   flex-direction: column;
   gap: var(--md-space-4);
+  overflow: hidden;
 }
 
 .plugin-layout {
+  min-height: 0;
+  flex: 1;
   display: grid;
   width: 100%;
   grid-template-columns: minmax(0, 1fr) 344px;
   gap: var(--md-space-3);
-  align-items: start;
+  align-items: stretch;
 }
 
 .plugin-primary-pane {
   display: flex;
   min-width: 0;
+  min-height: 0;
   flex-direction: column;
   gap: var(--md-space-4);
 }
 
 @media (max-width: 1199px) {
+  .plugins-page {
+    height: auto;
+    overflow: visible;
+  }
+
   .plugin-layout {
     grid-template-columns: 1fr;
   }
