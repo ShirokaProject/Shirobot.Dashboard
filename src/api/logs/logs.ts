@@ -22,5 +22,5 @@ export function getRuntimeLogs(query: RuntimeLogsQuery = {}) {
   if (query.limit) params.set('limit', String(query.limit))
 
   const search = params.toString()
-  return apiRequest<RuntimeLogsResponse>(`/api/runtime/logs${search ? `?${search}` : ''}`)
+  return apiRequest<RuntimeLogsResponse>(`/api/v1/runtime/logs${search ? `?${search}` : ''}`)
 }

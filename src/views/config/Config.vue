@@ -9,6 +9,15 @@
       :closable="false"
     />
 
+    <el-alert
+      v-if="saveMessage"
+      class="page-alert"
+      :title="saveMessage"
+      :type="saveMessage.includes('失败') ? 'error' : 'success'"
+      show-icon
+      :closable="false"
+    />
+
     <section class="config-layout">
       <aside class="config-nav">
         <button
@@ -31,52 +40,62 @@
 
         <el-form label-position="top" class="m3-form">
           <template v-if="activeSection === 'general'">
-            <el-form-item label="Bot 名称">
-              <el-input v-model="form.name" />
+            <el-form-item label="协议适配器">
+              <el-select v-model="form.protocol" placeholder="选择协议适配器" style="width: 100%">
+                <el-option label="MilkyAdapter" value="MilkyAdapter" />
+                <el-option label="OneBotAdapter" value="OneBotAdapter" />
+                <el-option label="TelegramAdapter" value="TelegramAdapter" />
+              </el-select>
             </el-form-item>
+
             <div class="setting-row">
               <div>
-                <div class="setting-label">调试模式</div>
-                <div class="setting-support">开启后会输出更多调试日志。</div>
+                <div class="setting-label">启用日志</div>
+                <div class="setting-support">对应 enable_log，关闭后将减少运行日志输出。</div>
               </div>
-              <el-switch v-model="form.debug" />
+              <el-switch v-model="form.enable_log" />
             </div>
-            <el-form-item label="日志等级">
-              <el-select v-model="form.logLevel" placeholder="选择日志等级" style="width: 100%">
-                <el-option label="INFO" value="info" />
-                <el-option label="DEBUG" value="debug" />
-                <el-option label="WARN" value="warn" />
-                <el-option label="ERROR" value="error" />
+
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">禁用控制台输入</div>
+                <div class="setting-support">对应 disable_console_input，开启后控制台不再接收交互输入。</div>
+              </div>
+              <el-switch v-model="form.disable_console_input" />
+            </div>
+
+            <el-form-item label="Avalonia 主题">
+              <el-select v-model="form.avalonia_theme" placeholder="选择界面主题" style="width: 100%">
+                <el-option label="Light" value="Light" />
+                <el-option label="Dark" value="Dark" />
+                <el-option label="System" value="System" />
               </el-select>
             </el-form-item>
           </template>
 
-          <template v-else-if="activeSection === 'runtime'">
-            <el-form-item label="HTTP 端口">
-              <el-input v-model="form.port" />
-            </el-form-item>
-            <el-form-item label="工作目录">
-              <el-input v-model="form.workdir" />
-            </el-form-item>
-            <div class="setting-row">
-              <div>
-                <div class="setting-label">自动重载插件</div>
-                <div class="setting-support">检测到插件文件变化后自动重载。</div>
-              </div>
-              <el-switch v-model="form.hotReload" />
-            </div>
-          </template>
-
           <template v-else>
+            <el-form-item label="所有者 QQ / ID 列表">
+              <el-input v-model="form.owner_list" placeholder="例如：1034028486, 100000001" />
+            </el-form-item>
+
+            <el-form-item label="管理员 QQ / ID 列表">
+              <el-input v-model="form.admin_list" placeholder="多个 ID 可用逗号或空格分隔" />
+            </el-form-item>
+
             <div class="setting-row">
               <div>
-                <div class="setting-label">允许远程管理</div>
-                <div class="setting-support">仅建议在受信任网络环境开启。</div>
+                <div class="setting-label">启用 API</div>
+                <div class="setting-support">对应 api.enable，开启后 Dashboard 可通过接口管理配置。</div>
               </div>
-              <el-switch v-model="form.remoteAdmin" />
+              <el-switch v-model="form.api_enable" />
             </div>
-            <el-form-item label="管理员账号">
-              <el-input v-model="form.admins" />
+
+            <el-form-item label="API 监听地址">
+              <el-input v-model="form.api_listen_url" placeholder="http://localhost:8080" />
+            </el-form-item>
+
+            <el-form-item label="API Token">
+              <el-input v-model="form.api_token" placeholder="请输入访问令牌" show-password />
             </el-form-item>
           </template>
 
@@ -93,7 +112,7 @@
 <script setup lang="ts">
 import { useConfigPage } from './Config'
 
-const { sections, activeSection, currentSection, form, loadError, saveConfig, resetConfig } = useConfigPage()
+const { sections, activeSection, currentSection, form, loadError, saveMessage, saveConfig, resetConfig } = useConfigPage()
 </script>
 
 <style scoped src="./Config.css"></style>

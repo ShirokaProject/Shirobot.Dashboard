@@ -74,7 +74,7 @@ export function usePluginConfigPage() {
       pluginNameOverride.value = ''
       assignForm(emptyForm)
       permissions.value = []
-      loadError.value = `后端插件配置接口暂不可用，请接入 /api/plugins/${pluginId.value}/config 后刷新。`
+      loadError.value = `后端插件配置接口暂不可用，请接入 /api/v1/plugins/${pluginId.value}/config 后刷新。`
       void error
     }
   }

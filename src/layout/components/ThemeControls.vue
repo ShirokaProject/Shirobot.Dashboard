@@ -66,7 +66,6 @@
           <section class="appearance-section">
             <div class="appearance-section-head">
               <span>主题色</span>
-              <small>Color</small>
             </div>
             <div class="theme-grid">
               <button
@@ -88,7 +87,6 @@
           <section class="appearance-section">
             <div class="appearance-section-head">
               <span>明暗模式</span>
-              <small>Mode</small>
             </div>
             <div class="mode-grid">
               <button
@@ -145,7 +143,7 @@ const fontGroups: Array<{
 }> = [
   {
     title: 'Maple Mono',
-    subtitle: 'Mono family',
+    subtitle: '',
     options: [
       { key: 'maple', label: 'Auto', sample: 'Aa', meta: '默认字重' },
       { key: 'maple-regular', label: 'Regular', sample: 'Aa', meta: '400', secondary: true },
@@ -156,7 +154,7 @@ const fontGroups: Array<{
   },
   {
     title: 'Handwriting',
-    subtitle: 'Soft display fonts',
+    subtitle: '',
     options: [
       { key: 'lolita', label: 'Lolita', sample: 'Lo', meta: 'Display' },
       { key: 'xiaolai', label: 'Xiaolai', sample: '小', meta: 'Regular' },
@@ -165,7 +163,7 @@ const fontGroups: Array<{
   },
   {
     title: 'Sans SC',
-    subtitle: 'Chinese sans-serif',
+    subtitle: '',
     options: [
       { key: 'source-han', label: 'Source Han', sample: '思', meta: 'Sans SC' }
     ]

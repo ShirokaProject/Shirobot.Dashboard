@@ -47,7 +47,7 @@ export function useLogsPage() {
       runtimeLogs.value = response.logs
     } catch (error) {
       runtimeLogs.value = []
-      loadError.value = '后端运行日志接口暂不可用，请接入 /api/runtime/logs 后刷新。'
+      loadError.value = '后端运行日志接口暂不可用，请接入 /api/v1/runtime/logs 后刷新。'
       void error
     }
   }

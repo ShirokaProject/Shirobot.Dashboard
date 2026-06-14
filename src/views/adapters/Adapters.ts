@@ -11,7 +11,7 @@ export function useAdaptersPage() {
       adapters.value = await getAdapters()
     } catch (error) {
       adapters.value = []
-      loadError.value = '后端适配器接口暂不可用，请接入 /api/adapters 后刷新。'
+      loadError.value = '后端适配器接口暂不可用，请接入 /api/v1/adapters 后刷新。'
       void error
     }
   }

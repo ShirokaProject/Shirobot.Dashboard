@@ -8,5 +8,5 @@ export interface AdapterInfo {
 }
 
 export function getAdapters() {
-  return apiRequest<AdapterInfo[]>('/api/adapters')
+  return apiRequest<AdapterInfo[]>('/api/v1/adapters')
 }

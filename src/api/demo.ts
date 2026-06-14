@@ -110,14 +110,17 @@ const demoAdapters: AdapterInfo[] = [
 ]
 
 const demoConfig: AppConfig = {
-  name: 'Shirobot Demo',
-  debug: false,
-  logLevel: 'info',
-  port: '8080',
-  workdir: './data',
-  hotReload: true,
-  remoteAdmin: false,
-  admins: '100000001'
+  protocol: 'MilkyAdapter',
+  enable_log: true,
+  disable_console_input: false,
+  avalonia_theme: 'Light',
+  owner_list: [1034028486],
+  admin_list: [],
+  api: {
+    enable: true,
+    listen_url: 'http://localhost:8080',
+    token: 'xxx'
+  }
 }
 
 const demoPluginConfig: PluginConfigResponse = {
@@ -241,10 +244,10 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   const method = methodOf(init)
   const pathname = url.pathname
 
-  if (method === 'GET' && pathname === '/api/dashboard/overview') return clone(demoOverview) as T
-  if (method === 'GET' && pathname === '/api/plugins') return clone(demoPlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/dashboard/overview') return clone(demoOverview) as T
+  if (method === 'GET' && pathname === '/api/v1/plugins') return clone(demoPlugins) as T
 
-  const pluginStateMatch = pathname.match(/^\/api\/plugins\/([^/]+)\/state$/)
+  const pluginStateMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/state$/)
   if (method === 'PUT' && pluginStateMatch) {
     const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginStateMatch[1] ?? ''))
     if (!plugin) throw new Error('Demo plugin not found')
@@ -253,25 +256,30 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     return clone(plugin) as T
   }
 
-  if (method === 'POST' && pathname === '/v1/plugins/upload') {
+  if (method === 'POST' && pathname === '/api/v1/plugins/upload') {
     return clone({ status: 'parsed', message: '演示模式：插件包已提交解析。' } satisfies PluginUploadResponse) as T
   }
 
-  if (method === 'GET' && /^\/api\/plugins\/[^/]+\/config$/.test(pathname)) return clone(demoPluginConfig) as T
-  if (method === 'PUT' && /^\/api\/plugins\/[^/]+\/config$/.test(pathname)) {
+  if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return clone(demoPluginConfig) as T
+  if (method === 'PUT' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
     return JSON.parse(String(init?.body ?? '{}')) as T
   }
 
-  if (method === 'GET' && pathname === '/api/adapters') return clone(demoAdapters) as T
-  if (method === 'GET' && pathname === '/api/config') return clone(demoConfig) as T
-  if (method === 'PUT' && pathname === '/api/config') return JSON.parse(String(init?.body ?? '{}')) as T
+  if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
+  if (method === 'GET' && pathname === '/api/v1/config') return clone(demoConfig) as T
+  if (method === 'PATCH' && pathname === '/api/v1/config') {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as Partial<AppConfig>
+    Object.assign(demoConfig, payload)
+    if (payload.api) demoConfig.api = { ...demoConfig.api, ...payload.api }
+    return { ok: true, msg: '配置更新成功' } as T
+  }
 
-  if (method === 'GET' && pathname === '/api/runtime/logs') {
+  if (method === 'GET' && pathname === '/api/v1/runtime/logs') {
     const response: RuntimeLogsResponse = { logs: clone(demoLogs), nextCursor: undefined }
     return response as T
   }
 
-  if (method === 'GET' && pathname === '/api/plugin-market/plugins') return clone(demoMarketplacePlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/plugin-market/plugins') return clone(demoMarketplacePlugins) as T
 
   throw new Error(`Demo endpoint not implemented: ${method} ${pathname}`)
 }

@@ -28,11 +28,11 @@ export interface PluginConfigResponse {
 }
 
 export function getPluginConfig(pluginId: string) {
-  return apiRequest<PluginConfigResponse>(`/api/plugins/${encodeURIComponent(pluginId)}/config`)
+  return apiRequest<PluginConfigResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/config`)
 }
 
 export function updatePluginConfig(pluginId: string, config: PluginConfigResponse) {
-  return apiRequest<PluginConfigResponse>(`/api/plugins/${encodeURIComponent(pluginId)}/config`, {
+  return apiRequest<PluginConfigResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/config`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config)

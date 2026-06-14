@@ -71,7 +71,7 @@ export function useOverviewPage() {
       bars.value = Array.isArray(response.bars) ? response.bars : []
       events.value = Array.isArray(response.events) ? response.events : []
     } catch (error) {
-      loadError.value = '后端概览接口暂不可用，请接入 /api/dashboard/overview 后刷新。'
+      loadError.value = '后端概览接口暂不可用，请接入 /api/v1/dashboard/overview 后刷新。'
       void error
     }
   }

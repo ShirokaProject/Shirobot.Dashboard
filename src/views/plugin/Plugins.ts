@@ -79,7 +79,7 @@ export function usePluginsPage() {
     } catch (error) {
       installedPlugins.value = []
       selectedPlugin.value = null
-      loadError.value = '后端插件接口暂不可用，请接入 /api/plugins 后刷新。'
+      loadError.value = '后端插件接口暂不可用，请接入 /api/v1/plugins 后刷新。'
       void error
     }
   }

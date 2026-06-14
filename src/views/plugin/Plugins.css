@@ -1,7 +1,7 @@
 .plugins-page {
   --plugin-page-max-width: 1440px;
   --plugin-panel-height: 100%;
-  height: calc(100vh - 96px - var(--md-space-8));
+  height: calc(100vh - 96px - var(--md-space-4) - var(--md-space-8));
   display: flex;
   width: min(100%, var(--plugin-page-max-width));
   margin-inline: auto;

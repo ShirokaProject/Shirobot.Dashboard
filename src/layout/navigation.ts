@@ -1,4 +1,4 @@
-import { Box, Connection, Document, InfoFilled, Monitor, Setting } from '@element-plus/icons-vue'
+import { Box, Document, InfoFilled, Monitor, Setting } from '@element-plus/icons-vue'
 
 export const menuItems = [
   {
@@ -8,6 +8,12 @@ export const menuItems = [
     icon: Monitor
   },
   {
+    path: '/plugin-market',
+    label: '插件市场',
+    short: '市场',
+    icon: Box
+  },
+  {
     path: '/plugins',
     label: '插件管理',
     short: '插件',
@@ -15,16 +21,10 @@ export const menuItems = [
     count: 4
   },
   {
-    path: '/plugin-market',
-    label: '插件市场',
-    short: '市场',
-    icon: Box
-  },
-  {
-    path: '/adapters',
-    label: '适配器管理',
-    short: '适配器',
-    icon: Connection
+    path: '/config',
+    label: '配置中心',
+    short: '配置',
+    icon: Setting
   },
   {
     path: '/logs',
@@ -32,12 +32,6 @@ export const menuItems = [
     short: '日志',
     icon: Document,
     count: 11
-  },
-  {
-    path: '/config',
-    label: '配置中心',
-    short: '配置',
-    icon: Setting
   },
   {
     path: '/about',

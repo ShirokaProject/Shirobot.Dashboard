@@ -48,7 +48,7 @@ export function usePluginMarketPage() {
       })
     } catch (error) {
       marketplacePlugins.value = []
-      loadError.value = '后端插件市场接口暂不可用，请接入 /api/plugin-market/plugins 后刷新。'
+      loadError.value = '后端插件市场接口暂不可用，请接入 /api/v1/plugin-market/plugins 后刷新。'
       void error
     }
   }

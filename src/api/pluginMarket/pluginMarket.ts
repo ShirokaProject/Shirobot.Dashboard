@@ -32,5 +32,5 @@ export function getPluginMarketPlugins(query: PluginMarketQuery = {}) {
   if (query.sort) params.set('sort', query.sort)
 
   const search = params.toString()
-  return apiRequest<MarketplacePlugin[]>(`/api/plugin-market/plugins${search ? `?${search}` : ''}`)
+  return apiRequest<MarketplacePlugin[]>(`/api/v1/plugin-market/plugins${search ? `?${search}` : ''}`)
 }

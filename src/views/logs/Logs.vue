@@ -92,7 +92,7 @@
             </article>
 
             <div v-if="filteredLogs.length === 0" class="terminal-empty">
-              No runtime logs. Connect backend endpoint /api/runtime/logs to show real logs.
+              No runtime logs. Connect backend endpoint /api/v1/runtime/logs to show real logs.
             </div>
 
             <div class="terminal-cursor-line" aria-hidden="true">

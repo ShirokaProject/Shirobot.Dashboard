@@ -36,5 +36,5 @@ export interface OverviewResponse {
 }
 
 export function getOverview() {
-  return apiRequest<OverviewResponse>('/api/dashboard/overview')
+  return apiRequest<OverviewResponse>('/api/v1/dashboard/overview')
 }

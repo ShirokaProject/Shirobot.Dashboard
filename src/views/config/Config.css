@@ -55,6 +55,57 @@
   margin-top: var(--md-space-6);
 }
 
+.m3-form :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.m3-form :deep(.el-form-item__label) {
+  margin-bottom: var(--md-space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
+  line-height: 1.25;
+}
+
+.m3-form :deep(.el-input__wrapper),
+.m3-form :deep(.el-select__wrapper) {
+  min-height: 56px;
+  padding: 0 var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-small) var(--md-sys-shape-corner-small) 0 0;
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 74%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--md-sys-color-on-surface-variant) 62%, transparent);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.m3-form :deep(.el-input__wrapper:hover),
+.m3-form :deep(.el-select__wrapper:hover) {
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 84%, transparent);
+  box-shadow: inset 0 -1px 0 var(--md-sys-color-on-surface);
+}
+
+.m3-form :deep(.el-input__wrapper.is-focus),
+.m3-form :deep(.el-select__wrapper.is-focused) {
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 22%, var(--md-sys-color-surface-container-high));
+  box-shadow: inset 0 -2px 0 var(--md-sys-color-primary);
+}
+
+.m3-form :deep(.el-input__inner),
+.m3-form :deep(.el-select__placeholder),
+.m3-form :deep(.el-select__selected-item) {
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-large);
+}
+
+.m3-form :deep(.el-input__inner::placeholder) {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-form :deep(.el-select__caret) {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 .setting-row {
   display: flex;
   align-items: center;
@@ -79,8 +130,50 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--md-space-2);
-  margin-top: var(--md-space-2);
+  gap: var(--md-space-3);
+  margin-top: var(--md-space-3);
+}
+
+.form-actions :deep(.el-button) {
+  min-width: 84px;
+  height: 40px;
+  padding: 0 var(--md-space-5);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 42%, transparent);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-large);
+  box-shadow: none;
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.form-actions :deep(.el-button:hover),
+.form-actions :deep(.el-button:focus-visible) {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 42%, var(--md-sys-color-outline));
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, var(--md-sys-color-surface-container-lowest));
+  transform: translateY(-1px);
+}
+
+.form-actions :deep(.el-button:active) {
+  transform: translateY(0);
+}
+
+.form-actions :deep(.el-button--primary) {
+  border-color: transparent;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+}
+
+.form-actions :deep(.el-button--primary:hover),
+.form-actions :deep(.el-button--primary:focus-visible) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 88%, var(--md-sys-color-on-primary));
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
 }
 
 @media (max-width: 839px) {

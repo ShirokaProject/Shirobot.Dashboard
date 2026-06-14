@@ -6,9 +6,6 @@
         <div class="eyebrow">关于 Shirobot Dashboard</div>
         <h2>Shirobot Dashboard</h2>
       </div>
-      <a class="hero-link" href="https://github.com/ShirokaProject" target="_blank" rel="noreferrer">
-        GitHub 项目
-      </a>
     </section>
 
     <section class="about-grid">
