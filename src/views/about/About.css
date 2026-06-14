@@ -1,0 +1,196 @@
+.about-page {
+  display: flex;
+  width: min(100%, 1280px);
+  flex-direction: column;
+  gap: var(--md-space-5);
+}
+
+.about-hero-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--md-space-5);
+  align-items: center;
+  padding: var(--md-space-6);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background:
+    radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent), transparent 30%),
+    var(--md-sys-color-surface-container-lowest);
+}
+
+.about-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 26px;
+  object-fit: cover;
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.eyebrow {
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-large);
+}
+
+.about-hero-main h2 {
+  margin: var(--md-space-1) 0 0;
+  font: var(--md-sys-typescale-headline-small);
+}
+
+.about-hero-main p,
+.card-head p,
+.sponsor-panel p {
+  margin: var(--md-space-1) 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.hero-link,
+.link-panel {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+
+.hero-link {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--md-space-4);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font: var(--md-sys-typescale-label-large);
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--md-space-4);
+}
+
+.about-card {
+  padding: var(--md-space-5);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.project-card,
+.sponsor-card {
+  grid-column: span 1;
+}
+
+.card-head {
+  display: flex;
+  gap: var(--md-space-3);
+  align-items: flex-start;
+}
+
+.card-head h3 {
+  margin: 0;
+  font: var(--md-sys-typescale-title-large);
+}
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font: var(--md-sys-typescale-title-medium);
+}
+
+.card-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.card-icon.avatar-source {
+  overflow: hidden;
+  padding: 0;
+}
+
+.card-icon.avatar-source img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.link-panel,
+.sponsor-panel {
+  display: block;
+  margin-top: var(--md-space-4);
+  padding: var(--md-space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-low);
+  font: var(--md-sys-typescale-title-small);
+  word-break: break-all;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-2);
+  margin-top: var(--md-space-4);
+}
+
+.info-list div {
+  padding: var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.info-list span,
+.info-list strong {
+  display: block;
+}
+
+.info-list span {
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+.info-list strong {
+  margin-top: var(--md-space-1);
+  font: var(--md-sys-typescale-label-large);
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-space-2);
+  margin-top: var(--md-space-4);
+}
+
+.chip-list span {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font: var(--md-sys-typescale-label-large);
+}
+
+.sponsor-panel {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.sponsor-panel p {
+  color: var(--md-sys-color-on-tertiary-container);
+  opacity: 0.82;
+}
+
+@media (max-width: 839px) {
+  .about-hero-card,
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-link {
+    justify-content: center;
+  }
+}

@@ -1,0 +1,110 @@
+.adapters-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-6);
+}
+
+.adapter-intro {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--md-space-4);
+  align-items: flex-end;
+  padding: var(--md-space-6);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--app-panel);
+}
+
+.adapter-intro h2,
+.adapter-card h3 {
+  margin: 0;
+  font: var(--md-sys-typescale-title-large);
+}
+
+.adapter-intro p,
+.adapter-card p {
+  margin: var(--md-space-1) 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.adapter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--md-space-4);
+}
+
+.adapter-card {
+  padding: var(--md-space-5);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--app-panel);
+}
+
+.adapter-head {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-3);
+}
+
+.adapter-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font: var(--md-sys-typescale-title-medium);
+}
+
+.adapter-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--md-space-3);
+  margin-top: var(--md-space-6);
+}
+
+.adapter-meta div {
+  padding: var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--app-panel-soft);
+}
+
+.adapter-meta span {
+  display: block;
+  font: var(--md-sys-typescale-label-medium);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.adapter-meta strong {
+  display: block;
+  margin-top: var(--md-space-1);
+  font: var(--md-sys-typescale-title-medium);
+}
+
+.online {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.offline {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.adapter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md-space-2);
+  margin-top: var(--md-space-6);
+}
+
+@media (max-width: 839px) {
+  .adapter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 599px) {
+  .adapter-intro {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
