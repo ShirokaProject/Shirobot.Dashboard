@@ -1,5 +1,5 @@
 export type LogKind = 'message' | 'plugin' | 'system'
-export type LogLevel = 'INFO' | 'WARN' | 'ERROR'
+export type LogLevel = 'LOG' | 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS'
 export type KindFilter = 'ALL' | LogKind
 
 export type RuntimeLog = {

@@ -1,6 +1,6 @@
 import type { AdapterInfo } from './adapters/adapters'
 import type { AppConfig } from './config/config'
-import type { RuntimeLogsResponse } from './logs/logs'
+import type { LogSourceInfo, RuntimeLogsResponse } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
 import type { MarketplacePlugin } from './pluginMarket/pluginMarket'
 import type { PluginConfigResponse } from './plugins/config'
@@ -9,29 +9,37 @@ import type { RuntimeLog } from '../features/logs/types'
 import type { Plugin } from '../features/plugins/types'
 
 const demoOverview: OverviewResponse = {
-  shirobotInfo: {
-    version: 'v0.1.0-demo',
-    commit: 'demo-a13f9c2',
-    commitTime: '2026-06-13 18:42',
-    uptime: '36h 12m'
-  },
-  latestError: {
+  bot_version: 'v0.1.0-demo',
+  uptime_seconds: 130320,
+  plugins_count: 12,
+  adapter: 'OneBot v11',
+  adapter_status: 'connected',
+  message_count: 1200,
+  message_freq: [
+    { start_time: '00:00', end_time: '02:00', count: 24 },
+    { start_time: '02:00', end_time: '04:00', count: 38 },
+    { start_time: '04:00', end_time: '06:00', count: 30 },
+    { start_time: '06:00', end_time: '08:00', count: 52 },
+    { start_time: '08:00', end_time: '10:00', count: 46 },
+    { start_time: '10:00', end_time: '12:00', count: 78 },
+    { start_time: '12:00', end_time: '14:00', count: 62 },
+    { start_time: '14:00', end_time: '16:00', count: 84 },
+    { start_time: '16:00', end_time: '18:00', count: 54 },
+    { start_time: '18:00', end_time: '20:00', count: 66 },
+    { start_time: '20:00', end_time: '22:00', count: 72 },
+    { start_time: '22:00', end_time: '24:00', count: 58 }
+  ],
+  latest_error: {
     source: 'AI Chat Plugin',
     message: '演示模式：这里展示后端接入后的最近错误格式。',
     time: '2026-06-13 19:08'
   },
-  stats: [
-    { key: 'plugins', label: '活跃插件', value: '12', support: '演示数据：2 个插件有可用更新' },
-    { key: 'adapters', label: '适配器', value: '4', support: '演示数据：1 个适配器离线' },
-    { key: 'messages', label: '今日消息', value: '1.2k', support: '演示数据：+18% 较昨日' },
-    { key: 'health', label: '健康状态', value: '正常', support: '演示数据：核心服务在线' }
-  ],
-  bars: [24, 38, 30, 52, 46, 78, 62, 84, 54, 66, 72, 58],
+  health_status: '正常',
   events: [
-    { title: '演示：OneBot v11 连接成功', time: '12:04' },
-    { title: '演示：Echo 插件完成热更新', time: '11:40' },
-    { title: '演示：Admin 权限缓存刷新', time: '10:18' },
-    { title: '演示：Schedule 插件已停用', time: '09:52' }
+    { message: '演示：OneBot v11 连接成功', time: '12:04', level: 'info' },
+    { message: '演示：Echo 插件完成热更新', time: '11:40', level: 'info' },
+    { message: '演示：Admin 权限缓存刷新', time: '10:18', level: 'info' },
+    { message: '演示：Schedule 插件已停用', time: '09:52', level: 'warning' }
   ]
 }
 
@@ -113,37 +121,48 @@ const demoConfig: AppConfig = {
   protocol: 'MilkyAdapter',
   enable_log: true,
   disable_console_input: false,
+  github_proxy: 'https://gh-proxy.com/',
+  host_update_repository: 'ShirokaProject/ShiroBot',
   avalonia_theme: 'Light',
   owner_list: [1034028486],
   admin_list: [],
   api: {
     enable: true,
     listen_url: 'http://localhost:8080',
+    listen_urls: [],
+    public_base_url: null,
+    auth_enable: true,
     token: 'xxx'
   }
 }
 
 const demoPluginConfig: PluginConfigResponse = {
-  pluginName: 'Echo Demo',
-  form: {
-    alias: 'Echo Debugger',
-    logLevel: 'info',
-    debug: false,
-    autoLoad: true,
-    commandPrefix: '/echo',
-    scope: 'all',
-    groupMessage: true,
-    privateMessage: true,
-    timeout: '5000',
-    concurrency: '4',
-    rawConfig: '{\n  "replyMode": "plain",\n  "trimMessage": true\n}'
+  plugin_id: 'JmParser',
+  config: {
+    proxy: '',
+    output_mode: 'file',
+    delete_after_minutes: 60,
+    max_concurrency: 16,
+    send_cover: true,
+    cover_blur_radius: 12
   },
-  permissions: [
-    { key: 'read-message', label: '读取消息', description: '允许插件读取消息事件。', enabled: true },
-    { key: 'send-message', label: '发送消息', description: '允许插件发送群聊或私聊消息。', enabled: true },
-    { key: 'write-config', label: '写入配置', description: '允许插件修改自身配置。', enabled: false },
-    { key: 'external-api', label: '访问外部 API', description: '允许插件请求外部网络服务。', enabled: false }
-  ]
+  schema: [
+    { key: 'proxy', label: '代理地址', type: 'string', description: '下载请求使用的代理地址，留空表示直连。', placeholder: 'http://127.0.0.1:7890', options: [], min: null, max: null },
+    { key: 'output_mode', label: '输出模式', type: 'select', description: 'file 上传 PDF，url 发送临时预览链接，both 两者都发送。', placeholder: null, options: ['file', 'url', 'both'], min: null, max: null },
+    { key: 'delete_after_minutes', label: '删除等待分钟', type: 'number', description: '生成文件保留时间。', placeholder: null, options: [], min: 1, max: 1440 },
+    { key: 'max_concurrency', label: '最大并发', type: 'number', description: '同时处理的最大任务数量。', placeholder: null, options: [], min: 1, max: 64 },
+    { key: 'send_cover', label: '发送封面', type: 'boolean', description: '是否发送封面图片。', placeholder: null, options: [], min: null, max: null },
+    { key: 'cover_blur_radius', label: '封面模糊半径', type: 'number', description: '封面图片的模糊强度。', placeholder: null, options: [], min: 0, max: 32 }
+  ],
+  routes: {
+    configured: false,
+    mode: 'default',
+    groups: [],
+    effective_mode: 'blacklist',
+    effective_groups: [],
+    default_mode: 'blacklist',
+    default_groups: []
+  }
 }
 
 const demoLogs: RuntimeLog[] = [
@@ -190,6 +209,14 @@ const demoLogs: RuntimeLog[] = [
     raw: '[22:43:31] [AI Chat Plugin] 演示：API key missing: please configure provider credentials.',
     traceId: 'demo-ai-9bb210'
   }
+]
+
+const demoLogSources: LogSourceInfo[] = [
+  { source: 'system', description: '系统运行日志', plugin_name: 'system' },
+  { source: 'Plugin Loader', description: '插件加载器日志', plugin_name: 'Plugin Loader' },
+  { source: 'OneBot v11', description: 'OneBot v11 适配器日志', plugin_name: 'OneBot v11' },
+  { source: 'Schedule Plugin', description: 'Schedule 插件日志', plugin_name: 'Schedule Plugin' },
+  { source: 'AI Chat Plugin', description: 'AI Chat 插件日志', plugin_name: 'AI Chat Plugin' }
 ]
 
 const demoMarketplacePlugins: MarketplacePlugin[] = [
@@ -244,25 +271,77 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   const method = methodOf(init)
   const pathname = url.pathname
 
-  if (method === 'GET' && pathname === '/api/v1/dashboard/overview') return clone(demoOverview) as T
-  if (method === 'GET' && pathname === '/api/v1/plugins') return clone(demoPlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
+  if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
 
-  const pluginStateMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/state$/)
-  if (method === 'PUT' && pluginStateMatch) {
-    const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginStateMatch[1] ?? ''))
+  const pluginActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(enable|disable|delete|update)$/)
+  if (method === 'POST' && pluginActionMatch) {
+    const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginActionMatch[1] ?? ''))
     if (!plugin) throw new Error('Demo plugin not found')
-    const payload = init?.body ? JSON.parse(String(init.body)) as { enabled?: boolean } : {}
-    plugin.status = payload.enabled ? 'enabled' : 'disabled'
-    return clone(plugin) as T
+    const action = pluginActionMatch[2]
+
+    if (action === 'enable') plugin.status = 'enabled'
+    if (action === 'disable') plugin.status = 'disabled'
+    if (action === 'delete') demoPlugins.splice(demoPlugins.indexOf(plugin), 1)
+    if (action === 'update' && plugin.latestVersion) {
+      plugin.version = plugin.latestVersion
+      plugin.hasUpdate = false
+    }
+
+    return { ok: true, message: `Plugin ${plugin.id} ${action}d.` } as T
   }
 
   if (method === 'POST' && pathname === '/api/v1/plugins/upload') {
-    return clone({ status: 'parsed', message: '演示模式：插件包已提交解析。' } satisfies PluginUploadResponse) as T
+    return clone({
+      upload_id: 'demo-upload-id',
+      status: 'parsed',
+      plugin: {
+        id: 'GithubView',
+        name: 'Github 预览插件',
+        version: '1.0.0',
+        enable: true,
+        author: 'greepar',
+        repo: 'greepar/ShiroBot.Plugin.GithubView',
+        description: '解析 GitHub 仓库链接并渲染相关信息卡片。',
+        category: 'Development'
+      },
+      package: {
+        file_name: 'ShiroBot.Plugin.GithubView.dll',
+        type: 'dll',
+        size: 123456
+      },
+      conflict: {
+        exists: true,
+        installed_version: '1.0.0',
+        uploaded_version: '1.0.0',
+        action: 'replace'
+      }
+    } satisfies PluginUploadResponse) as T
+  }
+
+  if (method === 'POST' && /^\/api\/v1\/plugins\/upload\/[^/]+\/confirm$/.test(pathname)) {
+    return { success: true, plugin: { id: 'GithubView', enable: true } } as T
+  }
+
+  if (method === 'DELETE' && /^\/api\/v1\/plugins\/upload\/[^/]+$/.test(pathname)) {
+    return { success: true } as T
   }
 
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return clone(demoPluginConfig) as T
-  if (method === 'PUT' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
-    return JSON.parse(String(init?.body ?? '{}')) as T
+  if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: number[] } }
+    if (payload.config) demoPluginConfig.config = { ...demoPluginConfig.config, ...payload.config }
+    if (payload.routes) {
+      demoPluginConfig.routes = {
+        ...demoPluginConfig.routes,
+        configured: true,
+        mode: payload.routes.mode ?? demoPluginConfig.routes.mode,
+        groups: payload.routes.groups ?? demoPluginConfig.routes.groups,
+        effective_mode: payload.routes.mode === 'default' ? demoPluginConfig.routes.default_mode : payload.routes.mode ?? demoPluginConfig.routes.effective_mode,
+        effective_groups: payload.routes.mode === 'default' ? demoPluginConfig.routes.default_groups : payload.routes.groups ?? demoPluginConfig.routes.effective_groups
+      }
+    }
+    return clone(demoPluginConfig) as T
   }
 
   if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
@@ -278,6 +357,8 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     const response: RuntimeLogsResponse = { logs: clone(demoLogs), nextCursor: undefined }
     return response as T
   }
+
+  if (method === 'GET' && pathname === '/api/v1/logs/sources') return clone(demoLogSources) as T
 
   if (method === 'GET' && pathname === '/api/v1/plugin-market/plugins') return clone(demoMarketplacePlugins) as T
 

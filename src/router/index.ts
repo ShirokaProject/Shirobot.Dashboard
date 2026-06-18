@@ -13,7 +13,7 @@ import {
 } from './pageLoaders'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/dashboard/'),
   routes: [
     {
       path: '/login',

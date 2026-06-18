@@ -1,39 +1,51 @@
 import { apiRequest } from '../core/http'
 
-export interface PluginConfigForm {
-  alias: string
-  logLevel: string
-  debug: boolean
-  autoLoad: boolean
-  commandPrefix: string
-  scope: string
-  groupMessage: boolean
-  privateMessage: boolean
-  timeout: string
-  concurrency: string
-  rawConfig: string
-}
+export type PluginConfigValue = string | number | boolean | null | Array<string | number>
+export type PluginConfigMap = Record<string, PluginConfigValue>
 
-export interface PluginPermissionConfig {
+export interface PluginConfigSchemaItem {
   key: string
   label: string
-  description: string
-  enabled: boolean
+  type: 'string' | 'text' | 'number' | 'boolean' | 'select' | string
+  description?: string | null
+  placeholder?: string | null
+  options?: Array<string | number>
+  min?: number | null
+  max?: number | null
+}
+
+export interface PluginRoutesConfig {
+  configured: boolean
+  mode: 'default' | 'blacklist' | 'whitelist' | string
+  groups: number[]
+  effective_mode: 'blacklist' | 'whitelist' | string
+  effective_groups: number[]
+  default_mode: 'blacklist' | 'whitelist' | string
+  default_groups: number[]
 }
 
 export interface PluginConfigResponse {
-  pluginName: string
-  form: PluginConfigForm
-  permissions: PluginPermissionConfig[]
+  plugin_id: string
+  config: PluginConfigMap
+  schema: PluginConfigSchemaItem[]
+  routes: PluginRoutesConfig
+}
+
+export interface PluginConfigUpdateRequest {
+  config: PluginConfigMap
+  routes: {
+    mode: string
+    groups: number[]
+  }
 }
 
 export function getPluginConfig(pluginId: string) {
   return apiRequest<PluginConfigResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/config`)
 }
 
-export function updatePluginConfig(pluginId: string, config: PluginConfigResponse) {
+export function updatePluginConfig(pluginId: string, config: PluginConfigUpdateRequest) {
   return apiRequest<PluginConfigResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/config`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config)
   })

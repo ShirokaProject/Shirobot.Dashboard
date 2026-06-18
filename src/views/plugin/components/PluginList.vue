@@ -35,11 +35,11 @@
         <span class="status-badge" :class="plugin.status">{{ statusText(plugin.status) }}</span>
         <el-switch
           :model-value="plugin.status === 'enabled'"
-          :disabled="plugin.status === 'error'"
+          :disabled="isToggleLocked(plugin)"
           @change="(value: string | number | boolean) => emit('toggle', plugin, Boolean(value))"
         />
         <button type="button" class="list-action-button text" @click="emit('select', plugin)">详情</button>
-        <button v-if="plugin.hasUpdate" type="button" class="list-action-button tonal">更新</button>
+        <button v-if="plugin.hasUpdate" type="button" class="list-action-button tonal" @click="emit('update', plugin)">更新</button>
         <span v-else class="action-placeholder"></span>
       </div>
     </article>
@@ -53,11 +53,13 @@ defineProps<{
   plugins: Plugin[]
   selectedPlugin: Plugin | null
   statusText: (status: PluginStatus) => string
+  isToggleLocked: (plugin: Plugin) => boolean
 }>()
 
 const emit = defineEmits<{
   select: [plugin: Plugin]
   toggle: [plugin: Plugin, enabled: boolean]
+  update: [plugin: Plugin]
 }>()
 </script>
 

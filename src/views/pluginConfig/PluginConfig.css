@@ -54,7 +54,7 @@
 
 .config-layout {
   display: grid;
-  grid-template-columns: 260px minmax(560px, 1fr) 340px;
+  grid-template-columns: 220px minmax(560px, 1fr) 320px;
   gap: var(--md-space-5);
   align-items: start;
 }
@@ -76,8 +76,7 @@
 
 .section-item {
   min-height: 56px;
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  display: flex;
   gap: var(--md-space-3);
   align-items: center;
   padding: 0 var(--md-space-3);
@@ -188,6 +187,17 @@
 
 .permission-card {
   cursor: pointer;
+}
+
+.switch-row.compact {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field-description {
+  margin: var(--md-space-2) 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
 }
 
 .config-inspector {

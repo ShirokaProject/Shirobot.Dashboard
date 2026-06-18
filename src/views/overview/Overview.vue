@@ -29,14 +29,6 @@
           <strong>{{ shirobotInfo.version }}</strong>
         </div>
         <div class="version-item">
-          <span><IconCommit /> 最新 Commit</span>
-          <strong>{{ shirobotInfo.commit }}</strong>
-        </div>
-        <div class="version-item">
-          <span><IconSchedule /> Commit 时间</span>
-          <strong>{{ shirobotInfo.commitTime }}</strong>
-        </div>
-        <div class="version-item">
           <span><IconTimer /> 稳定运行</span>
           <strong>{{ shirobotInfo.uptime }}</strong>
         </div>
@@ -110,8 +102,6 @@ import { useOverviewPage } from './Overview'
 
 const {
   IconPackage,
-  IconCommit,
-  IconSchedule,
   IconTimer,
   IconError,
   IconEvent,

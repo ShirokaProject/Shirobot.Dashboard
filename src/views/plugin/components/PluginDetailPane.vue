@@ -18,7 +18,7 @@
 
       <div class="detail-side-actions">
         <button type="button" class="detail-action-button tonal" @click="emit('openConfig', plugin)">打开配置</button>
-        <button type="button" class="detail-action-button danger">卸载</button>
+        <button type="button" class="detail-action-button danger" @click="emit('delete', plugin)">卸载</button>
       </div>
 
       <div class="detail-side-body">
@@ -48,7 +48,7 @@
             </div>
             <el-switch
               :model-value="plugin.status === 'enabled'"
-              :disabled="plugin.status === 'error'"
+              :disabled="isToggleLocked(plugin)"
               @change="(value: string | number | boolean) => emit('toggle', plugin!, Boolean(value))"
             />
           </div>
@@ -62,7 +62,7 @@
         <section class="detail-section-panel version-panel">
           <div class="detail-card-head compact">
             <div class="detail-section-title">版本管理</div>
-            <button v-if="plugin.hasUpdate" type="button" class="small-tonal-button">更新</button>
+            <button v-if="plugin.hasUpdate" type="button" class="small-tonal-button" @click="emit('update', plugin)">更新</button>
           </div>
 
           <dl class="detail-kv-list version-list">
@@ -103,11 +103,14 @@ import type { Plugin, PluginStatus } from '../../../features/plugins/types'
 defineProps<{
   plugin: Plugin | null
   statusText: (status: PluginStatus) => string
+  isToggleLocked: (plugin: Plugin) => boolean
 }>()
 
 const emit = defineEmits<{
   toggle: [plugin: Plugin, enabled: boolean]
   openConfig: [plugin: Plugin]
+  update: [plugin: Plugin]
+  delete: [plugin: Plugin]
 }>()
 </script>
 

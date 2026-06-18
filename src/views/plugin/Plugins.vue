@@ -13,29 +13,50 @@
       :closable="false"
     />
 
+    <el-alert
+      v-if="actionMessage"
+      class="page-alert"
+      :title="actionMessage"
+      type="success"
+      show-icon
+      :closable="false"
+    />
+
     <section class="plugin-layout">
       <main class="plugin-primary-pane">
         <PluginList
           :plugins="filteredInstalled"
           :selected-plugin="selectedPlugin"
           :status-text="statusText"
+          :is-toggle-locked="isPluginToggleLocked"
           @select="selectPlugin"
           @toggle="togglePlugin"
+          @update="requestPluginUpdate"
         />
       </main>
 
       <PluginDetailPane
         :plugin="selectedPlugin"
         :status-text="statusText"
+        :is-toggle-locked="isPluginToggleLocked"
         @toggle="togglePlugin"
         @open-config="openPluginConfig"
+        @update="requestPluginUpdate"
+        @delete="requestPluginDelete"
       />
     </section>
 
     <PluginUploadDialog
       v-model:visible="uploadDialogVisible"
       v-model:selected-file="selectedPluginFile"
+      :upload-result="pluginUploadResult"
+      :upload-error="pluginUploadError"
+      :parsing="pluginUploadParsing"
+      :installing="pluginUploadInstalling"
+      v-model:replace="pluginUploadReplace"
+      v-model:enable="pluginUploadEnable"
       @submit="submitPluginUpload"
+      @confirm="confirmUploadedPlugin"
     />
   </div>
 </template>
@@ -53,15 +74,26 @@ const {
   activeStatus,
   uploadDialogVisible,
   selectedPluginFile,
+  pluginUploadResult,
+  pluginUploadError,
+  pluginUploadParsing,
+  pluginUploadInstalling,
+  pluginUploadReplace,
+  pluginUploadEnable,
   selectedPlugin,
   statusFilters,
   filteredInstalled,
   loadError,
+  actionMessage,
   statusText,
+  isPluginToggleLocked,
   selectPlugin,
   togglePlugin,
+  requestPluginUpdate,
+  requestPluginDelete,
   openPluginConfig,
-  submitPluginUpload
+  submitPluginUpload,
+  confirmUploadedPlugin
 } = usePluginsPage()
 </script>
 

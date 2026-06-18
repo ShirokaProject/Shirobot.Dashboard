@@ -64,6 +64,14 @@
               <el-switch v-model="form.disable_console_input" />
             </div>
 
+            <el-form-item label="GitHub 代理地址">
+              <input v-model="form.github_proxy" class="config-text-input" placeholder="https://gh-proxy.com/" />
+            </el-form-item>
+
+            <el-form-item label="主程序更新仓库">
+              <input v-model="form.host_update_repository" class="config-text-input" placeholder="ShirokaProject/ShiroBot" />
+            </el-form-item>
+
             <el-form-item label="Avalonia 主题">
               <el-select v-model="form.avalonia_theme" placeholder="选择界面主题" style="width: 100%">
                 <el-option label="Light" value="Light" />
@@ -93,6 +101,27 @@
             <el-form-item label="API 监听地址">
               <el-input v-model="form.api_listen_url" placeholder="http://localhost:8080" />
             </el-form-item>
+
+            <el-form-item label="API 多监听地址">
+              <el-input
+                v-model="form.api_listen_urls"
+                type="textarea"
+                :rows="3"
+                placeholder="每行一个地址，例如：http://127.0.0.1:7001"
+              />
+            </el-form-item>
+
+            <el-form-item label="公开基础 URL">
+              <el-input v-model="form.api_public_base_url" placeholder="留空表示 null" />
+            </el-form-item>
+
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">启用 API 认证</div>
+                <div class="setting-support">对应 api.auth_enable，开启后访问接口需要令牌。</div>
+              </div>
+              <el-switch v-model="form.api_auth_enable" />
+            </div>
 
             <el-form-item label="API Token">
               <el-input v-model="form.api_token" placeholder="请输入访问令牌" show-password />

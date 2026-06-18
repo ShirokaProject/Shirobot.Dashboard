@@ -68,83 +68,29 @@
         <div class="terminal-tabs" aria-hidden="true">
           <div class="terminal-tab active">
             <span class="terminal-tab-icon">▣</span>
-            <strong>{{ activeSource === 'ALL' ? 'runtime.log' : `${activeSource}.log` }}</strong>
+            <strong>{{ activeLogFileName }}</strong>
           </div>
           <div class="terminal-window-spacer"></div>
           <span class="terminal-stream-status">{{ filteredLogs.length }} lines</span>
         </div>
 
         <div class="terminal-body">
-          <div class="terminal-command-line">
-            <span>PS C:\Shirobot&gt;</span>
-            <strong>Get-RuntimeLog -Source {{ activeSource === 'ALL' ? '*' : activeSource }} -Kind {{ activeKind }} -Tail {{ filteredLogs.length }}</strong>
-          </div>
-
           <div class="terminal-output" role="log" aria-label="运行时日志文本流">
             <article
               v-for="log in filteredLogs"
               :key="log.id"
               class="terminal-line"
-              :class="[{ active: selectedLog?.id === log.id }, log.kind, log.level]"
-              @click="selectedLog = log"
+              :class="[log.kind, log.level]"
             >
               <code>{{ log.raw }}</code>
             </article>
 
             <div v-if="filteredLogs.length === 0" class="terminal-empty">
-              No runtime logs. Connect backend endpoint /api/v1/runtime/logs to show real logs.
-            </div>
-
-            <div class="terminal-cursor-line" aria-hidden="true">
-              <span>PS C:\Shirobot&gt;</span><i></i>
+              No runtime logs. Connect backend endpoint /api/v1/logs/stream to show real logs.
             </div>
           </div>
         </div>
       </main>
-
-      <aside class="log-detail-panel">
-        <template v-if="selectedLog">
-          <div class="section-label">详情</div>
-
-          <section class="detail-summary">
-            <span class="detail-kind" :class="selectedLog.kind">{{ kindLabel(selectedLog.kind) }}</span>
-            <h3>{{ selectedLog.source }}</h3>
-            <p>{{ selectedLog.time }}</p>
-          </section>
-
-          <section class="detail-block">
-            <h3>消息内容</h3>
-            <p>{{ selectedLog.message }}</p>
-          </section>
-
-          <section class="detail-block compact">
-            <h3>解析信息</h3>
-            <dl>
-              <div>
-                <dt>来源</dt>
-                <dd>{{ selectedLog.source }}</dd>
-              </div>
-              <div v-if="selectedLog.groupName">
-                <dt>群聊</dt>
-                <dd>{{ selectedLog.groupName }}({{ selectedLog.groupId }})</dd>
-              </div>
-              <div v-if="selectedLog.userId">
-                <dt>发送者</dt>
-                <dd>{{ selectedLog.userId }}</dd>
-              </div>
-              <div>
-                <dt>Trace ID</dt>
-                <dd>{{ selectedLog.traceId }}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <section class="detail-block raw-block">
-            <h3>原始日志</h3>
-            <pre>{{ selectedLog.raw }}</pre>
-          </section>
-        </template>
-      </aside>
     </section>
   </div>
 </template>
@@ -156,13 +102,12 @@ const {
   keyword,
   activeKind,
   activeSource,
+  activeLogFileName,
   autoRefresh,
   loadError,
-  selectedLog,
   filteredLogs,
   sourceFilters,
   kindOptions,
-  kindLabel,
   setKind,
   refreshLogs
 } = useLogsPage()
