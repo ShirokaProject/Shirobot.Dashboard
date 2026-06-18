@@ -3,7 +3,7 @@
 
 @font-face {
   font-family: 'MapleMono';
-  src: url('/fonts-cdn/MapleMonoNormal-Regular.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -11,7 +11,7 @@
 
 @font-face {
   font-family: 'MapleMono';
-  src: url('/fonts-cdn/MapleMonoNormal-Medium.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -19,7 +19,7 @@
 
 @font-face {
   font-family: 'MapleMono';
-  src: url('/fonts-cdn/MapleMonoNormal-SemiBold.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -27,7 +27,7 @@
 
 @font-face {
   font-family: 'MapleMono';
-  src: url('/fonts-cdn/MapleMonoNormal-Bold.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -35,7 +35,7 @@
 
 @font-face {
   font-family: 'MapleMonoBold';
-  src: url('/fonts-cdn/MapleMonoNormal-Bold.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -43,7 +43,7 @@
 
 @font-face {
   font-family: 'MapleMonoSemiBold';
-  src: url('/fonts-cdn/MapleMonoNormal-SemiBold.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -51,7 +51,7 @@
 
 @font-face {
   font-family: 'MapleMonoMedium';
-  src: url('/fonts-cdn/MapleMonoNormal-Medium.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -59,7 +59,7 @@
 
 @font-face {
   font-family: 'MapleMonoRegular';
-  src: url('/fonts-cdn/MapleMonoNormal-Regular.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -67,7 +67,7 @@
 
 @font-face {
   font-family: 'Lolita';
-  src: url('/fonts-cdn/Lolita.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/Lolita.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -75,7 +75,7 @@
 
 @font-face {
   font-family: 'Xiaolai';
-  src: url('/fonts-cdn/xiaolai/Xiaolai-Regular.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/xiaolai/Xiaolai-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -83,7 +83,7 @@
 
 @font-face {
   font-family: 'XiaolaiMono';
-  src: url('/fonts-cdn/xiaolai/XiaolaiMono-Regular.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/xiaolai/XiaolaiMono-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -91,7 +91,7 @@
 
 @font-face {
   font-family: 'SourceHanSansSC';
-  src: url('/fonts-cdn/source-han-sans-sc/SourceHanSansSC-Light.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -99,7 +99,7 @@
 
 @font-face {
   font-family: 'SourceHanSansSC';
-  src: url('/fonts-cdn/source-han-sans-sc/SourceHanSansSC-Regular.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -107,7 +107,7 @@
 
 @font-face {
   font-family: 'SourceHanSansSC';
-  src: url('/fonts-cdn/source-han-sans-sc/SourceHanSansSC-Medium.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -115,7 +115,7 @@
 
 @font-face {
   font-family: 'SourceHanSansSC';
-  src: url('/fonts-cdn/source-han-sans-sc/SourceHanSansSC-Bold.woff2') format('woff2');
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
