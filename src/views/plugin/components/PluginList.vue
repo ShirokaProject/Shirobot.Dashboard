@@ -39,8 +39,6 @@
           @change="(value: string | number | boolean) => emit('toggle', plugin, Boolean(value))"
         />
         <button type="button" class="list-action-button text" @click="emit('select', plugin)">详情</button>
-        <button v-if="plugin.hasUpdate" type="button" class="list-action-button tonal" @click="emit('update', plugin)">更新</button>
-        <span v-else class="action-placeholder"></span>
       </div>
     </article>
   </section>
@@ -59,7 +57,6 @@ defineProps<{
 const emit = defineEmits<{
   select: [plugin: Plugin]
   toggle: [plugin: Plugin, enabled: boolean]
-  update: [plugin: Plugin]
 }>()
 </script>
 

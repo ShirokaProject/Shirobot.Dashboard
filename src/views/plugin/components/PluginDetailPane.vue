@@ -17,11 +17,52 @@
       </header>
 
       <div class="detail-side-actions">
-        <button type="button" class="detail-action-button tonal" @click="emit('openConfig', plugin)">打开配置</button>
-        <button type="button" class="detail-action-button danger" @click="emit('delete', plugin)">卸载</button>
+        <button type="button" class="detail-action-button tonal" :disabled="Boolean(hostOperation)" @click="emit('openConfig', plugin)">打开配置</button>
+        <button
+          type="button"
+          class="detail-action-button tonal"
+          :disabled="plugin.status !== 'enabled' || Boolean(hostOperation) || Boolean(runningActionId)"
+          @click="emit('update', plugin)"
+        >{{ hostOperation === 'update' ? '更新中...' : '检查更新' }}</button>
+        <button
+          type="button"
+          class="detail-action-button danger"
+          :disabled="Boolean(hostOperation) || Boolean(runningActionId)"
+          @click="emit('delete', plugin)"
+        >{{ hostOperation === 'delete' ? '卸载中...' : '卸载插件' }}</button>
       </div>
 
       <div class="detail-side-body">
+        <section class="detail-section-panel command-panel">
+          <div class="detail-card-head compact">
+            <div>
+              <div class="detail-section-title">插件操作</div>
+              <p>操作项由插件后端提供。</p>
+            </div>
+            <span v-if="actionsLoading" class="action-loading">加载中...</span>
+          </div>
+
+          <div v-if="actionsError" class="action-error">{{ actionsError }}</div>
+          <div v-else-if="actions.length" class="plugin-command-list">
+            <button
+              v-for="action in actions"
+              :key="action.id"
+              type="button"
+              class="plugin-command-button"
+              :class="actionToneClass(action.tone)"
+              :disabled="Boolean(runningActionId) || Boolean(hostOperation)"
+              @click="emit('action', plugin, action)"
+            >
+              <span>
+                <strong>{{ action.label }}</strong>
+                <small>{{ action.description }}</small>
+              </span>
+              <span v-if="runningActionId === action.id">执行中...</span>
+            </button>
+          </div>
+          <p v-else-if="!actionsLoading" class="action-empty">该插件没有额外操作。</p>
+        </section>
+
         <section class="detail-section-panel basic-panel">
           <div class="detail-section-title">基础信息</div>
           <dl class="detail-kv-list">
@@ -61,8 +102,7 @@
 
         <section class="detail-section-panel version-panel">
           <div class="detail-card-head compact">
-            <div class="detail-section-title">版本管理</div>
-            <button v-if="plugin.hasUpdate" type="button" class="small-tonal-button" @click="emit('update', plugin)">更新</button>
+            <div class="detail-section-title">版本信息</div>
           </div>
 
           <dl class="detail-kv-list version-list">
@@ -98,20 +138,35 @@
 </template>
 
 <script setup lang="ts">
+import type { PluginActionDefinition } from '../../../api'
 import type { Plugin, PluginStatus } from '../../../features/plugins/types'
 
 defineProps<{
   plugin: Plugin | null
   statusText: (status: PluginStatus) => string
   isToggleLocked: (plugin: Plugin) => boolean
+  actions: PluginActionDefinition[]
+  actionsLoading: boolean
+  actionsError: string
+  runningActionId: string
+  hostOperation: string
 }>()
 
 const emit = defineEmits<{
   toggle: [plugin: Plugin, enabled: boolean]
   openConfig: [plugin: Plugin]
+  action: [plugin: Plugin, action: PluginActionDefinition]
   update: [plugin: Plugin]
   delete: [plugin: Plugin]
 }>()
+
+function actionToneClass(tone: string) {
+  const normalized = tone.toLowerCase()
+  if (['danger', 'destructive', 'error'].includes(normalized)) return 'danger'
+  if (['warning', 'caution'].includes(normalized)) return 'warning'
+  if (['primary', 'accent', 'tonal'].includes(normalized)) return 'primary'
+  return 'neutral'
+}
 </script>
 
 <style scoped src="./PluginDetailPane.css"></style>

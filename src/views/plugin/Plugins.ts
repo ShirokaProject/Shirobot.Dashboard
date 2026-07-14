@@ -1,7 +1,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { cancelPluginUpload, confirmPluginUpload, deletePlugin, getInstalledPlugins, setPluginEnabled, updatePlugin, uploadPluginPackage } from '../../api'
-import type { PluginUploadParsedResponse } from '../../api'
+import { ElMessageBox } from 'element-plus'
+import { cancelPluginUpload, confirmPluginUpload, deleteInstalledPlugin, getApiErrorMessage, getInstalledPlugins, getPluginActions, runPluginAction, setPluginEnabled, updateInstalledPlugin, uploadPluginPackage } from '../../api'
+import type { PluginActionDefinition, PluginUploadParsedResponse } from '../../api'
 import type { Plugin, PluginStatus } from '../../features/plugins/types'
 
 export type PluginStatusFilter = {
@@ -28,10 +29,17 @@ export function usePluginsPage() {
   const pluginUploadEnable = ref(true)
   const loadError = ref('')
   const actionMessage = ref('')
+  const actionMessageType = ref<'success' | 'error'>('success')
+  const pluginActions = ref<PluginActionDefinition[]>([])
+  const pluginActionsLoading = ref(false)
+  const pluginActionsError = ref('')
+  const runningPluginActionId = ref('')
+  const hostOperation = ref<'update' | 'delete' | ''>('')
 
   const installedPlugins = ref<Plugin[]>([])
   const selectedPlugin = ref<Plugin | null>(null)
   const toggleLockedPluginIds = ref(new Set<string>())
+  let pluginActionsRequestId = 0
 
   const enabledCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'enabled').length)
   const disabledCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'disabled').length)
@@ -67,7 +75,10 @@ export function usePluginsPage() {
   }
 
   function isPluginToggleLocked(plugin: Plugin) {
-    return plugin.status === 'error' || toggleLockedPluginIds.value.has(plugin.id)
+    return plugin.status === 'error'
+      || Boolean(hostOperation.value)
+      || Boolean(runningPluginActionId.value)
+      || toggleLockedPluginIds.value.has(plugin.id)
   }
 
   function lockPluginToggle(pluginId: string) {
@@ -89,10 +100,13 @@ export function usePluginsPage() {
     try {
       const response = await setPluginEnabled(plugin.id, enabled)
       actionMessage.value = response.message
+      actionMessageType.value = response.ok ? 'success' : 'error'
       await loadInstalledPlugins(plugin.id)
+      await loadPluginActions(selectedPlugin.value)
     } catch (error) {
       plugin.status = previousStatus
-      console.error('Plugin state update failed', error)
+      actionMessageType.value = 'error'
+      actionMessage.value = getApiErrorMessage(error, '插件状态更新失败')
     }
   }
 
@@ -105,8 +119,7 @@ export function usePluginsPage() {
     } catch (error) {
       installedPlugins.value = []
       selectedPlugin.value = null
-      loadError.value = '后端插件接口暂不可用，请接入 /api/v1/plugins/list 后刷新。'
-      void error
+      loadError.value = getApiErrorMessage(error, '插件列表加载失败')
     }
   }
 
@@ -114,23 +127,109 @@ export function usePluginsPage() {
     router.push(`/plugins/${plugin.id}/config`)
   }
 
-  async function requestPluginUpdate(plugin: Plugin) {
+  async function loadPluginActions(plugin: Plugin | null | undefined) {
+    const requestId = ++pluginActionsRequestId
+    pluginActions.value = []
+    pluginActionsError.value = ''
+    pluginActionsLoading.value = false
+    if (!plugin || plugin.status !== 'enabled') return
+
+    pluginActionsLoading.value = true
     try {
-      const response = await updatePlugin(plugin.id)
-      actionMessage.value = response.message
-      await loadInstalledPlugins(plugin.id)
+      const response = await getPluginActions(plugin.id)
+      if (requestId === pluginActionsRequestId) pluginActions.value = response.actions
     } catch (error) {
-      console.error('Plugin update failed', error)
+      if (requestId === pluginActionsRequestId) {
+        pluginActionsError.value = getApiErrorMessage(error, '插件操作加载失败')
+      }
+    } finally {
+      if (requestId === pluginActionsRequestId) pluginActionsLoading.value = false
     }
   }
 
-  async function requestPluginDelete(plugin: Plugin) {
+  async function updatePlugin(plugin: Plugin) {
+    if (plugin.status !== 'enabled' || hostOperation.value || runningPluginActionId.value) return
+    hostOperation.value = 'update'
+    actionMessage.value = ''
     try {
-      const response = await deletePlugin(plugin.id)
+      const response = await updateInstalledPlugin(plugin.id)
       actionMessage.value = response.message
+      actionMessageType.value = response.ok ? 'success' : 'error'
+      await loadInstalledPlugins(plugin.id)
+      await loadPluginActions(selectedPlugin.value)
+    } catch (error) {
+      actionMessageType.value = 'error'
+      actionMessage.value = getApiErrorMessage(error, '插件更新失败')
+    } finally {
+      hostOperation.value = ''
+    }
+  }
+
+  async function deletePlugin(plugin: Plugin) {
+    if (hostOperation.value || runningPluginActionId.value) return
+    try {
+      await ElMessageBox.confirm(
+        `确定要卸载并删除“${plugin.name}”吗？插件文件将从服务器移除。`,
+        '卸载插件',
+        { type: 'warning', confirmButtonText: '卸载并删除', cancelButtonText: '取消' }
+      )
+    } catch {
+      return
+    }
+
+    hostOperation.value = 'delete'
+    actionMessage.value = ''
+    try {
+      const response = await deleteInstalledPlugin(plugin.id)
+      actionMessage.value = response.message
+      actionMessageType.value = response.ok ? 'success' : 'error'
       await loadInstalledPlugins()
     } catch (error) {
-      console.error('Plugin delete failed', error)
+      actionMessageType.value = 'error'
+      actionMessage.value = getApiErrorMessage(error, '插件卸载失败')
+    } finally {
+      hostOperation.value = ''
+    }
+  }
+
+  function isDangerousAction(action: PluginActionDefinition) {
+    return ['danger', 'destructive', 'error'].includes(action.tone.toLowerCase())
+  }
+
+  async function executePluginAction(plugin: Plugin, action: PluginActionDefinition) {
+    if (hostOperation.value || runningPluginActionId.value) return
+
+    if (isDangerousAction(action) || action.requires_confirmation) {
+      try {
+        await ElMessageBox.confirm(
+          action.confirmation_text || `确定要执行“${action.label}”吗？`,
+          action.label,
+          {
+            type: isDangerousAction(action) ? 'warning' : 'info',
+            confirmButtonText: '确认执行',
+            cancelButtonText: '取消'
+          }
+        )
+      } catch {
+        return
+      }
+    }
+
+    runningPluginActionId.value = action.id
+    actionMessage.value = ''
+    try {
+      const response = await runPluginAction(plugin.id, action.id)
+      actionMessage.value = response.message
+      actionMessageType.value = response.ok ? 'success' : 'error'
+      if (response.refresh) {
+        await loadInstalledPlugins(plugin.id)
+        await loadPluginActions(selectedPlugin.value)
+      }
+    } catch (error) {
+      actionMessageType.value = 'error'
+      actionMessage.value = getApiErrorMessage(error, `${action.label}执行失败`)
+    } finally {
+      runningPluginActionId.value = ''
     }
   }
 
@@ -201,13 +300,13 @@ export function usePluginsPage() {
         enable: pluginUploadEnable.value
       })
       actionMessage.value = response.success ? '插件安装成功' : '插件安装失败'
+      actionMessageType.value = response.success ? 'success' : 'error'
       resetPluginUploadState()
       uploadDialogVisible.value = false
       clearUploadQuery()
       await loadInstalledPlugins(response.plugin.id)
     } catch (error) {
-      pluginUploadError.value = '插件确认安装失败'
-      console.error('Plugin install failed', error)
+      pluginUploadError.value = getApiErrorMessage(error, '插件确认安装失败')
     } finally {
       pluginUploadInstalling.value = false
     }
@@ -243,6 +342,13 @@ export function usePluginsPage() {
     pluginUploadError.value = ''
   })
 
+  watch(
+    () => selectedPlugin.value ? `${selectedPlugin.value.id}:${selectedPlugin.value.status}` : '',
+    () => {
+      void loadPluginActions(selectedPlugin.value)
+    }
+  )
+
   return {
     keyword,
     activeStatus,
@@ -259,12 +365,19 @@ export function usePluginsPage() {
     filteredInstalled,
     loadError,
     actionMessage,
+    actionMessageType,
+    pluginActions,
+    pluginActionsLoading,
+    pluginActionsError,
+    runningPluginActionId,
+    hostOperation,
     statusText,
     isPluginToggleLocked,
     selectPlugin,
     togglePlugin,
-    requestPluginUpdate,
-    requestPluginDelete,
+    executePluginAction,
+    updatePlugin,
+    deletePlugin,
     openPluginConfig,
     submitPluginUpload,
     confirmUploadedPlugin

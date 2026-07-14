@@ -1,36 +1,66 @@
 import { apiRequest } from '../core/http'
 
-export type MarketSource = 'github.com' | 'shirobot hub'
 export type MarketSortKey = 'downloads' | 'publishedAt' | 'name'
+
+export interface PluginMarketAuthor {
+  name: string
+  url?: string
+}
+
+export interface PluginMarketReleaseAsset {
+  name: string
+  url: string
+  size: number
+  digest: string
+}
+
+export interface PluginMarketRelease {
+  version: string | null
+  prerelease: boolean
+  publishedAt: string | null
+  pageUrl: string | null
+  downloadCount: number | null
+  asset: PluginMarketReleaseAsset | null
+}
+
+export interface PluginMarketHealth {
+  status: string
+  message: string
+}
+
+export interface PluginMarketInstalledState {
+  version: string
+  enabled: boolean
+}
+
+export interface PluginMarketCompatibility {
+  shirobot: string
+  framework: string
+  platforms?: string[]
+}
 
 export interface MarketplacePlugin {
   id: string
+  kind: string
   name: string
-  author: string
-  version: string
-  category: string
-  source: MarketSource
-  downloads: string
-  downloadsValue: number
-  publishedAt: string
   description: string
+  category: string
+  authors: PluginMarketAuthor[]
+  repository: string
+  license: string
+  compatibility: PluginMarketCompatibility
+  deprecated: boolean
+  release: PluginMarketRelease
+  health: PluginMarketHealth
+  installed?: PluginMarketInstalledState
 }
 
-export interface PluginMarketQuery {
-  source?: MarketSource
-  keyword?: string
-  category?: string
-  sort?: MarketSortKey
+export interface PluginMarketResponse {
+  schemaVersion: number
+  generatedAt: string
+  plugins: MarketplacePlugin[]
 }
 
-export function getPluginMarketPlugins(query: PluginMarketQuery = {}) {
-  const params = new URLSearchParams()
-
-  if (query.source) params.set('source', query.source)
-  if (query.keyword) params.set('keyword', query.keyword)
-  if (query.category && query.category !== '全部') params.set('category', query.category)
-  if (query.sort) params.set('sort', query.sort)
-
-  const search = params.toString()
-  return apiRequest<MarketplacePlugin[]>(`/api/v1/plugin-market/plugins${search ? `?${search}` : ''}`)
+export function getPluginMarketPlugins() {
+  return apiRequest<PluginMarketResponse>('/api/v1/plugin-market/plugins')
 }

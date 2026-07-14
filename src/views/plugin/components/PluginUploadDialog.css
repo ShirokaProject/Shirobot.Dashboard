@@ -22,6 +22,7 @@
 
 :global(.plugin-upload-dialog),
 :deep(.plugin-upload-dialog) {
+  width: min(560px, calc(100vw - 32px)) !important;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-extra-large);
   background: color-mix(in srgb, var(--md-sys-color-primary-container) 18%, var(--md-sys-color-surface-container-lowest));
@@ -416,6 +417,19 @@
   font: var(--md-sys-typescale-body-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 599px) {
+  .upload-result-list {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-result-list dd {
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
 }
 
 .upload-plugin-description {

@@ -27,16 +27,24 @@ export interface PluginRoutesConfig {
 export interface PluginConfigResponse {
   plugin_id: string
   config: PluginConfigMap
-  schema: PluginConfigSchemaItem[]
+  schema?: PluginConfigSchemaItem[]
   routes: PluginRoutesConfig
 }
 
 export interface PluginConfigUpdateRequest {
-  config: PluginConfigMap
-  routes: {
+  config?: PluginConfigMap
+  routes?: {
     mode: string
     groups: number[]
   }
+}
+
+export interface PluginConfigUpdateResponse {
+  ok?: boolean
+  plugin_id?: string
+  config?: PluginConfigMap
+  schema?: PluginConfigSchemaItem[]
+  routes?: PluginRoutesConfig
 }
 
 export function getPluginConfig(pluginId: string) {
@@ -44,7 +52,7 @@ export function getPluginConfig(pluginId: string) {
 }
 
 export function updatePluginConfig(pluginId: string, config: PluginConfigUpdateRequest) {
-  return apiRequest<PluginConfigResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/config`, {
+  return apiRequest<PluginConfigUpdateResponse | null>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/config`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config)

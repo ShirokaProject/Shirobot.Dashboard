@@ -17,6 +17,15 @@ export interface PluginUploadConflictInfo {
 export interface PluginUploadParsedResponse {
   upload_id: string
   status: 'parsed'
+  source?: {
+    type: string
+    repository: string
+    release_name: string
+    release_version: string
+    release_url: string
+    asset_name: string
+    asset_type: string
+  }
   plugin: BackendPlugin
   package: PluginUploadPackageInfo
   conflict?: PluginUploadConflictInfo | null
@@ -43,9 +52,36 @@ export interface PluginUploadCancelResponse {
   success: boolean
 }
 
+export interface PluginStateChangeResponse {
+  ok: boolean
+  message: string
+}
+
+export interface PluginActionDefinition {
+  id: string
+  label: string
+  description: string | null
+  tone: string
+  requires_confirmation: boolean
+  confirmation_text: string | null
+}
+
+export interface PluginActionsResponse {
+  actions: PluginActionDefinition[]
+}
+
 export interface PluginActionResponse {
   ok: boolean
   message: string
+  refresh: boolean
+}
+
+export interface GithubPluginInstallRequest {
+  repository: string
+  includePrerelease: false
+  assetUrl: string
+  assetName: string
+  assetSha256: string
 }
 
 export interface BackendPlugin {
@@ -90,19 +126,29 @@ export async function getInstalledPlugins() {
 }
 
 export function setPluginEnabled(pluginId: string, enabled: boolean) {
-  return apiRequest<PluginActionResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/${enabled ? 'enable' : 'disable'}`, {
+  return apiRequest<PluginStateChangeResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/${enabled ? 'enable' : 'disable'}`, {
     method: 'POST'
   })
 }
 
-export function deletePlugin(pluginId: string) {
-  return apiRequest<PluginActionResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/delete`, {
+export function getPluginActions(pluginId: string) {
+  return apiRequest<PluginActionsResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/actions`)
+}
+
+export function runPluginAction(pluginId: string, actionId: string) {
+  return apiRequest<PluginActionResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/actions/${encodeURIComponent(actionId)}`, {
     method: 'POST'
   })
 }
 
-export function updatePlugin(pluginId: string) {
-  return apiRequest<PluginActionResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/update`, {
+export function updateInstalledPlugin(pluginId: string) {
+  return apiRequest<PluginStateChangeResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/update`, {
+    method: 'POST'
+  })
+}
+
+export function deleteInstalledPlugin(pluginId: string) {
+  return apiRequest<PluginStateChangeResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/delete`, {
     method: 'POST'
   })
 }
@@ -114,6 +160,25 @@ export function uploadPluginPackage(file: File) {
   return apiRequest<PluginUploadResponse>('/api/v1/plugins/upload', {
     method: 'POST',
     body: formData
+  })
+}
+
+export function prepareGithubPluginInstall(
+  repository: string,
+  asset: { url: string; name: string; digest: string }
+) {
+  const request: GithubPluginInstallRequest = {
+    repository,
+    includePrerelease: false,
+    assetUrl: asset.url,
+    assetName: asset.name,
+    assetSha256: asset.digest
+  }
+
+  return apiRequest<PluginUploadParsedResponse>('/api/v1/plugins/install/github', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request)
   })
 }
 

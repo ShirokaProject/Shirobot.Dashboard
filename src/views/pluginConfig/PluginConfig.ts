@@ -1,6 +1,6 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { getPluginConfig, updatePluginConfig, type PluginConfigMap, type PluginConfigResponse, type PluginConfigSchemaItem, type PluginRoutesConfig } from '../../api'
+import { getApiErrorMessage, getPluginConfig, updatePluginConfig, type PluginConfigMap, type PluginConfigResponse, type PluginConfigSchemaItem, type PluginConfigUpdateResponse, type PluginRoutesConfig } from '../../api'
 
 const sections = [
   { key: 'config', label: '配置', description: '插件运行参数' },
@@ -48,6 +48,7 @@ export function usePluginConfigPage() {
   const activeSection = ref<(typeof sections)[number]['key']>('config')
   const loadError = ref('')
   const saveMessage = ref('')
+  const saveMessageType = ref<'success' | 'error'>('success')
   const schema = ref<PluginConfigSchemaItem[]>([])
   const config = reactive<PluginConfigMap>({})
   const routes = reactive<PluginRoutesConfig>({ ...emptyRoutes })
@@ -59,9 +60,23 @@ export function usePluginConfigPage() {
   function assignResponse(response: PluginConfigResponse) {
     Object.keys(config).forEach(key => delete config[key])
     Object.assign(config, response.config)
-    schema.value = response.schema.length ? response.schema : createFallbackSchema(response.config)
+    schema.value = response.schema?.length ? response.schema : createFallbackSchema(response.config)
     Object.assign(routes, { ...emptyRoutes, ...response.routes })
     routeGroupsInput.value = formatGroupList(routes.groups)
+  }
+
+  function assignUpdateResponse(response: PluginConfigUpdateResponse) {
+    if (response.config) {
+      Object.keys(config).forEach(key => delete config[key])
+      Object.assign(config, response.config)
+    }
+    if (response.schema) {
+      schema.value = response.schema.length ? response.schema : createFallbackSchema(response.config ?? config)
+    }
+    if (response.routes) {
+      Object.assign(routes, { ...emptyRoutes, ...response.routes })
+      routeGroupsInput.value = formatGroupList(routes.groups)
+    }
   }
 
   async function loadPluginConfig() {
@@ -81,18 +96,25 @@ export function usePluginConfigPage() {
 
   async function savePluginConfig() {
     saveMessage.value = ''
+    const groups = parseGroupList(routeGroupsInput.value)
     try {
       const response = await updatePluginConfig(pluginId.value, {
         config: { ...config },
         routes: {
           mode: routes.mode,
-          groups: parseGroupList(routeGroupsInput.value)
+          groups
         }
       })
-      assignResponse(response)
+      if (response) {
+        assignUpdateResponse(response)
+      } else {
+        await loadPluginConfig()
+      }
+      saveMessageType.value = 'success'
       saveMessage.value = '插件配置已保存'
     } catch (error) {
-      saveMessage.value = '插件配置保存失败'
+      saveMessageType.value = 'error'
+      saveMessage.value = getApiErrorMessage(error, '插件配置保存失败')
       console.error('Plugin config save failed', error)
     }
   }
@@ -111,6 +133,7 @@ export function usePluginConfigPage() {
     routeGroupsInput,
     loadError,
     saveMessage,
+    saveMessageType,
     savePluginConfig
   }
 }

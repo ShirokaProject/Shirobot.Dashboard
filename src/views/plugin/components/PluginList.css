@@ -160,7 +160,7 @@
 
 .plugin-actions {
   display: grid;
-  grid-template-columns: 52px 48px 48px 56px;
+  grid-template-columns: 52px 48px 48px;
   align-items: center;
   justify-items: center;
   gap: var(--md-space-2);
@@ -189,20 +189,6 @@
 
 .list-action-button.text:hover {
   background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
-}
-
-.list-action-button.tonal {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-
-.list-action-button.tonal:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 86%, var(--md-sys-color-primary));
-}
-
-.action-placeholder {
-  width: 56px;
-  height: 32px;
 }
 
 @media (max-width: 1199px) {

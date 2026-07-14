@@ -17,9 +17,10 @@
       v-if="actionMessage"
       class="page-alert"
       :title="actionMessage"
-      type="success"
+      :type="actionMessageType"
       show-icon
-      :closable="false"
+      closable
+      @close="actionMessage = ''"
     />
 
     <section class="plugin-layout">
@@ -31,7 +32,6 @@
           :is-toggle-locked="isPluginToggleLocked"
           @select="selectPlugin"
           @toggle="togglePlugin"
-          @update="requestPluginUpdate"
         />
       </main>
 
@@ -39,10 +39,16 @@
         :plugin="selectedPlugin"
         :status-text="statusText"
         :is-toggle-locked="isPluginToggleLocked"
+        :actions="pluginActions"
+        :actions-loading="pluginActionsLoading"
+        :actions-error="pluginActionsError"
+        :running-action-id="runningPluginActionId"
+        :host-operation="hostOperation"
         @toggle="togglePlugin"
         @open-config="openPluginConfig"
-        @update="requestPluginUpdate"
-        @delete="requestPluginDelete"
+        @action="executePluginAction"
+        @update="updatePlugin"
+        @delete="deletePlugin"
       />
     </section>
 
@@ -85,12 +91,19 @@ const {
   filteredInstalled,
   loadError,
   actionMessage,
+  actionMessageType,
+  pluginActions,
+  pluginActionsLoading,
+  pluginActionsError,
+  runningPluginActionId,
+  hostOperation,
   statusText,
   isPluginToggleLocked,
   selectPlugin,
   togglePlugin,
-  requestPluginUpdate,
-  requestPluginDelete,
+  executePluginAction,
+  updatePlugin,
+  deletePlugin,
   openPluginConfig,
   submitPluginUpload,
   confirmUploadedPlugin

@@ -15,6 +15,19 @@ export class ApiError extends Error {
   }
 }
 
+export function getApiErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    if (typeof error.body === 'string' && error.body.trim()) return error.body
+    if (error.body && typeof error.body === 'object' && 'message' in error.body) {
+      const message = (error.body as { message?: unknown }).message
+      if (typeof message === 'string' && message.trim()) return message
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) return error.message
+  return fallback
+}
+
 function getActiveApiBaseUrl() {
   const session = getDashboardSession()
   return session?.apiBaseUrl ?? API_BASE_URL

@@ -1,16 +1,19 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="上传插件"
+    :title="title"
     width="560px"
     class="plugin-upload-dialog"
     modal-class="plugin-upload-overlay"
     append-to-body
     align-center
-    @update:model-value="emit('update:visible', $event)"
+    :close-on-click-modal="!(installing || parsing)"
+    :close-on-press-escape="!(installing || parsing)"
+    :show-close="!(installing || parsing)"
+    @update:model-value="handleVisibleChange"
   >
     <div class="upload-dialog-content">
-      <div class="upload-hero explorer-hero" aria-hidden="true">
+      <div v-if="showHero" class="upload-hero explorer-hero" aria-hidden="true">
         <div class="explorer-window">
           <div class="explorer-titlebar"><span></span><span></span><span></span></div>
           <div class="explorer-body">
@@ -77,6 +80,10 @@
             <dt>文件</dt>
             <dd>{{ uploadResult.package.file_name }} · {{ uploadResult.package.type }} · {{ formatSize(uploadResult.package.size) }}</dd>
           </div>
+          <div v-if="uploadResult.source?.release_version">
+            <dt>Release</dt>
+            <dd>{{ uploadResult.source.release_version }} · {{ uploadResult.source.asset_name || uploadResult.package.file_name }}</dd>
+          </div>
         </dl>
 
         <p class="upload-plugin-description">{{ uploadResult.plugin.description || '暂无插件描述。' }}</p>
@@ -102,7 +109,7 @@
 
     <template #footer>
       <div class="upload-dialog-footer">
-        <button type="button" class="md3-dialog-action text" @click="emit('update:visible', false)">
+        <button type="button" class="md3-dialog-action text" :disabled="installing || parsing" @click="emit('update:visible', false)">
           取消
         </button>
         <button v-if="!uploadResult" type="button" class="md3-dialog-action tonal" :disabled="!selectedFile || parsing" @click="emit('submit')">
@@ -120,16 +127,22 @@
 import type { UploadFile } from 'element-plus'
 import type { PluginUploadParsedResponse } from '../../../api'
 
-defineProps<{
+const props = withDefaults(defineProps<{
   visible: boolean
-  selectedFile: File | null
+  title?: string
+  showHero?: boolean
+  selectedFile?: File | null
   uploadResult: PluginUploadParsedResponse | null
   uploadError: string
   parsing: boolean
   installing: boolean
   replace: boolean
   enable: boolean
-}>()
+}>(), {
+  title: '上传插件',
+  showHero: true,
+  selectedFile: null
+})
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
@@ -144,6 +157,11 @@ function formatSize(size: number) {
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
+
+function handleVisibleChange(value: boolean) {
+  if (!value && (props.installing || props.parsing)) return
+  emit('update:visible', value)
 }
 
 function handlePluginFileChange(file: UploadFile) {

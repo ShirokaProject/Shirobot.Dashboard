@@ -2,11 +2,10 @@ import type { AdapterInfo } from './adapters/adapters'
 import type { AppConfig } from './config/config'
 import type { LogSourceInfo, RuntimeLogsResponse } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
-import type { MarketplacePlugin } from './pluginMarket/pluginMarket'
+import type { PluginMarketResponse } from './pluginMarket/pluginMarket'
 import type { PluginConfigResponse } from './plugins/config'
-import type { PluginUploadResponse } from './plugins/plugins'
+import type { BackendPlugin, PluginActionDefinition, PluginUploadParsedResponse, PluginUploadResponse } from './plugins/plugins'
 import type { RuntimeLog } from '../features/logs/types'
-import type { Plugin } from '../features/plugins/types'
 
 const demoOverview: OverviewResponse = {
   bot_version: 'v0.1.0-demo',
@@ -43,7 +42,7 @@ const demoOverview: OverviewResponse = {
   ]
 }
 
-const demoPlugins: Plugin[] = [
+const demoPlugins: BackendPlugin[] = [
   {
     id: 'echo',
     name: 'Echo',
@@ -219,44 +218,93 @@ const demoLogSources: LogSourceInfo[] = [
   { source: 'AI Chat Plugin', description: 'AI Chat 插件日志', plugin_name: 'AI Chat Plugin' }
 ]
 
-const demoMarketplacePlugins: MarketplacePlugin[] = [
-  {
-    id: 'weather',
-    name: 'Weather',
-    author: 'Mika',
-    version: '2.3.0',
-    category: '工具',
-    source: 'github.com',
-    downloads: '18k',
-    downloadsValue: 18000,
-    publishedAt: '2026-05-28',
-    description: '演示：天气查询、空气质量、灾害预警与城市订阅。'
-  },
-  {
-    id: 'rss',
-    name: 'RSS Hub',
-    author: 'Community',
-    version: '1.4.2',
-    category: '订阅',
-    source: 'github.com',
-    downloads: '9.6k',
-    downloadsValue: 9600,
-    publishedAt: '2026-04-18',
-    description: '演示：订阅 RSS 源并自动推送到群聊或私聊。'
-  },
-  {
-    id: 'ai-chat',
-    name: 'AI Chat',
-    author: 'Shiro Labs',
-    version: '0.6.0',
-    category: 'AI',
-    source: 'shirobot hub',
-    downloads: '31k',
-    downloadsValue: 31000,
-    publishedAt: '2026-06-10',
-    description: '演示：接入大模型，实现群聊问答、总结和角色对话。'
-  }
-]
+const demoMarketplace: PluginMarketResponse = {
+  schemaVersion: 1,
+  generatedAt: '2026-07-14T08:00:00Z',
+  plugins: [
+    {
+      id: 'weather',
+      kind: 'plugin',
+      name: 'Weather',
+      description: '演示：天气查询、空气质量、灾害预警与城市订阅。',
+      category: '工具',
+      authors: [{ name: 'Mika', url: 'https://github.com/mika' }],
+      repository: 'ShirokaProject/ShiroBot.Plugin.Weather',
+      license: 'MIT',
+      compatibility: { shirobot: '>=0.1.0', framework: 'net10.0' },
+      deprecated: false,
+      release: {
+        version: '2.3.0',
+        prerelease: false,
+        publishedAt: '2026-05-28T10:00:00Z',
+        pageUrl: 'https://github.com/ShirokaProject/ShiroBot.Plugin.Weather/releases/tag/v2.3.0',
+        downloadCount: 18000,
+        asset: {
+          name: 'ShiroBot.Plugin.Weather.zip',
+          url: 'https://github.com/ShirokaProject/ShiroBot.Plugin.Weather/releases/download/v2.3.0/ShiroBot.Plugin.Weather.zip',
+          size: 245760,
+          digest: `sha256:${'1'.repeat(64)}`
+        }
+      },
+      health: { status: 'available', message: 'Release 与插件清单校验通过。' }
+    },
+    {
+      id: 'rss',
+      kind: 'plugin',
+      name: 'RSS Hub',
+      description: '演示：订阅 RSS 源并自动推送到群聊或私聊。',
+      category: '订阅',
+      authors: [{ name: 'Community', url: 'https://github.com/ShirokaProject' }],
+      repository: 'ShirokaProject/ShiroBot.Plugin.Rss',
+      license: 'GPL-3.0',
+      compatibility: { shirobot: '>=0.1.0', framework: 'net10.0' },
+      deprecated: false,
+      release: {
+        version: '1.4.2',
+        prerelease: false,
+        publishedAt: '2026-04-18T08:30:00Z',
+        pageUrl: 'https://github.com/ShirokaProject/ShiroBot.Plugin.Rss/releases/tag/v1.4.2',
+        downloadCount: 9600,
+        asset: {
+          name: 'ShiroBot.Plugin.Rss.dll',
+          url: 'https://github.com/ShirokaProject/ShiroBot.Plugin.Rss/releases/download/v1.4.2/ShiroBot.Plugin.Rss.dll',
+          size: 132096,
+          digest: `sha256:${'2'.repeat(64)}`
+        }
+      },
+      health: { status: 'available', message: 'Release 与插件清单校验通过。' }
+    },
+    {
+      id: 'ai-chat',
+      kind: 'plugin',
+      name: 'AI Chat',
+      description: '演示：接入大模型，实现群聊问答、总结和角色对话。',
+      category: 'AI',
+      authors: [{ name: 'Shiro Labs', url: 'https://github.com/ShirokaProject' }],
+      repository: 'ShirokaProject/ShiroBot.Plugin.AIChat',
+      license: 'Apache-2.0',
+      compatibility: { shirobot: '>=0.1.0', framework: 'net10.0' },
+      deprecated: false,
+      release: {
+        version: '0.7.0',
+        prerelease: false,
+        publishedAt: '2026-06-10T14:20:00Z',
+        pageUrl: 'https://github.com/ShirokaProject/ShiroBot.Plugin.AIChat/releases/tag/v0.7.0',
+        downloadCount: 31000,
+        asset: {
+          name: 'ShiroBot.Plugin.AIChat.zip',
+          url: 'https://github.com/ShirokaProject/ShiroBot.Plugin.AIChat/releases/download/v0.7.0/ShiroBot.Plugin.AIChat.zip',
+          size: 524288,
+          digest: `sha256:${'3'.repeat(64)}`
+        }
+      },
+      health: { status: 'available', message: 'Release、资源和兼容性声明均有效。' },
+      installed: { version: '0.6.0', enabled: false }
+    }
+  ]
+}
+
+const demoPendingGithubInstalls = new Map<string, PluginUploadParsedResponse>()
 
 function clone<T>(value: T): T {
   return structuredClone(value)
@@ -264,6 +312,40 @@ function clone<T>(value: T): T {
 
 function methodOf(init?: RequestInit) {
   return (init?.method ?? 'GET').toUpperCase()
+}
+
+function createDemoPluginActions(plugin: BackendPlugin): PluginActionDefinition[] {
+  const actions: PluginActionDefinition[] = [
+    {
+      id: 'reload',
+      label: '重新加载',
+      description: '卸载并重新加载当前插件。',
+      tone: 'neutral',
+      requires_confirmation: false,
+      confirmation_text: ''
+    }
+  ]
+
+  if (plugin.hasUpdate) {
+    actions.unshift({
+      id: 'update',
+      label: '更新插件',
+      description: `更新到 v${plugin.latestVersion ?? plugin.version}。`,
+      tone: 'primary',
+      requires_confirmation: true,
+      confirmation_text: `确定将 ${plugin.name} 更新到 v${plugin.latestVersion ?? plugin.version} 吗？`
+    })
+  }
+
+  actions.push({
+    id: 'uninstall',
+    label: '卸载插件',
+    description: '移除插件文件和当前加载实例。',
+    tone: 'danger',
+    requires_confirmation: true,
+    confirmation_text: `确定卸载 ${plugin.name} 吗？此操作无法撤销。`
+  })
+  return actions
 }
 
 export async function getDemoApiResponse<T>(path: string, init?: RequestInit): Promise<T> {
@@ -274,7 +356,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
   if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
 
-  const pluginActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(enable|disable|delete|update)$/)
+  const pluginActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(enable|disable)$/)
   if (method === 'POST' && pluginActionMatch) {
     const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginActionMatch[1] ?? ''))
     if (!plugin) throw new Error('Demo plugin not found')
@@ -282,13 +364,56 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
     if (action === 'enable') plugin.status = 'enabled'
     if (action === 'disable') plugin.status = 'disabled'
-    if (action === 'delete') demoPlugins.splice(demoPlugins.indexOf(plugin), 1)
-    if (action === 'update' && plugin.latestVersion) {
-      plugin.version = plugin.latestVersion
-      plugin.hasUpdate = false
-    }
+    plugin.enable = action === 'enable'
+    const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
+    if (marketPlugin?.installed) marketPlugin.installed.enabled = action === 'enable'
 
     return { ok: true, message: `Plugin ${plugin.id} ${action}d.` } as T
+  }
+
+  const pluginHostActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(update|delete)$/)
+  if (method === 'POST' && pluginHostActionMatch) {
+    const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginHostActionMatch[1] ?? ''))
+    if (!plugin) throw new Error('Demo plugin not found')
+    const action = pluginHostActionMatch[2]
+    if (action === 'update') {
+      plugin.version = plugin.latestVersion ?? plugin.version
+      plugin.hasUpdate = false
+      return { ok: true, message: `${plugin.name} 已更新。` } as T
+    }
+
+    demoPlugins.splice(demoPlugins.indexOf(plugin), 1)
+    const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
+    if (marketPlugin) delete marketPlugin.installed
+    return { ok: true, message: `${plugin.name} 已卸载。` } as T
+  }
+
+  const pluginActionsMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/actions$/)
+  if (method === 'GET' && pluginActionsMatch) {
+    const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginActionsMatch[1] ?? ''))
+    if (!plugin) throw new Error('Demo plugin not found')
+    return { actions: createDemoPluginActions(plugin) } as T
+  }
+
+  const runPluginActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/actions\/([^/]+)$/)
+  if (method === 'POST' && runPluginActionMatch) {
+    const plugin = demoPlugins.find(item => item.id === decodeURIComponent(runPluginActionMatch[1] ?? ''))
+    if (!plugin) throw new Error('Demo plugin not found')
+    const actionId = decodeURIComponent(runPluginActionMatch[2] ?? '')
+
+    if (actionId === 'update' && plugin.latestVersion) {
+      plugin.version = plugin.latestVersion
+      plugin.hasUpdate = false
+      const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
+      if (marketPlugin?.installed) marketPlugin.installed.version = plugin.version
+    }
+    if (actionId === 'uninstall') {
+      demoPlugins.splice(demoPlugins.indexOf(plugin), 1)
+      const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
+      if (marketPlugin) delete marketPlugin.installed
+    }
+
+    return { ok: true, message: `${plugin.name}：${actionId} 已完成。`, refresh: true } as T
   }
 
   if (method === 'POST' && pathname === '/api/v1/plugins/upload') {
@@ -319,11 +444,85 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     } satisfies PluginUploadResponse) as T
   }
 
-  if (method === 'POST' && /^\/api\/v1\/plugins\/upload\/[^/]+\/confirm$/.test(pathname)) {
+  if (method === 'POST' && pathname === '/api/v1/plugins/install/github') {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { repository?: string }
+    const marketPlugin = demoMarketplace.plugins.find(plugin => plugin.repository === payload.repository)
+    if (!marketPlugin) throw new Error('演示目录中未找到该 GitHub 仓库。')
+    if (!marketPlugin.release.version || !marketPlugin.release.pageUrl || !marketPlugin.release.asset) {
+      throw new Error('演示目录项没有可安装资源。')
+    }
+
+    const installed = demoPlugins.find(plugin => plugin.id === marketPlugin.id)
+    const uploadId = `demo-github-${marketPlugin.id}`
+    const preview: PluginUploadParsedResponse = {
+      upload_id: uploadId,
+      status: 'parsed',
+      source: {
+        type: 'github',
+        repository: marketPlugin.repository,
+        release_name: `v${marketPlugin.release.version}`,
+        release_version: marketPlugin.release.version,
+        release_url: marketPlugin.release.pageUrl,
+        asset_name: marketPlugin.release.asset.name,
+        asset_type: marketPlugin.release.asset.name.endsWith('.zip') ? 'zip' : 'dll'
+      },
+      plugin: {
+        id: marketPlugin.id,
+        name: marketPlugin.name,
+        version: marketPlugin.release.version,
+        author: marketPlugin.authors.map(author => author.name).join(', '),
+        repo: marketPlugin.repository,
+        description: marketPlugin.description,
+        category: marketPlugin.category
+      },
+      package: {
+        file_name: marketPlugin.release.asset.name,
+        type: marketPlugin.release.asset.name.endsWith('.zip') ? 'zip' : 'dll',
+        size: marketPlugin.release.asset.size
+      },
+      conflict: {
+        exists: Boolean(installed),
+        installed_version: installed?.version,
+        uploaded_version: marketPlugin.release.version,
+        action: installed ? 'replace' : 'install'
+      }
+    }
+    demoPendingGithubInstalls.set(uploadId, preview)
+    return clone(preview) as T
+  }
+
+  const confirmUploadMatch = pathname.match(/^\/api\/v1\/plugins\/upload\/([^/]+)\/confirm$/)
+  if (method === 'POST' && confirmUploadMatch) {
+    const uploadId = decodeURIComponent(confirmUploadMatch[1] ?? '')
+    const pendingInstall = demoPendingGithubInstalls.get(uploadId)
+    if (pendingInstall) {
+      const payload = JSON.parse(String(init?.body ?? '{}')) as { enable?: boolean }
+      const existing = demoPlugins.find(plugin => plugin.id === pendingInstall.plugin.id)
+      const installedPlugin: BackendPlugin = {
+        ...pendingInstall.plugin,
+        enable: payload.enable ?? true,
+        status: payload.enable === false ? 'disabled' : 'enabled',
+        latestVersion: pendingInstall.plugin.version,
+        hasUpdate: false,
+        permissions: [],
+        history: [{ version: pendingInstall.plugin.version, date: '2026-07-14' }]
+      }
+      if (existing) Object.assign(existing, installedPlugin)
+      else demoPlugins.push(installedPlugin)
+
+      const marketPlugin = demoMarketplace.plugins.find(plugin => plugin.id === pendingInstall.plugin.id)
+      if (marketPlugin) {
+        marketPlugin.installed = { version: pendingInstall.plugin.version, enabled: installedPlugin.status === 'enabled' }
+      }
+      demoPendingGithubInstalls.delete(uploadId)
+      return { success: true, plugin: { id: pendingInstall.plugin.id, enable: installedPlugin.status === 'enabled' } } as T
+    }
     return { success: true, plugin: { id: 'GithubView', enable: true } } as T
   }
 
-  if (method === 'DELETE' && /^\/api\/v1\/plugins\/upload\/[^/]+$/.test(pathname)) {
+  const cancelUploadMatch = pathname.match(/^\/api\/v1\/plugins\/upload\/([^/]+)$/)
+  if (method === 'DELETE' && cancelUploadMatch) {
+    demoPendingGithubInstalls.delete(decodeURIComponent(cancelUploadMatch[1] ?? ''))
     return { success: true } as T
   }
 
@@ -341,7 +540,12 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
         effective_groups: payload.routes.mode === 'default' ? demoPluginConfig.routes.default_groups : payload.routes.groups ?? demoPluginConfig.routes.effective_groups
       }
     }
-    return clone(demoPluginConfig) as T
+    return clone({
+      ok: true,
+      plugin_id: demoPluginConfig.plugin_id,
+      config: demoPluginConfig.config,
+      routes: demoPluginConfig.routes
+    }) as T
   }
 
   if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
@@ -360,7 +564,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && pathname === '/api/v1/logs/sources') return clone(demoLogSources) as T
 
-  if (method === 'GET' && pathname === '/api/v1/plugin-market/plugins') return clone(demoMarketplacePlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/plugin-market/plugins') return clone(demoMarketplace) as T
 
   throw new Error(`Demo endpoint not implemented: ${method} ${pathname}`)
 }

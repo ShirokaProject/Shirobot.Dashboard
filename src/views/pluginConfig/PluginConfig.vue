@@ -13,7 +13,7 @@
       v-if="saveMessage"
       class="page-alert"
       :title="saveMessage"
-      :type="saveMessage.includes('失败') ? 'error' : 'success'"
+      :type="saveMessageType"
       show-icon
       :closable="false"
     />
@@ -159,6 +159,7 @@ const {
   routeGroupsInput,
   loadError,
   saveMessage,
+  saveMessageType,
   savePluginConfig
 } = usePluginConfigPage()
 </script>

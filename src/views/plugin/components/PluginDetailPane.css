@@ -107,7 +107,7 @@
 
 .detail-side-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--md-space-2);
   padding: var(--md-space-3) var(--md-space-4) var(--md-space-4);
   background: var(--md-sys-color-surface-container-low);
@@ -137,6 +137,98 @@
 
 .detail-action-button.tonal:hover {
   background: color-mix(in srgb, var(--md-sys-color-primary-container) 88%, var(--md-sys-color-primary));
+}
+
+.plugin-command-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-2);
+}
+
+.plugin-command-button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-space-3);
+  padding: var(--md-space-2) var(--md-space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  text-align: left;
+}
+
+.plugin-command-button > span:first-child {
+  min-width: 0;
+}
+
+.plugin-command-button strong,
+.plugin-command-button small {
+  display: block;
+}
+
+.plugin-command-button strong {
+  font: var(--md-sys-typescale-label-large);
+}
+
+.plugin-command-button small,
+.plugin-command-button > span:last-child,
+.action-loading,
+.action-empty {
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.plugin-command-button.primary {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.plugin-command-button.primary small,
+.plugin-command-button.primary > span:last-child {
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.76;
+}
+
+.plugin-command-button.warning {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.plugin-command-button.warning small,
+.plugin-command-button.warning > span:last-child {
+  color: var(--md-sys-color-on-tertiary-container);
+  opacity: 0.76;
+}
+
+.plugin-command-button.danger {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.plugin-command-button.danger small,
+.plugin-command-button.danger > span:last-child {
+  color: var(--md-sys-color-on-error-container);
+  opacity: 0.76;
+}
+
+.plugin-command-button:disabled {
+  opacity: 0.62;
+  cursor: default;
+}
+
+.action-error {
+  padding: var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.action-empty {
+  margin: 0;
 }
 
 .detail-action-button.danger {
