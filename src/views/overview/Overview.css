@@ -84,8 +84,11 @@
 .version-item {
   min-width: 0;
   min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: var(--md-space-5);
-  border-radius: var(--md-sys-shape-corner-medium);
+  border-radius: var(--md-sys-shape-corner-large);
   background: var(--md-sys-color-surface-container-low);
 }
 

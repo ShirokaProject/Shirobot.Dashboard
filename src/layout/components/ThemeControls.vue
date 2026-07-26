@@ -307,34 +307,26 @@ onBeforeUnmount(() => {
   height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 46%, transparent);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-full);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 88%, white 12%);
+  background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  box-shadow:
-    0 8px 20px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 62%, transparent);
   transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .top-action-icon:hover,
 .top-action-icon:focus-visible {
   border-color: color-mix(in srgb, currentColor 24%, var(--md-sys-color-outline-variant));
-  box-shadow:
-    0 14px 32px color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
-  transform: translateY(-1px);
-  outline: 0;
+  box-shadow: var(--md-sys-elevation-level1);
 }
 
 .top-action-icon:active {
-  transform: translateY(0) scale(0.98);
+  box-shadow: none;
 }
 
 .top-action-icon svg {
@@ -349,23 +341,9 @@ onBeforeUnmount(() => {
 
 .font-action,
 .appearance-action {
-  color: var(--md-sys-color-primary);
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 72%, var(--md-sys-color-surface-container-lowest));
-}
-
-.appearance-action.rose {
-  color: #94425f;
-  background: color-mix(in srgb, #ffd9e5 88%, white 12%);
-}
-
-.appearance-action.lavender {
-  color: #6750a4;
-  background: color-mix(in srgb, #eaddff 88%, white 12%);
-}
-
-.appearance-action.blue {
-  color: #365f91;
-  background: color-mix(in srgb, #d3e4ff 88%, white 12%);
+  border-color: transparent;
+  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary-container);
 }
 
 .font-action-label {
@@ -382,13 +360,10 @@ onBeforeUnmount(() => {
   align-items: stretch;
   gap: var(--md-space-3);
   padding: var(--md-space-3);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 54%, transparent);
-  border-radius: var(--md-sys-shape-corner-large);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 94%, white 6%);
-  box-shadow:
-    0 18px 48px color-mix(in srgb, var(--md-sys-color-shadow) 18%, transparent),
-    0 8px 18px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container);
+  box-shadow: var(--md-sys-elevation-level2);
   transform-origin: top right;
 }
 

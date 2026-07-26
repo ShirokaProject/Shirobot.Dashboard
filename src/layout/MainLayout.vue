@@ -91,7 +91,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 .md3-bottom-bar {
   display: none;
   height: 80px;
-  background: var(--md-sys-color-surface-container-lowest);
+  background: var(--md-sys-color-surface-container);
   align-items: center;
   justify-content: space-around;
   padding: 0 var(--md-space-2);
@@ -120,8 +120,8 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 }
 
 .bottom-item.active .bottom-indicator {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
 .bottom-item.active {

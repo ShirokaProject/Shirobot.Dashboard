@@ -308,8 +308,8 @@
 }
 
 .mode-option.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
 .login-form {
@@ -438,7 +438,7 @@
 
 .demo-card strong {
   display: block;
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-secondary-container);
   font: var(--md-sys-typescale-title-small);
 }
 
@@ -463,15 +463,21 @@
 }
 
 
+/* Login CTA = highest emphasis: M3 filled button */
 .md3-button.filled-tonal {
   border: 0;
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 .md3-button.filled-tonal:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 72%, var(--md-sys-color-surface-container-high));
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 8%, var(--md-sys-color-primary));
   box-shadow: var(--md-sys-elevation-level1);
+}
+
+.md3-button.filled-tonal:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 10%, var(--md-sys-color-primary));
+  box-shadow: none;
 }
 
 @media (max-width: 899px) {

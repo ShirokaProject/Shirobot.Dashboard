@@ -122,13 +122,10 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 2px;
   padding: var(--md-space-2);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 54%, transparent);
-  border-radius: var(--md-sys-shape-corner-large);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 94%, white 6%);
-  box-shadow:
-    0 18px 48px color-mix(in srgb, var(--md-sys-color-shadow) 18%, transparent),
-    0 8px 18px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container);
+  box-shadow: var(--md-sys-elevation-level2);
   transform-origin: top right;
 }
 
@@ -167,8 +164,8 @@ onBeforeUnmount(() => {
 }
 
 .session-menu button:hover {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  color: var(--md-sys-color-on-surface);
 }
 
 .session-menu button.danger {

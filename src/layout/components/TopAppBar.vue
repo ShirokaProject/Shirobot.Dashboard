@@ -34,8 +34,6 @@ defineProps<{
   background: color-mix(in srgb, var(--md-sys-color-surface) 46%, transparent);
   backdrop-filter: blur(24px) saturate(1.35);
   -webkit-backdrop-filter: blur(24px) saturate(1.35);
-  box-shadow:
-    0 12px 32px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
 }
 
 .title-block {

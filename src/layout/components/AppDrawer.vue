@@ -145,7 +145,7 @@ function triggerAvatarSpin() {
   padding: var(--md-space-4) var(--md-space-3);
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--md-sys-color-surface) 78%, var(--md-sys-color-surface-container-low));
+  background: var(--md-sys-color-surface-container-low);
   transition:
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
     flex-basis var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -373,24 +373,24 @@ function triggerAvatarSpin() {
   color: var(--md-sys-color-primary);
 }
 
+/* M3 Extended FAB: 56dp height, 16dp corner, primary-container */
 .drawer-primary-action {
-  width: 172px;
-  height: 60px;
+  height: 56px;
   display: inline-flex;
   align-self: flex-start;
   box-sizing: border-box;
   flex: 0 0 auto;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: var(--md-space-3);
-  margin: 0 0 var(--md-space-4);
-  padding: 0 0 0 40px;
+  margin: 0 0 var(--md-space-4) var(--md-space-2);
+  padding: 0 var(--md-space-5);
   border: 0;
-  border-radius: 20px;
+  border-radius: var(--md-sys-shape-corner-large);
   background: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
   cursor: pointer;
-  font: var(--md-sys-typescale-title-small);
+  font: var(--md-sys-typescale-label-large);
   box-shadow: var(--md-sys-elevation-level1);
   transition:
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -414,7 +414,7 @@ function triggerAvatarSpin() {
   height: 56px;
   margin-left: 8px;
   gap: 0;
-  padding-left: 16px;
+  padding: 0;
   border-radius: var(--md-sys-shape-corner-large);
 }
 
@@ -442,10 +442,10 @@ function triggerAvatarSpin() {
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 0;
+  gap: var(--md-space-2);
   align-self: stretch;
   overflow-y: auto;
-  margin-left: calc(-1 * var(--md-space-3));
+  margin-left: 0;
   padding: var(--md-space-1) 0;
   transition:
     margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -466,17 +466,17 @@ function triggerAvatarSpin() {
   cursor: pointer;
 }
 
+/* M3 navigation drawer item: 56dp height, full pill indicator */
 .drawer-item {
   width: calc(100% - 8px);
-  height: 40px;
-  margin-left: 0;
-  border-radius: 0 var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) 0;
+  height: 56px;
+  margin-left: var(--md-space-2);
+  border-radius: var(--md-sys-shape-corner-full);
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) auto;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: center;
-  padding: 0 var(--md-space-3) 0 0;
-  font: var(--md-sys-typescale-title-small);
-  letter-spacing: 0.01em;
+  padding: 0 var(--md-space-6) 0 var(--md-space-2);
+  font: var(--md-sys-typescale-label-large);
   text-align: left;
   transition:
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
@@ -537,22 +537,27 @@ function triggerAvatarSpin() {
 }
 
 .drawer-item:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 7%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
 }
 
+/* M3 active indicator: secondary-container */
 .drawer-item.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
-.md3-drawer.collapsed .drawer-item:hover,
+.md3-drawer.collapsed .drawer-item:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 .md3-drawer.collapsed .drawer-item.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
 .nav-icon {
-  width: 56px;
+  width: 48px;
   height: 40px;
   display: grid;
   place-items: center;
@@ -601,8 +606,8 @@ function triggerAvatarSpin() {
 }
 
 .rail-item.active .rail-indicator {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
 .rail-item.active {

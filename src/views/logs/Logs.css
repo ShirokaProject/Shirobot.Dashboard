@@ -223,11 +223,8 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 46%, transparent);
   border-radius: var(--md-sys-shape-corner-extra-large);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 82%, var(--md-sys-color-primary-container));
+  background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface);
-  box-shadow:
-    0 18px 46px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 58%, transparent);
 }
 
 .terminal-tabs {
@@ -263,9 +260,7 @@
 
 .terminal-tab strong {
   overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 600;
+  font: var(--md-sys-typescale-title-small);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -306,12 +301,12 @@
   display: block;
   min-height: 28px;
   padding: 2px 8px;
-  border-radius: var(--md-sys-shape-corner-small);
+  border-radius: var(--md-sys-shape-corner-extra-small);
   cursor: pointer;
   color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium);
   font-family: var(--font-mono);
-  font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .terminal-line:hover {
@@ -339,15 +334,15 @@
 }
 
 .terminal-line.LOG code {
-  color: #d7d7d7;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .terminal-line.INFO code {
-  color: #5ee7ff;
+  color: color-mix(in srgb, var(--md-sys-color-primary) 80%, var(--md-sys-color-on-surface));
 }
 
 .terminal-line.WARN code {
-  color: #fff176;
+  color: color-mix(in srgb, var(--md-sys-color-tertiary) 85%, var(--md-sys-color-on-surface));
 }
 
 .terminal-line.ERROR code {
@@ -355,13 +350,13 @@
 }
 
 .terminal-line.SUCCESS code {
-  color: #21f341;
+  color: color-mix(in srgb, var(--md-sys-color-secondary) 85%, var(--md-sys-color-on-surface));
 }
 
 .terminal-empty {
   color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
   font-family: var(--font-mono);
-  font-size: 15px;
 }
 
 @media (max-width: 839px) {

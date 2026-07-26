@@ -1,11 +1,12 @@
 import { createApp } from 'vue'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+// style.css must come AFTER element-plus css so the M3 token bridge wins
 import './style.css'
 import App from './App.vue'
 import router from './router'
 import { hasDashboardSession } from './auth/session'
 import { preloadDashboardPages } from './router/pageLoaders'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
 
 const app = createApp(App)
 app.use(router)
