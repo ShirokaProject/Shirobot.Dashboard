@@ -159,6 +159,8 @@ export function saveDashboardSession(session: Omit<DashboardSession, 'profileId'
 
   if (session.mode === 'api' && session.token) {
     sessionStorage.setItem(tokenKey(profileId), session.token)
+  } else {
+    sessionStorage.removeItem(tokenKey(profileId))
   }
 }
 

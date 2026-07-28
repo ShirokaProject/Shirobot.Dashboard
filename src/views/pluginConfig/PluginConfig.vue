@@ -1,5 +1,5 @@
 <template>
-  <div class="plugin-config-page">
+  <div class="plugin-config-page" :class="{ embedded }">
     <el-alert
       v-if="loadError"
       class="page-alert"
@@ -9,14 +9,17 @@
       :closable="false"
     />
 
-    <el-alert
-      v-if="saveMessage"
-      class="page-alert"
-      :title="saveMessage"
-      :type="saveMessageType"
-      show-icon
-      :closable="false"
-    />
+    <div aria-live="polite">
+      <el-alert
+        v-if="saveMessage"
+        class="page-alert"
+        :title="saveMessage"
+        :type="saveMessageType"
+        show-icon
+        :closable="saveMessageType === 'error'"
+        @close="saveMessage = ''"
+      />
+    </div>
 
     <section class="config-header-card">
       <div class="plugin-mark" aria-hidden="true">
@@ -29,20 +32,25 @@
         <h2>{{ pluginName }}</h2>
         <p>配置插件运行参数和群组路由规则。</p>
       </div>
-      <div class="header-actions">
+      <div v-if="!embedded" class="header-actions m3-form-actions">
         <el-button round @click="$router.push('/plugins')">返回插件</el-button>
-        <el-button round type="primary" @click="savePluginConfig">保存配置</el-button>
+        <el-button round type="primary" :loading="saving" @click="savePluginConfig">保存配置</el-button>
       </div>
+      <button v-else type="button" class="embedded-close-button" aria-label="关闭配置面板" @click="emit('close')">
+        <MaterialSymbol name="close" />
+      </button>
     </section>
 
     <section class="config-layout">
-      <aside class="config-sections">
+      <aside class="config-sections" role="tablist" aria-label="配置分区">
         <button
           v-for="section in sections"
           :key="section.key"
           type="button"
+          role="tab"
           class="section-item"
           :class="{ active: activeSection === section.key }"
+          :aria-selected="activeSection === section.key"
           @click="activeSection = section.key"
         >
           <span>
@@ -63,27 +71,38 @@
 
           <el-form v-else label-position="top" class="m3-form">
             <el-form-item v-for="item in schema" :key="item.key" :label="item.label || item.key">
-              <template v-if="item.type === 'select'">
+              <template v-if="fieldType(item) === 'select'">
                 <el-select v-model="config[item.key]" style="width: 100%" :placeholder="item.placeholder || '请选择'">
                   <el-option v-for="option in item.options || []" :key="String(option)" :label="String(option)" :value="option" />
                 </el-select>
               </template>
 
-              <template v-else-if="item.type === 'boolean'">
-                <div class="switch-row compact">
+              <template v-else-if="fieldType(item) === 'boolean'">
+                <div class="switch-row compact" @click="config[item.key] = !config[item.key]">
                   <div>
                     <strong>{{ item.label || item.key }}</strong>
                     <p v-if="item.description">{{ item.description }}</p>
                   </div>
-                  <el-switch v-model="config[item.key]" />
+                  <el-switch v-model="config[item.key]" :aria-label="item.label || item.key" @click.stop />
                 </div>
               </template>
 
-              <template v-else-if="item.type === 'number'">
-                <el-input-number v-model="config[item.key]" :min="item.min ?? undefined" :max="item.max ?? undefined" style="width: 100%" />
+              <template v-else-if="fieldType(item) === 'number'">
+                <!-- M3 slider for bounded ranges; free number input otherwise -->
+                <div v-if="item.min != null && item.max != null" class="slider-row">
+                  <el-slider
+                    :model-value="Number(config[item.key] ?? item.min)"
+                    :min="item.min"
+                    :max="item.max"
+                    :aria-label="item.label || item.key"
+                    @update:model-value="(value: number | number[]) => { config[item.key] = Array.isArray(value) ? value[0] : value }"
+                  />
+                  <span class="slider-value" aria-hidden="true">{{ Number(config[item.key] ?? item.min) }}</span>
+                </div>
+                <el-input-number v-else v-model="config[item.key]" :min="item.min ?? undefined" :max="item.max ?? undefined" style="width: 100%" />
               </template>
 
-              <template v-else-if="item.type === 'text'">
+              <template v-else-if="fieldType(item) === 'text'">
                 <el-input v-model="config[item.key]" type="textarea" :rows="4" :placeholder="item.placeholder || ''" />
               </template>
 
@@ -91,7 +110,7 @@
                 <el-input v-model="config[item.key]" :placeholder="item.placeholder || ''" />
               </template>
 
-              <p v-if="item.description && item.type !== 'boolean'" class="field-description">{{ item.description }}</p>
+              <p v-if="item.description && fieldType(item) !== 'boolean'" class="field-description">{{ item.description }}</p>
             </el-form-item>
           </el-form>
         </div>
@@ -112,7 +131,11 @@
             </el-form-item>
 
             <el-form-item label="群组列表">
-              <el-input v-model="routeGroupsInput" placeholder="多个群号可用逗号或空格分隔，例如：123456789, 987654321" />
+              <el-input
+                v-model="routeGroupsInput"
+                :disabled="routes.mode === 'default'"
+                placeholder="多个群组或频道 ID 可用逗号或空格分隔"
+              />
               <p class="field-description">当模式为黑名单或白名单时生效。</p>
             </el-form-item>
           </el-form>
@@ -129,7 +152,7 @@
             </div>
             <div>
               <span>有效模式</span>
-              <strong>{{ routes.effective_mode }}</strong>
+              <strong>{{ routeModeLabel(routes.effective_mode) }}</strong>
             </div>
             <div>
               <span>有效群组</span>
@@ -137,20 +160,44 @@
             </div>
             <div>
               <span>默认模式</span>
-              <strong>{{ routes.default_mode }}</strong>
+              <strong>{{ routeModeLabel(routes.default_mode) }}</strong>
             </div>
           </div>
         </section>
       </aside>
     </section>
+
+    <footer v-if="embedded" class="embedded-config-actions">
+      <el-button round @click="emit('openFull')">完整页面</el-button>
+      <el-button round type="primary" :loading="saving" @click="savePluginConfig">保存配置</el-button>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import MaterialSymbol from '../../components/MaterialSymbol.vue'
 import { usePluginConfigPage } from './PluginConfig'
 
+const props = withDefaults(defineProps<{
+  pluginId?: string
+  pluginName?: string
+  embedded?: boolean
+}>(), {
+  pluginId: '',
+  pluginName: '',
+  embedded: false
+})
+
+const emit = defineEmits<{
+  close: []
+  openFull: []
+}>()
+
+const pluginIdSource = computed(() => props.pluginId || '')
+
 const {
-  pluginName,
+  pluginName: routePluginName,
   sections,
   activeSection,
   schema,
@@ -160,8 +207,16 @@ const {
   loadError,
   saveMessage,
   saveMessageType,
+  saving,
+  fieldType,
   savePluginConfig
-} = usePluginConfigPage()
+} = usePluginConfigPage(props.pluginId ? pluginIdSource : undefined)
+
+const pluginName = computed(() => props.pluginName || routePluginName.value)
+
+function routeModeLabel(mode: string) {
+  return { default: '默认规则', blacklist: '黑名单', whitelist: '白名单' }[mode] ?? mode
+}
 </script>
 
 <style scoped src="./PluginConfig.css"></style>

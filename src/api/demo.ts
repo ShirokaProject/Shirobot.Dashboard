@@ -1,11 +1,9 @@
-import type { AdapterInfo } from './adapters/adapters'
 import type { AppConfig } from './config/config'
-import type { LogSourceInfo, RuntimeLogsResponse } from './logs/logs'
+import type { LogSourceInfo } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
 import type { PluginMarketResponse } from './pluginMarket/pluginMarket'
 import type { PluginConfigResponse } from './plugins/config'
 import type { BackendPlugin, PluginActionDefinition, PluginUploadParsedResponse, PluginUploadResponse } from './plugins/plugins'
-import type { RuntimeLog } from '../features/logs/types'
 
 const demoOverview: OverviewResponse = {
   bot_version: 'v0.1.0-demo',
@@ -29,9 +27,9 @@ const demoOverview: OverviewResponse = {
     { start_time: '22:00', end_time: '24:00', count: 58 }
   ],
   latest_error: {
-    source: 'AI Chat Plugin',
     message: '演示模式：这里展示后端接入后的最近错误格式。',
-    time: '2026-06-13 19:08'
+    time: '2026-06-13 19:08',
+    level: 'error'
   },
   health_status: '正常',
   events: [
@@ -47,8 +45,10 @@ const demoPlugins: BackendPlugin[] = [
     id: 'echo',
     name: 'Echo',
     author: 'Shirobot Core',
+    repo: 'ShirokaProject/ShiroBot.Plugin.Echo',
     version: '1.0.0',
     latestVersion: '1.1.0',
+    enable: true,
     status: 'enabled',
     hasUpdate: true,
     category: '基础能力',
@@ -63,8 +63,10 @@ const demoPlugins: BackendPlugin[] = [
     id: 'admin',
     name: 'Admin',
     author: 'Shirobot Core',
+    repo: 'ShirokaProject/ShiroBot.Plugin.Admin',
     version: '1.2.1',
     latestVersion: '1.2.1',
+    enable: true,
     status: 'enabled',
     hasUpdate: false,
     category: '管理',
@@ -79,8 +81,10 @@ const demoPlugins: BackendPlugin[] = [
     id: 'schedule',
     name: 'Schedule',
     author: 'Community',
+    repo: 'ShirokaProject/ShiroBot.Plugin.Schedule',
     version: '0.9.0',
     latestVersion: '1.0.0',
+    enable: false,
     status: 'disabled',
     hasUpdate: true,
     category: '自动化',
@@ -95,8 +99,10 @@ const demoPlugins: BackendPlugin[] = [
     id: 'ai-chat',
     name: 'AI Chat',
     author: 'Shiro Labs',
+    repo: 'ShirokaProject/ShiroBot.Plugin.AIChat',
     version: '0.6.0',
     latestVersion: '0.6.0',
+    enable: true,
     status: 'error',
     hasUpdate: false,
     category: 'AI',
@@ -110,12 +116,6 @@ const demoPlugins: BackendPlugin[] = [
   }
 ]
 
-const demoAdapters: AdapterInfo[] = [
-  { type: 'OneBot v11', account: '100000001', connected: true, events: 842 },
-  { type: 'Telegram', account: '@demo_bot', connected: false, events: 0 },
-  { type: 'Discord', account: 'shirobot-demo', connected: true, events: 126 }
-]
-
 const demoConfig: AppConfig = {
   protocol: 'MilkyAdapter',
   enable_log: true,
@@ -123,7 +123,7 @@ const demoConfig: AppConfig = {
   github_proxy: 'https://gh-proxy.com/',
   host_update_repository: 'ShirokaProject/ShiroBot',
   avalonia_theme: 'Light',
-  owner_list: [1034028486],
+  owner_list: ['1034028486'],
   admin_list: [],
   api: {
     enable: true,
@@ -163,52 +163,6 @@ const demoPluginConfig: PluginConfigResponse = {
     default_groups: []
   }
 }
-
-const demoLogs: RuntimeLog[] = [
-  {
-    id: 1,
-    kind: 'system',
-    level: 'INFO',
-    time: '22:37:31',
-    source: 'Plugin Loader',
-    message: '演示：Echo v1.0.0 loaded in 42ms.',
-    raw: '[22:37:31] [Plugin Loader] 演示：Echo v1.0.0 loaded in 42ms.',
-    traceId: 'demo-pl-93a21c'
-  },
-  {
-    id: 2,
-    kind: 'message',
-    level: 'INFO',
-    time: '22:37:39',
-    source: 'OneBot v11',
-    groupName: '示例群聊',
-    groupId: '100000001',
-    userId: '200000001',
-    message: '你好，Shirobot',
-    raw: '[22:37:39] 收到群消息 示例群聊(100000001) 200000001发送: 你好，Shirobot',
-    traceId: 'demo-ob-37f39a'
-  },
-  {
-    id: 3,
-    kind: 'plugin',
-    level: 'WARN',
-    time: '22:38:31',
-    source: 'Schedule Plugin',
-    message: '演示：heartbeat task delayed by 132ms.',
-    raw: '[22:38:31] [Schedule Plugin] 演示：heartbeat task delayed by 132ms.',
-    traceId: 'demo-sc-02cafe'
-  },
-  {
-    id: 4,
-    kind: 'plugin',
-    level: 'ERROR',
-    time: '22:43:31',
-    source: 'AI Chat Plugin',
-    message: '演示：API key missing: please configure provider credentials.',
-    raw: '[22:43:31] [AI Chat Plugin] 演示：API key missing: please configure provider credentials.',
-    traceId: 'demo-ai-9bb210'
-  }
-]
 
 const demoLogSources: LogSourceInfo[] = [
   { source: 'system', description: '系统运行日志', plugin_name: 'system' },
@@ -299,7 +253,7 @@ const demoMarketplace: PluginMarketResponse = {
         }
       },
       health: { status: 'available', message: 'Release、资源和兼容性声明均有效。' },
-      installed: { version: '0.6.0', enabled: false }
+      installed: { version: '0.6.0', enabled: true }
     }
   ]
 }
@@ -362,13 +316,14 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     if (!plugin) throw new Error('Demo plugin not found')
     const action = pluginActionMatch[2]
 
-    if (action === 'enable') plugin.status = 'enabled'
-    if (action === 'disable') plugin.status = 'disabled'
-    plugin.enable = action === 'enable'
+    const enabled = action === 'enable'
+    plugin.status = enabled ? 'enabled' : 'disabled'
+    plugin.enable = enabled
+    plugin.errorMessage = undefined
     const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
-    if (marketPlugin?.installed) marketPlugin.installed.enabled = action === 'enable'
+    if (marketPlugin?.installed) marketPlugin.installed.enabled = enabled
 
-    return { ok: true, message: `Plugin ${plugin.id} ${action}d.` } as T
+    return { ok: true, message: `${plugin.name} 已${enabled ? '启用' : '关闭'}。` } as T
   }
 
   const pluginHostActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(update|delete)$/)
@@ -424,7 +379,6 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
         id: 'GithubView',
         name: 'Github 预览插件',
         version: '1.0.0',
-        enable: true,
         author: 'greepar',
         repo: 'greepar/ShiroBot.Plugin.GithubView',
         description: '解析 GitHub 仓库链接并渲染相关信息卡片。',
@@ -528,7 +482,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return clone(demoPluginConfig) as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
-    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: number[] } }
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[] } }
     if (payload.config) demoPluginConfig.config = { ...demoPluginConfig.config, ...payload.config }
     if (payload.routes) {
       demoPluginConfig.routes = {
@@ -548,7 +502,6 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     }) as T
   }
 
-  if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
   if (method === 'GET' && pathname === '/api/v1/config') return clone(demoConfig) as T
   if (method === 'PATCH' && pathname === '/api/v1/config') {
     const payload = JSON.parse(String(init?.body ?? '{}')) as Partial<AppConfig>
@@ -557,10 +510,6 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     return { ok: true, msg: '配置更新成功' } as T
   }
 
-  if (method === 'GET' && pathname === '/api/v1/runtime/logs') {
-    const response: RuntimeLogsResponse = { logs: clone(demoLogs), nextCursor: undefined }
-    return response as T
-  }
 
   if (method === 'GET' && pathname === '/api/v1/logs/sources') return clone(demoLogSources) as T
 

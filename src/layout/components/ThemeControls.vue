@@ -52,12 +52,8 @@
         aria-label="切换外观"
         @click="toggleAppearancePanel"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 1.27-3.07 1.2 1.2 0 0 1 .85-2.05H17a4 4 0 0 0 4-4C21 7 17 3 12 3Z" />
-          <circle cx="7.5" cy="10" r="1.2" />
-          <circle cx="10.5" cy="7.2" r="1.2" />
-          <circle cx="14.2" cy="7.6" r="1.2" />
-          <circle cx="16.4" cy="10.8" r="1.2" />
+        <svg viewBox="0 -960 960 960" aria-hidden="true" focusable="false" class="palette-symbol">
+          <path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-220 40q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120-160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm200 0q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120 160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z" />
         </svg>
       </button>
 
@@ -78,10 +74,27 @@
                 @focus="previewColor(theme.key)"
                 @click="setColor(theme.key)"
               >
-                <span class="theme-swatch" aria-hidden="true"></span>
+                <span
+                  v-if="theme.key === 'custom'"
+                  class="theme-swatch custom"
+                  :style="{ background: customSeed }"
+                  aria-hidden="true"
+                ></span>
+                <span v-else class="theme-swatch" aria-hidden="true"></span>
                 <span>{{ theme.label }}</span>
               </button>
             </div>
+
+            <label v-if="activeColor === 'custom'" class="seed-picker">
+              <span>种子颜色</span>
+              <input
+                type="color"
+                :value="customSeed"
+                aria-label="自定义种子颜色"
+                @input="onSeedInput(($event.target as HTMLInputElement).value)"
+              />
+              <code>{{ customSeed }}</code>
+            </label>
           </section>
 
           <section class="appearance-section">
@@ -100,9 +113,9 @@
                 @click="setMode(mode.key)"
               >
                 <span class="mode-choice-icon" aria-hidden="true">
-                  <svg v-if="mode.key === 'dark'" viewBox="0 0 24 24" focusable="false"><path d="M21 14.2A7.8 7.8 0 0 1 9.8 3a9 9 0 1 0 11.2 11.2Z" /></svg>
-                  <svg v-else-if="mode.key === 'light'" viewBox="0 0 24 24" focusable="false"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2m-2.34-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41" /><circle cx="12" cy="12" r="4" /></svg>
-                  <svg v-else viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8m-4-4v4" /></svg>
+                  <MaterialSymbol v-if="mode.key === 'dark'" name="dark" />
+                  <MaterialSymbol v-else-if="mode.key === 'light'" name="light" />
+                  <MaterialSymbol v-else name="system" />
                 </span>
                 <span>{{ mode.label }}</span>
               </button>
@@ -116,6 +129,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import MaterialSymbol from '../../components/MaterialSymbol.vue'
 import {
   DEFAULT_COLOR_MODE,
   DEFAULT_COLOR_THEME,
@@ -124,6 +138,7 @@ import {
   applyColorTheme,
   colorModes,
   colorThemes,
+  getStoredSeed,
   isColorModeKey,
   isColorThemeKey,
   type ColorModeKey,
@@ -173,9 +188,21 @@ const fontGroups: Array<{
 const activeColor = ref<ColorThemeKey>(DEFAULT_COLOR_THEME)
 const activeMode = ref<ColorModeKey>(DEFAULT_COLOR_MODE)
 const activeFont = ref<FontPreviewKey>('maple')
+const customSeed = ref(getStoredSeed())
 const appearancePanelOpen = ref(false)
 const fontPanelOpen = ref(false)
 const controlsRoot = ref<HTMLElement | null>(null)
+let seedDebounce: ReturnType<typeof setTimeout> | null = null
+
+function onSeedInput(value: string) {
+  customSeed.value = value
+  // Scheme generation is cheap but color inputs fire rapidly while dragging
+  if (seedDebounce) clearTimeout(seedDebounce)
+  seedDebounce = setTimeout(() => {
+    localStorage.setItem(THEME_STORAGE_KEYS.seed, value)
+    applyColorTheme('custom', value)
+  }, 60)
+}
 
 function previewColor(color: ColorThemeKey) {
   applyColorTheme(color)
@@ -279,7 +306,9 @@ onMounted(() => {
   const savedMode = localStorage.getItem(THEME_STORAGE_KEYS.mode)
   const savedFont = localStorage.getItem(FONT_STORAGE_KEY)
 
-  if (isColorThemeKey(savedColor)) setColor(savedColor)
+  // Always apply the dynamic scheme on startup (replaces static CSS palettes)
+  applyColorTheme(isColorThemeKey(savedColor) ? savedColor : DEFAULT_COLOR_THEME)
+  if (isColorThemeKey(savedColor)) activeColor.value = savedColor
   if (isColorModeKey(savedMode)) setMode(savedMode)
   if (isFontPreviewKey(savedFont)) setFont(savedFont)
 
@@ -288,6 +317,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', handleOutsidePointerDown)
+  if (seedDebounce) clearTimeout(seedDebounce)
 })
 </script>
 
@@ -302,48 +332,53 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
+/* Standard M3 icon button: no outline, state layer feedback only */
 .top-action-icon {
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 0;
   border-radius: var(--md-sys-shape-corner-full);
   background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   transition:
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .top-action-icon:hover,
 .top-action-icon:focus-visible {
-  border-color: color-mix(in srgb, currentColor 24%, var(--md-sys-color-outline-variant));
-  box-shadow: var(--md-sys-elevation-level1);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface-container-lowest));
 }
 
 .top-action-icon:active {
-  box-shadow: none;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, var(--md-sys-color-surface-container-lowest));
 }
 
 .top-action-icon svg {
   width: 21px;
   height: 21px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: currentColor;
 }
 
 .font-action,
 .appearance-action {
-  border-color: transparent;
   color: var(--md-sys-color-on-primary-container);
   background: var(--md-sys-color-primary-container);
+}
+
+.font-action:hover,
+.font-action:focus-visible,
+.appearance-action:hover,
+.appearance-action:focus-visible {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 8%, var(--md-sys-color-primary-container));
+}
+
+.font-action:active,
+.appearance-action:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 10%, var(--md-sys-color-primary-container));
 }
 
 .font-action-label {
@@ -480,6 +515,39 @@ onBeforeUnmount(() => {
   background: #d3e4ff;
 }
 
+.theme-swatch.custom {
+  background: conic-gradient(#f66 0deg, #fc6 90deg, #6c6 180deg, #66f 270deg, #f66 360deg);
+}
+
+/* Seed color picker for the custom theme */
+.seed-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-3);
+  margin-top: var(--md-space-2);
+  padding: var(--md-space-2) var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+  cursor: pointer;
+}
+
+.seed-picker input[type='color'] {
+  width: 40px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: transparent;
+  cursor: pointer;
+}
+
+.seed-picker code {
+  font-family: var(--font-mono);
+  color: var(--md-sys-color-on-surface);
+}
+
 .mode-choice-icon,
 .mode-choice-icon svg {
   width: 20px;
@@ -487,11 +555,7 @@ onBeforeUnmount(() => {
 }
 
 .mode-choice-icon svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  font-size: 20px;
 }
 
 .font-panel {

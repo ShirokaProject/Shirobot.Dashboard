@@ -1,0 +1,125 @@
+/*
+ * Rose theme (default).
+ * Light roles live on :root; dark roles apply for explicit data-mode='dark'
+ * and for system dark when the user hasn't forced a mode.
+ * NOTE: keep this file imported before lavender/blue — the rose dark block
+ * also defines the shared dark error palette other themes inherit.
+ */
+
+:root {
+  /*
+   * Material 3 color roles.
+   * Default color theme: Rose / light.
+   * App CSS should consume semantic roles, not raw hex colors.
+   */
+  --md-sys-color-primary: #94425f;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #ffd9e5;
+  --md-sys-color-on-primary-container: #3d071e;
+  --md-sys-color-secondary: #725762;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #f8dbe6;
+  --md-sys-color-on-secondary-container: #2b151e;
+  --md-sys-color-tertiary: #87515d;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #ffd9df;
+  --md-sys-color-on-tertiary-container: #341017;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+
+  --md-sys-color-surface: #fff8fa;
+  --md-sys-color-on-surface: #21191d;
+  --md-sys-color-surface-variant: #f2dde3;
+  --md-sys-color-on-surface-variant: #554149;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #fff1f6;
+  --md-sys-color-surface-container: #fceaf1;
+  --md-sys-color-surface-container-high: #f5e2e9;
+  --md-sys-color-surface-container-highest: #eedbe3;
+  --md-sys-color-surface-dim: #e8d6dc;
+  --md-sys-color-surface-bright: #fff8fa;
+  --md-sys-color-outline: #87727a;
+  --md-sys-color-outline-variant: #dac0c9;
+  --md-sys-color-inverse-surface: #372e32;
+  --md-sys-color-inverse-on-surface: #fceef3;
+  --md-sys-color-inverse-primary: #ffb1c8;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-surface-tint: var(--md-sys-color-primary);
+}
+
+/* Rose / dark */
+:root[data-mode='dark'] {
+  --md-sys-color-primary: #ffb1c8;
+  --md-sys-color-on-primary: #5e1130;
+  --md-sys-color-primary-container: #7b2947;
+  --md-sys-color-on-primary-container: #ffd9e3;
+  --md-sys-color-secondary: #e2bdc8;
+  --md-sys-color-on-secondary: #432932;
+  --md-sys-color-secondary-container: #5a3f48;
+  --md-sys-color-on-secondary-container: #ffd9e3;
+  --md-sys-color-tertiary: #efbd94;
+  --md-sys-color-on-tertiary: #48290d;
+  --md-sys-color-tertiary-container: #613f20;
+  --md-sys-color-on-tertiary-container: #ffdcc2;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+  --md-sys-color-surface: #181114;
+  --md-sys-color-on-surface: #eee0e4;
+  --md-sys-color-surface-variant: #514348;
+  --md-sys-color-on-surface-variant: #d5c2ca;
+  --md-sys-color-surface-container-lowest: #120c0f;
+  --md-sys-color-surface-container-low: #21191d;
+  --md-sys-color-surface-container: #261d21;
+  --md-sys-color-surface-container-high: #30262a;
+  --md-sys-color-surface-container-highest: #3b3034;
+  --md-sys-color-surface-dim: #181114;
+  --md-sys-color-surface-bright: #40373a;
+  --md-sys-color-outline: #9e8c93;
+  --md-sys-color-outline-variant: #514348;
+  --md-sys-color-inverse-surface: #eee0e4;
+  --md-sys-color-inverse-on-surface: #362e32;
+  --md-sys-color-inverse-primary: #984061;
+}
+
+/* System dark follows OS unless user explicitly selects light/dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']):not([data-mode='dark']) {
+    --md-sys-color-primary: #ffb1c8;
+    --md-sys-color-on-primary: #5e1130;
+    --md-sys-color-primary-container: #7b2947;
+    --md-sys-color-on-primary-container: #ffd9e3;
+    --md-sys-color-secondary: #e2bdc8;
+    --md-sys-color-on-secondary: #432932;
+    --md-sys-color-secondary-container: #5a3f48;
+    --md-sys-color-on-secondary-container: #ffd9e3;
+    --md-sys-color-tertiary: #efbd94;
+    --md-sys-color-on-tertiary: #48290d;
+    --md-sys-color-tertiary-container: #613f20;
+    --md-sys-color-on-tertiary-container: #ffdcc2;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+    --md-sys-color-surface: #181114;
+    --md-sys-color-on-surface: #eee0e4;
+    --md-sys-color-surface-variant: #514348;
+    --md-sys-color-on-surface-variant: #d5c2ca;
+    --md-sys-color-surface-container-lowest: #120c0f;
+    --md-sys-color-surface-container-low: #21191d;
+    --md-sys-color-surface-container: #261d21;
+    --md-sys-color-surface-container-high: #30262a;
+    --md-sys-color-surface-container-highest: #3b3034;
+    --md-sys-color-surface-dim: #181114;
+    --md-sys-color-surface-bright: #40373a;
+    --md-sys-color-outline: #9e8c93;
+    --md-sys-color-outline-variant: #514348;
+    --md-sys-color-inverse-surface: #eee0e4;
+    --md-sys-color-inverse-on-surface: #362e32;
+    --md-sys-color-inverse-primary: #984061;
+  }
+}

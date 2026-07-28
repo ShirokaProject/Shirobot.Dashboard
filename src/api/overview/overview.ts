@@ -6,9 +6,9 @@ export interface OverviewInfo {
 }
 
 export interface OverviewLatestError {
-  source: string
   message: string
   time: string
+  level: string
 }
 
 export type OverviewMetricKey = 'plugins' | 'adapters' | 'messages' | 'health'

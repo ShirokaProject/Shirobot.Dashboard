@@ -4,11 +4,11 @@ export interface AppConfig {
   protocol: string
   enable_log: boolean
   disable_console_input: boolean
-  github_proxy: string
+  github_proxy: string | null
   host_update_repository: string
   avalonia_theme: string
-  owner_list: number[]
-  admin_list: number[]
+  owner_list: string[]
+  admin_list: string[]
   api: {
     enable: boolean
     listen_url: string

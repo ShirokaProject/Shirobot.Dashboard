@@ -1,7 +1,7 @@
 {
   "name": "shirobot.dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@material/material-color-utilities": "^0.4.0",
     "element-plus": "^2.14.2",
     "vue": "^3.5.34",
     "vue-router": "^5.1.0"

@@ -6,28 +6,41 @@
 }
 
 .plugin-toolbar.compact {
-  width: fit-content;
-  max-width: calc(100% - 376px);
+  width: min(640px, 100%);
+  max-width: none;
   align-items: center;
   justify-content: flex-start;
   gap: var(--md-space-3);
-  padding: var(--md-space-2);
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  background: var(--md-sys-color-surface-container-lowest);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-outline-variant) 34%, transparent);
+  padding: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
 }
 
+/* Search field aligned with market page: 48px, surface-container-high, focus ring */
 .plugin-search-container {
-  height: 44px;
-  width: min(440px, 44vw);
+  height: 48px;
+  width: min(480px, 100%);
+  flex: 1;
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) auto;
   gap: var(--md-space-2);
   align-items: center;
   padding: 0 var(--md-space-4);
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.plugin-search-container:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface-container-high));
+}
+
+.plugin-search-container:focus-within {
+  background: var(--md-sys-color-surface-container-high);
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
 }
 
 .search-icon,
@@ -37,11 +50,8 @@
 }
 
 .search-icon svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  font-size: 20px;
+  fill: currentColor;
 }
 
 .plugin-search-container input {
@@ -57,19 +67,37 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* 48px hit area via padding-box; visual circle stays compact */
 .clear-search-button {
-  width: 24px;
-  height: 24px;
+  position: relative;
+  width: 32px;
+  height: 32px;
   border: 0;
   border-radius: var(--md-sys-shape-corner-full);
-  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
+  background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font: var(--md-sys-typescale-title-small);
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
+.clear-search-button::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.clear-search-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.clear-search-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+}
+
+/* M3 filled tonal button with state layers */
 .upload-trigger-button {
-  height: 44px;
+  height: 48px;
   min-width: 124px;
   display: inline-flex;
   align-items: center;
@@ -82,6 +110,20 @@
   color: var(--md-sys-color-on-primary-container);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.upload-trigger-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 8%, var(--md-sys-color-primary-container));
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.upload-trigger-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 10%, var(--md-sys-color-primary-container));
+  box-shadow: none;
 }
 
 .button-icon {
@@ -94,11 +136,15 @@
 .button-icon svg {
   width: 18px;
   height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  font-size: 18px;
+  fill: currentColor;
+}
+
+.clear-search-button svg {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  fill: currentColor;
 }
 
 @media (max-width: 839px) {
@@ -113,6 +159,17 @@
   }
 
   .plugin-search-container {
+    width: 100%;
+  }
+}
+
+@media (max-width: 599px) {
+  .plugin-toolbar.compact {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .upload-trigger-button {
     width: 100%;
   }
 }

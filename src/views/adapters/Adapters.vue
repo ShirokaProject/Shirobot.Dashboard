@@ -5,7 +5,7 @@
         <h2>连接协议</h2>
         <p>管理 Shirobot 与不同平台之间的连接适配器，包含连接状态、账号与事件吞吐。</p>
       </div>
-      <el-button round type="primary">新增适配器</el-button>
+      <el-button round type="primary" disabled title="后端接入后可用">新增适配器</el-button>
     </section>
 
     <el-alert
@@ -39,8 +39,8 @@
           </div>
         </div>
         <div class="adapter-actions">
-          <el-button round text>详情</el-button>
-          <el-button round :type="adapter.connected ? 'danger' : 'primary'">
+          <el-button round text disabled title="后端接入后可用">详情</el-button>
+          <el-button round :type="adapter.connected ? 'danger' : 'primary'" disabled title="后端接入后可用">
             {{ adapter.connected ? '断开' : '连接' }}
           </el-button>
         </div>

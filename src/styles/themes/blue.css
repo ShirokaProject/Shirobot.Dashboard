@@ -1,0 +1,99 @@
+/* Blue theme (data-color='blue'). */
+
+/* Blue / light */
+:root[data-color='blue'] {
+  --md-sys-color-primary: #365f91;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #d3e4ff;
+  --md-sys-color-on-primary-container: #001c38;
+  --md-sys-color-secondary: #535f70;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #d8e3f8;
+  --md-sys-color-on-secondary-container: #101c2b;
+  --md-sys-color-tertiary: #6b5778;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #f2daff;
+  --md-sys-color-on-tertiary-container: #251431;
+  --md-sys-color-surface: #f8fbff;
+  --md-sys-color-on-surface: #191c20;
+  --md-sys-color-surface-variant: #dfe2eb;
+  --md-sys-color-on-surface-variant: #43474e;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f1f4f9;
+  --md-sys-color-surface-container: #ebeff4;
+  --md-sys-color-surface-container-high: #e5e9ee;
+  --md-sys-color-surface-container-highest: #dfe3e8;
+  --md-sys-color-surface-dim: #d8dae0;
+  --md-sys-color-surface-bright: #f8fbff;
+  --md-sys-color-outline: #73777f;
+  --md-sys-color-outline-variant: #c3c7cf;
+  --md-sys-color-inverse-surface: #2e3135;
+  --md-sys-color-inverse-on-surface: #eff0f7;
+  --md-sys-color-inverse-primary: #a2c9ff;
+}
+
+/* Blue / dark */
+:root[data-mode='dark'][data-color='blue'] {
+  --md-sys-color-primary: #a2c9ff;
+  --md-sys-color-on-primary: #00315d;
+  --md-sys-color-primary-container: #144777;
+  --md-sys-color-on-primary-container: #d3e4ff;
+  --md-sys-color-secondary: #bbc7db;
+  --md-sys-color-on-secondary: #253140;
+  --md-sys-color-secondary-container: #3b4858;
+  --md-sys-color-on-secondary-container: #d8e3f8;
+  --md-sys-color-tertiary: #d6bee4;
+  --md-sys-color-on-tertiary: #3b2948;
+  --md-sys-color-tertiary-container: #523f5f;
+  --md-sys-color-on-tertiary-container: #f2daff;
+  --md-sys-color-surface: #101418;
+  --md-sys-color-on-surface: #e0e2e8;
+  --md-sys-color-surface-variant: #43474e;
+  --md-sys-color-on-surface-variant: #c3c7cf;
+  --md-sys-color-surface-container-lowest: #0b0f13;
+  --md-sys-color-surface-container-low: #191c20;
+  --md-sys-color-surface-container: #1d2024;
+  --md-sys-color-surface-container-high: #272a2f;
+  --md-sys-color-surface-container-highest: #32353a;
+  --md-sys-color-surface-dim: #101418;
+  --md-sys-color-surface-bright: #36393e;
+  --md-sys-color-outline: #8d9199;
+  --md-sys-color-outline-variant: #43474e;
+  --md-sys-color-inverse-surface: #e0e2e8;
+  --md-sys-color-inverse-on-surface: #2e3135;
+  --md-sys-color-inverse-primary: #365f91;
+}
+
+/* System dark (no explicit mode) */
+@media (prefers-color-scheme: dark) {
+  :root[data-color='blue']:not([data-mode='light']):not([data-mode='dark']) {
+    --md-sys-color-primary: #a2c9ff;
+    --md-sys-color-on-primary: #00315d;
+    --md-sys-color-primary-container: #144777;
+    --md-sys-color-on-primary-container: #d3e4ff;
+    --md-sys-color-secondary: #bbc7db;
+    --md-sys-color-on-secondary: #253140;
+    --md-sys-color-secondary-container: #3b4858;
+    --md-sys-color-on-secondary-container: #d8e3f8;
+    --md-sys-color-tertiary: #d6bee4;
+    --md-sys-color-on-tertiary: #3b2948;
+    --md-sys-color-tertiary-container: #523f5f;
+    --md-sys-color-on-tertiary-container: #f2daff;
+    --md-sys-color-surface: #101418;
+    --md-sys-color-on-surface: #e0e2e8;
+    --md-sys-color-surface-variant: #43474e;
+    --md-sys-color-on-surface-variant: #c3c7cf;
+    --md-sys-color-surface-container-lowest: #0b0f13;
+    --md-sys-color-surface-container-low: #191c20;
+    --md-sys-color-surface-container: #1d2024;
+    --md-sys-color-surface-container-high: #272a2f;
+    --md-sys-color-surface-container-highest: #32353a;
+    --md-sys-color-surface-dim: #101418;
+    --md-sys-color-surface-bright: #36393e;
+    --md-sys-color-outline: #8d9199;
+    --md-sys-color-outline-variant: #43474e;
+    --md-sys-color-inverse-surface: #e0e2e8;
+    --md-sys-color-inverse-on-surface: #2e3135;
+    --md-sys-color-inverse-primary: #365f91;
+  }
+}

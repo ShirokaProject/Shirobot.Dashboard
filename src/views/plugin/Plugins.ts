@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { cancelPluginUpload, confirmPluginUpload, deleteInstalledPlugin, getApiErrorMessage, getInstalledPlugins, getPluginActions, runPluginAction, setPluginEnabled, updateInstalledPlugin, uploadPluginPackage } from '../../api'
@@ -6,19 +6,36 @@ import type { PluginActionDefinition, PluginUploadParsedResponse } from '../../a
 import type { Plugin, PluginStatus } from '../../features/plugins/types'
 
 export type PluginStatusFilter = {
-  key: PluginStatus | 'all'
+  key: 'all' | 'issues' | 'unloaded' | 'updates' | 'starred'
   label: string
   count: number
 }
 
-const pluginToggleCooldownMs = 5000
+export type PluginPrioritySection = {
+  key: 'running' | 'closed'
+  title: string
+  description: string
+  icon: string
+  plugins: Plugin[]
+}
+
+const pluginToggleCooldownMs = 600
+const starredPluginsStorageKey = 'shirobot.dashboard.starred-plugins'
+
+function getStoredStarredPluginIds() {
+  try {
+    const value = JSON.parse(localStorage.getItem(starredPluginsStorageKey) ?? '[]') as unknown
+    return new Set(Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [])
+  } catch {
+    return new Set<string>()
+  }
+}
 
 export function usePluginsPage() {
   const route = useRoute()
   const router = useRouter()
 
   const keyword = ref('')
-  const activeStatus = ref<PluginStatus | 'all'>('all')
   const uploadDialogVisible = ref(false)
   const selectedPluginFile = ref<File | null>(null)
   const pluginUploadResult = ref<PluginUploadParsedResponse | null>(null)
@@ -28,8 +45,7 @@ export function usePluginsPage() {
   const pluginUploadReplace = ref(true)
   const pluginUploadEnable = ref(true)
   const loadError = ref('')
-  const actionMessage = ref('')
-  const actionMessageType = ref<'success' | 'error'>('success')
+  const actionSnackbar = ref<{ message: string; type: 'success' | 'error' } | null>(null)
   const pluginActions = ref<PluginActionDefinition[]>([])
   const pluginActionsLoading = ref(false)
   const pluginActionsError = ref('')
@@ -38,29 +54,88 @@ export function usePluginsPage() {
 
   const installedPlugins = ref<Plugin[]>([])
   const selectedPlugin = ref<Plugin | null>(null)
+  const detailVisible = ref(false)
+  const configPanelVisible = ref(false)
+  const configPanelClosing = ref(false)
+  const starredPluginIds = ref(getStoredStarredPluginIds())
   const toggleLockedPluginIds = ref(new Set<string>())
+  const togglePendingPluginIds = ref(new Set<string>())
   let pluginActionsRequestId = 0
+  let actionSnackbarTimer: ReturnType<typeof setTimeout> | null = null
 
-  const enabledCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'enabled').length)
-  const disabledCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'disabled').length)
-  const errorCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'error').length)
+  function showActionMessage(message: string, type: 'success' | 'error') {
+    if (actionSnackbarTimer) window.clearTimeout(actionSnackbarTimer)
+    actionSnackbar.value = { message, type }
+    actionSnackbarTimer = window.setTimeout(() => {
+      actionSnackbar.value = null
+      actionSnackbarTimer = null
+    }, type === 'success' ? 3000 : 5000)
+  }
+
+  function dismissActionSnackbar() {
+    if (actionSnackbarTimer) window.clearTimeout(actionSnackbarTimer)
+    actionSnackbarTimer = null
+    actionSnackbar.value = null
+  }
+
+  const totalCount = computed(() => installedPlugins.value.length)
+  const configPanelShifted = computed(() => configPanelVisible.value || configPanelClosing.value)
   const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
-
-  const statusFilters = computed<PluginStatusFilter[]>(() => [
-    { key: 'all', label: '全部', count: installedPlugins.value.length },
-    { key: 'enabled', label: '启用', count: enabledCount.value },
-    { key: 'disabled', label: '关闭', count: disabledCount.value },
-    { key: 'error', label: '错误', count: errorCount.value }
-  ])
 
   const filteredInstalled = computed(() => {
     return installedPlugins.value.filter(plugin => {
-      const matchStatus = activeStatus.value === 'all' || plugin.status === activeStatus.value
       const matchKeyword = !normalizedKeyword.value || [plugin.name, plugin.author, plugin.category, plugin.description, plugin.version, plugin.latestVersion ?? '']
         .some(value => value.toLowerCase().includes(normalizedKeyword.value))
-      return matchStatus && matchKeyword
+      return matchKeyword
     })
   })
+
+  const pluginSections = computed<PluginPrioritySection[]>(() => {
+    const plugins = filteredInstalled.value
+    const sortByPriority = (left: Plugin, right: Plugin) => {
+      const updatePriority = Number(right.hasUpdate) - Number(left.hasUpdate)
+      if (updatePriority) return updatePriority
+
+      const errorPriority = Number(right.status === 'error') - Number(left.status === 'error')
+      if (errorPriority) return errorPriority
+
+      const starPriority = Number(starredPluginIds.value.has(right.id)) - Number(starredPluginIds.value.has(left.id))
+      if (starPriority) return starPriority
+
+      return left.name.localeCompare(right.name)
+    }
+
+    const sections: PluginPrioritySection[] = [
+      {
+        key: 'running',
+        title: '启动中',
+        description: '当前已加载并参与运行的插件。',
+        icon: 'plugins-filled',
+        plugins: plugins.filter(plugin => plugin.status === 'enabled').sort(sortByPriority)
+      },
+      {
+        key: 'closed',
+        title: '已关闭',
+        description: '包含手动关闭和加载异常的插件。',
+        icon: 'close',
+        plugins: plugins.filter(plugin => plugin.status !== 'enabled').sort(sortByPriority)
+      }
+    ]
+
+    return sections.filter(section => section.plugins.length > 0)
+  })
+
+  function isPluginStarred(plugin: Plugin) {
+    return starredPluginIds.value.has(plugin.id)
+  }
+
+  function togglePluginStar(plugin: Plugin) {
+    const nextIds = new Set(starredPluginIds.value)
+    if (nextIds.has(plugin.id)) nextIds.delete(plugin.id)
+    else nextIds.add(plugin.id)
+    starredPluginIds.value = nextIds
+    localStorage.setItem(starredPluginsStorageKey, JSON.stringify([...nextIds]))
+  }
 
   function statusText(status: PluginStatus) {
     return {
@@ -72,13 +147,20 @@ export function usePluginsPage() {
 
   function selectPlugin(plugin: Plugin) {
     selectedPlugin.value = plugin
+    configPanelVisible.value = false
+    configPanelClosing.value = false
+    detailVisible.value = true
   }
 
   function isPluginToggleLocked(plugin: Plugin) {
-    return plugin.status === 'error'
-      || Boolean(hostOperation.value)
+    return Boolean(hostOperation.value)
       || Boolean(runningPluginActionId.value)
+      || togglePendingPluginIds.value.has(plugin.id)
       || toggleLockedPluginIds.value.has(plugin.id)
+  }
+
+  function isPluginTogglePending(plugin: Plugin) {
+    return togglePendingPluginIds.value.has(plugin.id)
   }
 
   function lockPluginToggle(pluginId: string) {
@@ -94,19 +176,25 @@ export function usePluginsPage() {
     if (isPluginToggleLocked(plugin)) return
 
     const previousStatus = plugin.status
+    const previousEnabled = plugin.enabled
+    togglePendingPluginIds.value = new Set(togglePendingPluginIds.value).add(plugin.id)
+    plugin.enabled = enabled
     plugin.status = enabled ? 'enabled' : 'disabled'
     lockPluginToggle(plugin.id)
 
     try {
       const response = await setPluginEnabled(plugin.id, enabled)
-      actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      showActionMessage(response.message, response.ok ? 'success' : 'error')
       await loadInstalledPlugins(plugin.id)
       await loadPluginActions(selectedPlugin.value)
     } catch (error) {
+      plugin.enabled = previousEnabled
       plugin.status = previousStatus
-      actionMessageType.value = 'error'
-      actionMessage.value = getApiErrorMessage(error, '插件状态更新失败')
+      showActionMessage(getApiErrorMessage(error, '插件状态更新失败'), 'error')
+    } finally {
+      const nextPendingIds = new Set(togglePendingPluginIds.value)
+      nextPendingIds.delete(plugin.id)
+      togglePendingPluginIds.value = nextPendingIds
     }
   }
 
@@ -124,6 +212,36 @@ export function usePluginsPage() {
   }
 
   function openPluginConfig(plugin: Plugin) {
+    selectedPlugin.value = plugin
+    if (configPanelVisible.value) {
+      closePluginConfig()
+      return
+    }
+    configPanelClosing.value = false
+    configPanelVisible.value = true
+  }
+
+  function closePluginConfig() {
+    if (!configPanelVisible.value) return
+    configPanelClosing.value = true
+    configPanelVisible.value = false
+  }
+
+  function finishPluginConfigClose() {
+    configPanelClosing.value = false
+  }
+
+  function requestPluginDetailClose(done?: () => void) {
+    if (configPanelShifted.value) {
+      closePluginConfig()
+      return
+    }
+
+    if (done) done()
+    else detailVisible.value = false
+  }
+
+  function openPluginConfigPage(plugin: Plugin) {
     router.push(`/plugins/${plugin.id}/config`)
   }
 
@@ -148,18 +266,26 @@ export function usePluginsPage() {
   }
 
   async function updatePlugin(plugin: Plugin) {
-    if (plugin.status !== 'enabled' || hostOperation.value || runningPluginActionId.value) return
+    if (!plugin.enabled || !plugin.repository || hostOperation.value || runningPluginActionId.value) return
+
+    try {
+      await ElMessageBox.confirm(
+        `将检查“${plugin.name}”的 GitHub Release，并在有可用 DLL 新版本时执行更新。更新期间插件可能短暂不可用。`,
+        '更新插件',
+        { type: 'info', confirmButtonText: '开始更新', cancelButtonText: '取消' }
+      )
+    } catch {
+      return
+    }
+
     hostOperation.value = 'update'
-    actionMessage.value = ''
     try {
       const response = await updateInstalledPlugin(plugin.id)
-      actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      showActionMessage(response.message, response.ok ? 'success' : 'error')
       await loadInstalledPlugins(plugin.id)
       await loadPluginActions(selectedPlugin.value)
     } catch (error) {
-      actionMessageType.value = 'error'
-      actionMessage.value = getApiErrorMessage(error, '插件更新失败')
+      showActionMessage(getApiErrorMessage(error, '插件更新失败'), 'error')
     } finally {
       hostOperation.value = ''
     }
@@ -178,15 +304,13 @@ export function usePluginsPage() {
     }
 
     hostOperation.value = 'delete'
-    actionMessage.value = ''
     try {
       const response = await deleteInstalledPlugin(plugin.id)
-      actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      showActionMessage(response.message, response.ok ? 'success' : 'error')
+      detailVisible.value = false
       await loadInstalledPlugins()
     } catch (error) {
-      actionMessageType.value = 'error'
-      actionMessage.value = getApiErrorMessage(error, '插件卸载失败')
+      showActionMessage(getApiErrorMessage(error, '插件卸载失败'), 'error')
     } finally {
       hostOperation.value = ''
     }
@@ -216,18 +340,15 @@ export function usePluginsPage() {
     }
 
     runningPluginActionId.value = action.id
-    actionMessage.value = ''
     try {
       const response = await runPluginAction(plugin.id, action.id)
-      actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      showActionMessage(response.message, response.ok ? 'success' : 'error')
       if (response.refresh) {
         await loadInstalledPlugins(plugin.id)
         await loadPluginActions(selectedPlugin.value)
       }
     } catch (error) {
-      actionMessageType.value = 'error'
-      actionMessage.value = getApiErrorMessage(error, `${action.label}执行失败`)
+      showActionMessage(getApiErrorMessage(error, `${action.label}执行失败`), 'error')
     } finally {
       runningPluginActionId.value = ''
     }
@@ -299,8 +420,7 @@ export function usePluginsPage() {
         replace: pluginUploadReplace.value,
         enable: pluginUploadEnable.value
       })
-      actionMessage.value = response.success ? '插件安装成功' : '插件安装失败'
-      actionMessageType.value = response.success ? 'success' : 'error'
+      showActionMessage(response.success ? '插件安装成功' : '插件安装失败', response.success ? 'success' : 'error')
       resetPluginUploadState()
       uploadDialogVisible.value = false
       clearUploadQuery()
@@ -314,6 +434,10 @@ export function usePluginsPage() {
 
   onMounted(() => {
     void loadInstalledPlugins()
+  })
+
+  onBeforeUnmount(() => {
+    if (actionSnackbarTimer) window.clearTimeout(actionSnackbarTimer)
   })
 
   watch(
@@ -337,6 +461,13 @@ export function usePluginsPage() {
     }
   })
 
+  watch(detailVisible, visible => {
+    if (!visible) {
+      configPanelVisible.value = false
+      configPanelClosing.value = false
+    }
+  })
+
   watch(selectedPluginFile, () => {
     pluginUploadResult.value = null
     pluginUploadError.value = ''
@@ -351,7 +482,7 @@ export function usePluginsPage() {
 
   return {
     keyword,
-    activeStatus,
+    totalCount,
     uploadDialogVisible,
     selectedPluginFile,
     pluginUploadResult,
@@ -361,24 +492,34 @@ export function usePluginsPage() {
     pluginUploadReplace,
     pluginUploadEnable,
     selectedPlugin,
-    statusFilters,
+    detailVisible,
+    configPanelVisible,
+    configPanelShifted,
     filteredInstalled,
+    pluginSections,
     loadError,
-    actionMessage,
-    actionMessageType,
+    actionSnackbar,
     pluginActions,
     pluginActionsLoading,
     pluginActionsError,
     runningPluginActionId,
     hostOperation,
     statusText,
+    dismissActionSnackbar,
+    isPluginStarred,
+    togglePluginStar,
     isPluginToggleLocked,
+    isPluginTogglePending,
     selectPlugin,
     togglePlugin,
     executePluginAction,
     updatePlugin,
     deletePlugin,
     openPluginConfig,
+    closePluginConfig,
+    finishPluginConfigClose,
+    requestPluginDetailClose,
+    openPluginConfigPage,
     submitPluginUpload,
     confirmUploadedPlugin
   }

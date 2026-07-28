@@ -1,0 +1,408 @@
+/*
+ * Shared app-level M3 component classes used across views.
+ * Conventions: selection = secondary-container pairing; warning = tertiary-container
+ * pairing; state layers = hover 8% / pressed 10% of the matching on-color.
+ */
+
+.md3-page-title {
+  margin: 0;
+  font: var(--md-sys-typescale-headline-medium);
+  letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-page-subtitle {
+  margin: var(--md-space-1) 0 0;
+  font: var(--md-sys-typescale-body-medium);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-section-title {
+  margin: 0 0 var(--md-space-4);
+  font: var(--md-sys-typescale-title-large);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  color: var(--md-sys-color-on-surface);
+}
+
+.page-alert {
+  border: 0 !important;
+  border-radius: var(--md-sys-shape-corner-large) !important;
+  background: var(--md-sys-color-secondary-container) !important;
+  color: var(--md-sys-color-on-secondary-container) !important;
+}
+
+/* Semantic tonal pairing per alert type (MD3: container + on-container) */
+.page-alert.el-alert--warning {
+  background: var(--md-sys-color-tertiary-container) !important;
+  color: var(--md-sys-color-on-tertiary-container) !important;
+}
+
+.page-alert.el-alert--error {
+  background: var(--md-sys-color-error-container) !important;
+  color: var(--md-sys-color-on-error-container) !important;
+}
+
+.page-alert .el-alert__title,
+.page-alert .el-alert__icon {
+  color: inherit !important;
+}
+
+.empty-state {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+  text-align: center;
+}
+
+.md3-card-title {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-supporting-text {
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* M3 filled text field for config forms (shared by Config / PluginConfig) */
+.m3-form .el-form-item {
+  margin-bottom: 0;
+}
+
+.m3-form .el-form-item__label {
+  margin-bottom: var(--md-space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
+  line-height: 1.25;
+}
+
+.m3-form .el-input__wrapper,
+.m3-form .el-select__wrapper {
+  min-height: 56px;
+  padding: 0 var(--md-space-4);
+}
+
+.m3-form .el-input__wrapper,
+.m3-form .el-select__wrapper,
+.m3-form .el-textarea__inner {
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-small) var(--md-sys-shape-corner-small) 0 0 !important;
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 74%, transparent) !important;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--md-sys-color-on-surface-variant) 62%, transparent) !important;
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.m3-form .el-input__wrapper:hover,
+.m3-form .el-select__wrapper:hover,
+.m3-form .el-textarea__inner:hover {
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 84%, transparent) !important;
+  box-shadow: inset 0 -1px 0 var(--md-sys-color-on-surface) !important;
+}
+
+.m3-form .el-input__wrapper.is-focus,
+.m3-form .el-select__wrapper.is-focused,
+.m3-form .el-textarea__inner:focus {
+  background: color-mix(in srgb, var(--md-sys-color-primary-container) 22%, var(--md-sys-color-surface-container-high)) !important;
+  box-shadow: inset 0 -2px 0 var(--md-sys-color-primary) !important;
+}
+
+.m3-form .el-textarea__inner {
+  padding: var(--md-space-4);
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-large);
+}
+
+.m3-form .el-input__inner,
+.m3-form .el-select__placeholder,
+.m3-form .el-select__selected-item {
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-large);
+}
+
+.m3-form .el-input__inner::placeholder,
+.m3-form .el-textarea__inner::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-form .el-select__caret {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-form .el-input-number {
+  width: 100%;
+}
+
+.m3-form .el-input-number .el-input__wrapper {
+  padding: 0 var(--md-space-10);
+}
+
+.m3-form .el-input-number__decrease,
+.m3-form .el-input-number__increase {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* M3 buttons for config form actions: text (reset) + filled (save) */
+.m3-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md-space-3);
+  margin-top: var(--md-space-3);
+}
+
+.m3-form-actions .el-button {
+  min-width: 84px;
+  height: 40px;
+  padding: 0 var(--md-space-5);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 42%, transparent);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-large);
+  box-shadow: none;
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.m3-form-actions .el-button:hover,
+.m3-form-actions .el-button:focus-visible {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 42%, var(--md-sys-color-outline));
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, var(--md-sys-color-surface-container-lowest));
+}
+
+.m3-form-actions .el-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, var(--md-sys-color-surface-container-lowest));
+}
+
+.m3-form-actions .el-button.is-disabled,
+.m3-form-actions .el-button.is-disabled:hover {
+  border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  background: transparent;
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+/* Save = M3 filled button: state layer on hover, level1 elevation only */
+.m3-form-actions .el-button--primary {
+  border-color: transparent;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.m3-form-actions .el-button--primary:hover,
+.m3-form-actions .el-button--primary:focus-visible {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 8%, var(--md-sys-color-primary));
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.m3-form-actions .el-button--primary:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 10%, var(--md-sys-color-primary));
+  box-shadow: none;
+}
+
+.m3-form-actions .el-button--primary.is-disabled,
+.m3-form-actions .el-button--primary.is-disabled:hover {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  box-shadow: none;
+}
+
+/* Dirty-state badge shown in panel heads */
+.unsaved-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-1);
+  height: 24px;
+  padding: 0 var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  font: var(--md-sys-typescale-label-medium);
+  white-space: nowrap;
+}
+
+/* Filter chip / segment (filter bars on market, plugins, logs) */
+.md3-chip {
+  position: relative;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  padding: 0 var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+/* Invisible hit area extension to reach 48px touch target */
+.md3-chip::after {
+  content: '';
+  position: absolute;
+  inset: calc((48px - 100%) / -2) 0;
+}
+
+.md3-chip:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-chip:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+}
+
+.md3-chip.selected,
+.md3-chip[aria-pressed='true'] {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md3-chip.selected:hover,
+.md3-chip[aria-pressed='true']:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
+}
+
+.md3-chip.selected:active,
+.md3-chip[aria-pressed='true']:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 10%, var(--md-sys-color-secondary-container));
+}
+
+/* Status badge (plugin list / detail pane / market) with Material Symbols glyph */
+.status-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--md-space-1);
+  padding: 0 var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+  white-space: nowrap;
+}
+
+/* Leading icon rendered via mask so it tints with the badge's on-color */
+.status-badge::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  background: currentColor;
+}
+
+.status-badge.enabled {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* check_circle */
+.status-badge.enabled::before {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1.4 14.6L6.2 12.2l1.4-1.4 3 3 5.8-5.8 1.4 1.4Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1.4 14.6L6.2 12.2l1.4-1.4 3 3 5.8-5.8 1.4 1.4Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.status-badge.disabled {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* do_not_disturb_on */
+.status-badge.disabled::before {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11H7v-2h10Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm5 11H7v-2h10Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.status-badge.error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* error */
+.status-badge.error::before {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5h2v6h-2Zm1 10.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5h2v6h-2Zm1 10.5a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.status-badge.warning {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+/* warning */
+.status-badge.warning::before {
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 21 12 2l11 19Zm10-6h2v-5h-2Zm1 3.25a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 21 12 2l11 19Zm10-6h2v-5h-2Zm1 3.25a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Shared icon sizing for inline Material Symbols in buttons */
+.m3-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+/* Live/streaming indicator dot (logs page) */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+.live-dot.paused {
+  background: var(--md-sys-color-outline);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--md-sys-color-outline) 12%, transparent);
+}
+
+/* Text action button (inline list/detail actions) */
+.md3-text-button {
+  position: relative;
+  height: 40px;
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--md-space-3);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  cursor: pointer;
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.md3-text-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.md3-text-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+}
+
+.md3-text-button:disabled {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  cursor: default;
+  background: transparent;
+}

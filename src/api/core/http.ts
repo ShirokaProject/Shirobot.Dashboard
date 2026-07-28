@@ -22,6 +22,10 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
       const message = (error.body as { message?: unknown }).message
       if (typeof message === 'string' && message.trim()) return message
     }
+    if (error.body && typeof error.body === 'object' && 'msg' in error.body) {
+      const message = (error.body as { msg?: unknown }).msg
+      if (typeof message === 'string' && message.trim()) return message
+    }
   }
 
   if (error instanceof Error && error.message.trim()) return error.message
@@ -87,4 +91,26 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   }
 
   return await readResponseBody(response) as T
+}
+
+export async function verifyApiAccess(apiBaseUrl: string, token: string) {
+  const baseUrl = apiBaseUrl.trim()
+  const url = baseUrl
+    ? `${baseUrl.replace(/\/$/, '')}/api/v1/auth`
+    : '/api/v1/auth'
+  const headers = new Headers()
+  if (token.trim()) headers.set('Authorization', `Bearer ${token.trim()}`)
+
+  const response = await fetch(url, { headers })
+  if (!response.ok) {
+    let body: unknown = null
+    try {
+      body = await readResponseBody(response)
+    } catch (error) {
+      body = error instanceof ApiError ? error.body : null
+    }
+    throw new ApiError(response.statusText || 'API authentication failed', response.status, body)
+  }
+
+  return await readResponseBody(response) as { ok: boolean }
 }

@@ -21,10 +21,11 @@
         type="button"
         class="bottom-item"
         :class="{ active: isActiveRoute(item.path) }"
+        :aria-current="isActiveRoute(item.path) ? 'page' : undefined"
         @click="$router.push(item.path)"
       >
         <span class="bottom-indicator">
-          <el-icon><component :is="item.icon" /></el-icon>
+          <MaterialSymbol :name="isActiveRoute(item.path) ? `${item.icon}-filled` : item.icon" />
         </span>
         <span>{{ item.short }}</span>
       </button>
@@ -39,6 +40,7 @@ import { useRoute } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
 import PageTransition from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
+import MaterialSymbol from '../components/MaterialSymbol.vue'
 import { menuItems } from './navigation'
 
 const route = useRoute()
@@ -60,22 +62,30 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 
 <style scoped>
 .md3-app-shell {
+  --app-top-bar-height: 96px;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   display: flex;
+  overflow: hidden;
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
 }
 
 .md3-main-area {
   min-width: 0;
+  min-height: 0;
   flex: 1;
   display: flex;
+  overflow-x: hidden;
+  overflow-y: auto;
   flex-direction: column;
+  overscroll-behavior-y: contain;
 }
 
 .md3-content-area {
   flex: 1;
-  overflow: auto;
+  overflow: visible;
   box-sizing: border-box;
   padding: var(--md-space-4) var(--md-space-8) var(--md-space-8);
   width: 100%;
@@ -84,7 +94,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 .md3-content-frame {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - 96px - var(--md-space-4) - var(--md-space-8));
+  min-height: calc(100vh - var(--app-top-bar-height) - var(--md-space-4) - var(--md-space-8));
   overflow: visible;
 }
 
@@ -108,6 +118,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font: var(--md-sys-typescale-label-medium);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
 }
 
 .bottom-indicator {
@@ -117,11 +128,25 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   display: grid;
   place-items: center;
   font-size: 22px;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+/* M3 nav bar: state layer lives on the indicator pill */
+.bottom-item:hover .bottom-indicator {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.bottom-item:active .bottom-indicator {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
 }
 
 .bottom-item.active .bottom-indicator {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
+}
+
+.bottom-item.active:hover .bottom-indicator {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
 }
 
 .bottom-item.active {
@@ -140,7 +165,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   }
 
   .md3-main-area {
-    min-height: calc(100vh - 80px);
+    min-height: 0;
   }
 
   .md3-content-area {
@@ -153,6 +178,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 
   .md3-bottom-bar {
     display: flex;
+    flex: 0 0 80px;
     order: 2;
   }
 }

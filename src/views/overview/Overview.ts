@@ -35,9 +35,9 @@ const emptyShirobotInfo: OverviewInfo = {
 }
 
 const emptyLatestError: OverviewLatestError = {
-  source: '',
   message: '',
-  time: ''
+  time: '',
+  level: ''
 }
 
 const adapterStatusLabel: Record<NonNullable<OverviewResponse['adapter_status']>, string> = {

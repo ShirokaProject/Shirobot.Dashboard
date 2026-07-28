@@ -1,4 +1,4 @@
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useRoute } from 'vue-router'
 import { getApiErrorMessage, getPluginConfig, updatePluginConfig, type PluginConfigMap, type PluginConfigResponse, type PluginConfigSchemaItem, type PluginConfigUpdateResponse, type PluginRoutesConfig } from '../../api'
 
@@ -18,15 +18,13 @@ const emptyRoutes: PluginRoutesConfig = {
 }
 
 function parseGroupList(value: string) {
-  return value
+  return [...new Set(value
     .split(/[,\s]+/)
     .map(item => item.trim())
-    .filter(Boolean)
-    .map(Number)
-    .filter(Number.isFinite)
+    .filter(Boolean))]
 }
 
-function formatGroupList(value: number[]) {
+function formatGroupList(value: string[]) {
   return value.join(', ')
 }
 
@@ -35,7 +33,7 @@ function createFallbackSchema(config: PluginConfigMap): PluginConfigSchemaItem[]
     key,
     label: key,
     type: typeof value === 'boolean' ? 'boolean' : typeof value === 'number' ? 'number' : 'string',
-    description: null,
+    description: '',
     placeholder: null,
     options: [],
     min: null,
@@ -43,18 +41,42 @@ function createFallbackSchema(config: PluginConfigMap): PluginConfigSchemaItem[]
   }))
 }
 
-export function usePluginConfigPage() {
+function fieldType(item: PluginConfigSchemaItem) {
+  return item.type.trim().toLowerCase()
+}
+
+export function usePluginConfigPage(pluginIdSource?: MaybeRefOrGetter<string>) {
   const route = useRoute()
   const activeSection = ref<(typeof sections)[number]['key']>('config')
   const loadError = ref('')
   const saveMessage = ref('')
   const saveMessageType = ref<'success' | 'error'>('success')
+  const saving = ref(false)
   const schema = ref<PluginConfigSchemaItem[]>([])
   const config = reactive<PluginConfigMap>({})
   const routes = reactive<PluginRoutesConfig>({ ...emptyRoutes })
   const routeGroupsInput = ref('')
+  let dismissTimer: ReturnType<typeof setTimeout> | null = null
 
-  const pluginId = computed(() => String(route.params.pluginId ?? 'plugin'))
+  function clearDismissTimer() {
+    if (dismissTimer) {
+      clearTimeout(dismissTimer)
+      dismissTimer = null
+    }
+  }
+
+  function showSaveMessage(message: string, type: 'success' | 'error') {
+    clearDismissTimer()
+    saveMessage.value = message
+    saveMessageType.value = type
+    if (type === 'success') {
+      dismissTimer = setTimeout(() => {
+        saveMessage.value = ''
+      }, 4000)
+    }
+  }
+
+  const pluginId = computed(() => pluginIdSource ? toValue(pluginIdSource) : String(route.params.pluginId ?? 'plugin'))
   const pluginName = computed(() => pluginId.value)
 
   function assignResponse(response: PluginConfigResponse) {
@@ -95,6 +117,9 @@ export function usePluginConfigPage() {
   }
 
   async function savePluginConfig() {
+    if (saving.value) return
+    saving.value = true
+    clearDismissTimer()
     saveMessage.value = ''
     const groups = parseGroupList(routeGroupsInput.value)
     try {
@@ -110,17 +135,21 @@ export function usePluginConfigPage() {
       } else {
         await loadPluginConfig()
       }
-      saveMessageType.value = 'success'
-      saveMessage.value = '插件配置已保存'
+      showSaveMessage('插件配置已保存', 'success')
     } catch (error) {
-      saveMessageType.value = 'error'
-      saveMessage.value = getApiErrorMessage(error, '插件配置保存失败')
+      showSaveMessage(getApiErrorMessage(error, '插件配置保存失败'), 'error')
       console.error('Plugin config save failed', error)
+    } finally {
+      saving.value = false
     }
   }
 
-  onMounted(() => {
+  watch(pluginId, () => {
     void loadPluginConfig()
+  }, { immediate: true })
+
+  onBeforeUnmount(() => {
+    clearDismissTimer()
   })
 
   return {
@@ -134,6 +163,8 @@ export function usePluginConfigPage() {
     loadError,
     saveMessage,
     saveMessageType,
+    saving,
+    fieldType,
     savePluginConfig
   }
 }

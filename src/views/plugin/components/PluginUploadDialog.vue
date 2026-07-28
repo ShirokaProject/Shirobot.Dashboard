@@ -91,20 +91,21 @@
         <div v-if="uploadResult.conflict?.exists" class="upload-conflict-panel">
           <strong>检测到已安装同 ID 插件</strong>
           <span>将替换 {{ uploadResult.conflict.installed_version || '当前版本' }} 为 {{ uploadResult.conflict.uploaded_version || uploadResult.plugin.version }}</span>
+          <span v-if="!replace">必须启用“替换已安装插件”才能继续安装。</span>
         </div>
 
         <label class="upload-option-row" v-if="uploadResult.conflict?.exists">
           <span>替换已安装插件</span>
-          <input type="checkbox" :checked="replace" @change="emit('update:replace', ($event.target as HTMLInputElement).checked)" />
+          <el-switch :model-value="replace" aria-label="替换已安装插件" @change="(value: string | number | boolean) => emit('update:replace', Boolean(value))" />
         </label>
 
         <label class="upload-option-row">
           <span>安装后启用插件</span>
-          <input type="checkbox" :checked="enable" @change="emit('update:enable', ($event.target as HTMLInputElement).checked)" />
+          <el-switch :model-value="enable" aria-label="安装后启用插件" @change="(value: string | number | boolean) => emit('update:enable', Boolean(value))" />
         </label>
       </div>
 
-      <div v-if="uploadError" class="upload-error-panel">{{ uploadError }}</div>
+      <div v-if="uploadError" class="upload-error-panel" role="alert" aria-live="assertive">{{ uploadError }}</div>
     </div>
 
     <template #footer>
@@ -115,7 +116,7 @@
         <button v-if="!uploadResult" type="button" class="md3-dialog-action tonal" :disabled="!selectedFile || parsing" @click="emit('submit')">
           {{ parsing ? '解析中...' : '提交解析' }}
         </button>
-        <button v-else type="button" class="md3-dialog-action tonal" :disabled="installing" @click="emit('confirm')">
+        <button v-else type="button" class="md3-dialog-action tonal" :disabled="installing || confirmBlocked" @click="emit('confirm')">
           {{ installing ? '安装中...' : '确认安装' }}
         </button>
       </div>
@@ -124,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { UploadFile } from 'element-plus'
 import type { PluginUploadParsedResponse } from '../../../api'
 
@@ -152,6 +154,8 @@ const emit = defineEmits<{
   submit: []
   confirm: []
 }>()
+
+const confirmBlocked = computed(() => Boolean(props.uploadResult?.conflict?.exists && !props.replace))
 
 function formatSize(size: number) {
   if (size < 1024) return `${size} B`

@@ -94,15 +94,19 @@
             </template>
 
             <section v-else class="demo-card">
-              <span class="demo-icon" aria-hidden="true">✦</span>
+              <span class="demo-icon" aria-hidden="true"><MaterialSymbol name="box" /></span>
               <div>
                 <strong>演示模式</strong>
                 <p>使用内置演示数据，不请求后端，适合截图、预览和 UI 审查。</p>
               </div>
             </section>
 
+            <div v-if="loginError" class="login-error" role="alert">{{ loginError }}</div>
+
             <div class="form-actions">
-              <button type="submit" class="md3-button filled-tonal">进入</button>
+              <button type="submit" class="md3-button filled-tonal" :disabled="submitting">
+                {{ submitting ? '验证中...' : '进入' }}
+              </button>
             </div>
           </form>
         </section>
@@ -113,6 +117,7 @@
 
 <script setup lang="ts">
 import avatarUrl from '../../assets/images/avatar.png'
+import MaterialSymbol from '../../components/MaterialSymbol.vue'
 import ThemeControls from '../../layout/components/ThemeControls.vue'
 import { useLoginPage } from './Login'
 
@@ -123,6 +128,8 @@ const {
   selectedProfileId,
   isDemoMode,
   showEndpointSettings,
+  loginError,
+  submitting,
   selectProfile,
   submitLogin,
   toggleEndpointSettings

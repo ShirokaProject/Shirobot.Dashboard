@@ -1,5 +1,6 @@
-import { computed, onMounted, reactive, ref } from 'vue'
-import { getAppConfig, updateAppConfig, type AppConfig } from '../../api'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfig } from '../../api'
+import { getDashboardSession, saveDashboardSession } from '../../auth/session'
 
 const sections = [
   { key: 'general', label: '通用', description: '协议、日志、控制台与界面主题配置。' },
@@ -46,7 +47,7 @@ const emptyForm: ConfigForm = {
   protocol: emptyConfig.protocol,
   enable_log: emptyConfig.enable_log,
   disable_console_input: emptyConfig.disable_console_input,
-  github_proxy: emptyConfig.github_proxy,
+  github_proxy: emptyConfig.github_proxy ?? '',
   host_update_repository: emptyConfig.host_update_repository,
   avalonia_theme: emptyConfig.avalonia_theme,
   owner_list: '',
@@ -59,17 +60,15 @@ const emptyForm: ConfigForm = {
   api_token: emptyConfig.api.token
 }
 
-function formatIdList(value: number[]) {
+function formatIdList(value: string[]) {
   return value.join(', ')
 }
 
 function parseIdList(value: string) {
-  return value
+  return [...new Set(value
     .split(/[,\s]+/)
     .map(item => item.trim())
-    .filter(Boolean)
-    .map(Number)
-    .filter(Number.isFinite)
+    .filter(Boolean))]
 }
 
 function formatStringList(value: string[]) {
@@ -88,7 +87,7 @@ function configToForm(config: AppConfig): ConfigForm {
     protocol: config.protocol,
     enable_log: config.enable_log,
     disable_console_input: config.disable_console_input,
-    github_proxy: config.github_proxy,
+    github_proxy: config.github_proxy ?? '',
     host_update_repository: config.host_update_repository,
     avalonia_theme: config.avalonia_theme,
     owner_list: formatIdList(config.owner_list),
@@ -107,7 +106,7 @@ function formToConfig(form: ConfigForm): AppConfig {
     protocol: form.protocol,
     enable_log: form.enable_log,
     disable_console_input: form.disable_console_input,
-    github_proxy: form.github_proxy,
+    github_proxy: form.github_proxy.trim() || null,
     host_update_repository: form.host_update_repository,
     avalonia_theme: form.avalonia_theme,
     owner_list: parseIdList(form.owner_list),
@@ -128,48 +127,87 @@ export function useConfigPage() {
   const currentSection = computed(() => sections.find(section => section.key === activeSection.value) ?? sections[0])
   const loadError = ref('')
   const saveMessage = ref('')
-  let lastLoadedForm: ConfigForm = { ...emptyForm }
+  const saveMessageType = ref<'success' | 'error'>('success')
+  const saving = ref(false)
+  const baseline = ref<ConfigForm>({ ...emptyForm })
+  let dismissTimer: ReturnType<typeof setTimeout> | null = null
 
   const form = reactive<ConfigForm>({ ...emptyForm })
+
+  const isDirty = computed(() => (Object.keys(emptyForm) as (keyof ConfigForm)[]).some(key => form[key] !== baseline.value[key]))
 
   function assignForm(config: ConfigForm) {
     Object.assign(form, config)
   }
 
+  function clearDismissTimer() {
+    if (dismissTimer) {
+      clearTimeout(dismissTimer)
+      dismissTimer = null
+    }
+  }
+
+  function showSaveMessage(message: string, type: 'success' | 'error') {
+    clearDismissTimer()
+    saveMessage.value = message
+    saveMessageType.value = type
+    if (type === 'success') {
+      dismissTimer = setTimeout(() => {
+        saveMessage.value = ''
+      }, 4000)
+    }
+  }
+
   async function loadConfig() {
     loadError.value = ''
+    clearDismissTimer()
     saveMessage.value = ''
     try {
-      lastLoadedForm = configToForm(await getAppConfig())
-      assignForm(lastLoadedForm)
+      baseline.value = configToForm(await getAppConfig())
+      assignForm(baseline.value)
     } catch (error) {
-      lastLoadedForm = { ...emptyForm }
-      assignForm(lastLoadedForm)
+      baseline.value = { ...emptyForm }
+      assignForm(baseline.value)
       loadError.value = '后端配置接口暂不可用，请接入 /api/v1/config 后刷新。'
       void error
     }
   }
 
   async function saveConfig() {
+    if (saving.value) return
+    saving.value = true
+    clearDismissTimer()
     saveMessage.value = ''
     try {
       const payload = formToConfig(form)
       const response = await updateAppConfig(payload)
-      lastLoadedForm = configToForm(payload)
-      assignForm(lastLoadedForm)
-      saveMessage.value = response.msg || '配置更新成功'
+      const session = getDashboardSession()
+      if (session?.mode === 'api' && session.token !== payload.api.token) {
+        saveDashboardSession({ ...session, token: payload.api.token })
+      }
+      baseline.value = configToForm(payload)
+      assignForm(baseline.value)
+      showSaveMessage(response.msg || '配置更新成功', 'success')
     } catch (error) {
       console.error('App config save failed', error)
-      saveMessage.value = '配置保存失败'
+      showSaveMessage(getApiErrorMessage(error, '配置保存失败'), 'error')
+    } finally {
+      saving.value = false
     }
   }
 
   function resetConfig() {
-    assignForm(lastLoadedForm)
+    assignForm(baseline.value)
+    clearDismissTimer()
+    saveMessage.value = ''
   }
 
   onMounted(() => {
     void loadConfig()
+  })
+
+  onBeforeUnmount(() => {
+    clearDismissTimer()
   })
 
   return {
@@ -177,8 +215,11 @@ export function useConfigPage() {
     activeSection,
     currentSection,
     form,
+    isDirty,
+    saving,
     loadError,
     saveMessage,
+    saveMessageType,
     saveConfig,
     resetConfig
   }

@@ -1,13 +1,10 @@
+/* M3 scrim: plain 32% scrim color, no blur */
 :global(.plugin-upload-overlay) {
   position: fixed !important;
   inset: 0 !important;
   display: grid;
   place-items: center;
-  background:
-    linear-gradient(color-mix(in srgb, var(--md-sys-color-primary-container) 6%, transparent), color-mix(in srgb, var(--md-sys-color-primary-container) 6%, transparent)),
-    color-mix(in srgb, var(--md-sys-color-scrim, #000) 30%, transparent) !important;
-  backdrop-filter: blur(16px) saturate(1.04);
-  -webkit-backdrop-filter: blur(16px) saturate(1.04);
+  background: color-mix(in srgb, var(--md-sys-color-scrim, #000) 32%, transparent) !important;
 }
 
 :global(.plugin-upload-overlay .el-overlay-dialog) {
@@ -20,12 +17,13 @@
   padding: var(--md-space-6);
 }
 
+/* M3 dialog: surface-container-high, extra-large corners, level3 elevation */
 :global(.plugin-upload-dialog),
 :deep(.plugin-upload-dialog) {
   width: min(560px, calc(100vw - 32px)) !important;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-extra-large);
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 18%, var(--md-sys-color-surface-container-lowest));
+  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
   box-shadow: var(--md-sys-elevation-level3);
 }
@@ -80,7 +78,7 @@
   position: relative;
   height: 150px;
   overflow: hidden;
-  border-radius: var(--md-sys-shape-corner-extra-large);
+  border-radius: var(--md-sys-shape-corner-large);
   background:
     radial-gradient(circle at 22% 22%, color-mix(in srgb, var(--md-sys-color-primary-container) 16%, transparent), transparent 34%),
     radial-gradient(circle at 82% 78%, color-mix(in srgb, var(--md-sys-color-primary-container) 18%, transparent), transparent 38%),
@@ -276,10 +274,9 @@
   border-radius: var(--md-sys-shape-corner-large);
   background: color-mix(in srgb, var(--md-sys-color-primary-container) 8%, var(--md-sys-color-surface-container-lowest));
   transition:
-    border-color var(--md-sys-motion-duration-short4),
-    background var(--md-sys-motion-duration-short4),
-    transform var(--md-sys-motion-duration-short4),
-    box-shadow var(--md-sys-motion-duration-short4);
+    border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 :global(.plugin-upload-dialog .el-upload-dragger:hover),
@@ -287,7 +284,6 @@
   border-color: color-mix(in srgb, var(--md-sys-color-primary) 36%, var(--md-sys-color-outline-variant));
   background: color-mix(in srgb, var(--md-sys-color-primary-container) 16%, var(--md-sys-color-surface-container-lowest));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
-  transform: translateY(-1px);
 }
 
 .upload-dropzone-text {
@@ -437,22 +433,25 @@
   font: var(--md-sys-typescale-body-medium);
 }
 
+/* Warning panel: tertiary-container pairing (project warning convention) */
 .upload-conflict-panel {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--md-space-1);
   padding: var(--md-space-3);
   border-radius: var(--md-sys-shape-corner-medium);
-  background: color-mix(in srgb, #fff176 18%, var(--md-sys-color-surface-container-lowest));
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
 }
 
 .upload-conflict-panel strong {
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-tertiary-container);
   font: var(--md-sys-typescale-label-large);
 }
 
+/* Option rows: 48px list items, whole row clickable via label */
 .upload-option-row {
-  min-height: 44px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -462,16 +461,17 @@
   background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 48%, transparent);
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-label-large);
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.upload-option-row input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--md-sys-color-primary);
+.upload-option-row:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface-container-high));
 }
 
 .upload-error-panel {
   padding: var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-medium);
   background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
   font: var(--md-sys-typescale-body-medium);
@@ -509,14 +509,24 @@
   background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
 }
 
+.md3-dialog-action.text:active {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+}
+
+/* Filled tonal: full container color, hover 8% / pressed 10% state layers */
 .md3-dialog-action.tonal {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 42%, var(--md-sys-color-surface-container-lowest));
+  background: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
 }
 
 .md3-dialog-action.tonal:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 46%, var(--md-sys-color-primary));
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 8%, var(--md-sys-color-primary-container));
   box-shadow: var(--md-sys-elevation-level1);
+}
+
+.md3-dialog-action.tonal:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 10%, var(--md-sys-color-primary-container));
+  box-shadow: none;
 }
 
 .md3-dialog-action:disabled,

@@ -7,6 +7,21 @@ import App from './App.vue'
 import router from './router'
 import { hasDashboardSession } from './auth/session'
 import { preloadDashboardPages } from './router/pageLoaders'
+import {
+  DEFAULT_COLOR_THEME,
+  THEME_STORAGE_KEYS,
+  applyColorMode,
+  applyColorTheme,
+  isColorModeKey,
+  isColorThemeKey
+} from './theme'
+
+// Bootstrap the dynamic M3 scheme before mount so every page (incl. login)
+// gets generated colors instead of the static CSS fallback.
+const savedColor = localStorage.getItem(THEME_STORAGE_KEYS.color)
+const savedMode = localStorage.getItem(THEME_STORAGE_KEYS.mode)
+applyColorTheme(isColorThemeKey(savedColor) ? savedColor : DEFAULT_COLOR_THEME)
+if (isColorModeKey(savedMode)) applyColorMode(savedMode)
 
 const app = createApp(App)
 app.use(router)

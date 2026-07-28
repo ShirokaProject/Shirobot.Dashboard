@@ -1,31 +1,35 @@
+/*
+ * Plugin detail popup — Android Quick-Settings inspired (nng refs):
+ * hero identity block, grouped list rows on a single tonal sheet,
+ * footer bar with text/outlined/filled pill actions.
+ */
 .plugin-detail-pane {
-  position: sticky;
-  top: 0;
   display: flex;
-  height: var(--plugin-panel-height, calc(100vh - 224px));
+  max-height: min(78vh, 860px);
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-extra-large);
-  background: var(--md-sys-color-surface-container-lowest);
+  background: var(--md-sys-color-surface-container-high);
 }
 
-.detail-side-header {
+/* ---------- Hero ---------- */
+.detail-hero {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  gap: var(--md-space-3);
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: var(--md-space-4);
   align-items: start;
-  padding: var(--md-space-4);
-  background: var(--md-sys-color-surface-container-low);
+  padding: var(--md-space-6) var(--md-space-6) var(--md-space-4);
 }
 
+/* M3 avatar: full circle */
 .plugin-avatar {
   width: 40px;
   height: 40px;
-  border-radius: var(--md-sys-shape-corner-large);
+  border-radius: var(--md-sys-shape-corner-full);
   display: grid;
   place-items: center;
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface-variant);
 }
 
@@ -55,295 +59,257 @@
   height: 56px;
 }
 
-.detail-heading {
+.plugin-avatar.large svg {
+  width: 28px;
+  height: 28px;
+}
+
+.hero-text {
   min-width: 0;
 }
 
-.detail-title-line {
+.hero-title-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--md-space-2);
+  flex-wrap: wrap;
 }
 
-.detail-title-line h2 {
+.hero-title-line h2 {
   margin: 0;
-  font: var(--md-sys-typescale-title-medium);
+  font: var(--md-sys-typescale-title-large);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
 }
 
-.detail-side-header p,
-.detail-card-head p {
+.hero-description {
   margin: var(--md-space-1) 0 0;
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-small);
+  font: var(--md-sys-typescale-body-medium);
+  letter-spacing: var(--md-sys-typescale-body-medium-tracking);
 }
 
-.status-badge,
-.md3-chip {
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 var(--md-space-3);
-  border-radius: var(--md-sys-shape-corner-full);
+.hero-meta {
+  margin: var(--md-space-1) 0 0;
+  color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-label-medium);
-  white-space: nowrap;
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
 }
 
-.status-badge.enabled {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-
-.status-badge.disabled {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.status-badge.error {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-}
-
-.detail-side-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--md-space-2);
-  padding: var(--md-space-3) var(--md-space-4) var(--md-space-4);
-  background: var(--md-sys-color-surface-container-low);
-}
-
-.detail-action-button,
-.small-tonal-button {
+/* Icon button: 40px visual, 48px hit area, state layers */
+.detail-close-button {
+  position: relative;
+  width: 40px;
   height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   border: 0;
   border-radius: var(--md-sys-shape-corner-full);
-  cursor: pointer;
-  font: var(--md-sys-typescale-label-large);
-  transition:
-    background var(--md-sys-motion-duration-short4),
-    color var(--md-sys-motion-duration-short4),
-    box-shadow var(--md-sys-motion-duration-short4);
-}
-
-.detail-action-button.tonal {
-  padding: 0 var(--md-space-5);
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-
-.detail-action-button.tonal:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 88%, var(--md-sys-color-primary));
-}
-
-.plugin-command-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--md-space-2);
-}
-
-.plugin-command-button {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--md-space-3);
-  padding: var(--md-space-2) var(--md-space-3);
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
-  cursor: pointer;
-  text-align: left;
-}
-
-.plugin-command-button > span:first-child {
-  min-width: 0;
-}
-
-.plugin-command-button strong,
-.plugin-command-button small {
-  display: block;
-}
-
-.plugin-command-button strong {
-  font: var(--md-sys-typescale-label-large);
-}
-
-.plugin-command-button small,
-.plugin-command-button > span:last-child,
-.action-loading,
-.action-empty {
+  background: transparent;
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-small);
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.plugin-command-button.primary {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+.detail-close-button::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
 }
 
-.plugin-command-button.primary small,
-.plugin-command-button.primary > span:last-child {
-  color: var(--md-sys-color-on-primary-container);
-  opacity: 0.76;
+.detail-close-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
 }
 
-.plugin-command-button.warning {
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
+.detail-close-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
 }
 
-.plugin-command-button.warning small,
-.plugin-command-button.warning > span:last-child {
-  color: var(--md-sys-color-on-tertiary-container);
-  opacity: 0.76;
+.detail-close-button svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
 }
 
-.plugin-command-button.danger {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-}
-
-.plugin-command-button.danger small,
-.plugin-command-button.danger > span:last-child {
-  color: var(--md-sys-color-on-error-container);
-  opacity: 0.76;
-}
-
-.plugin-command-button:disabled {
-  opacity: 0.62;
-  cursor: default;
-}
-
-.action-error {
-  padding: var(--md-space-3);
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-  font: var(--md-sys-typescale-body-small);
-}
-
-.action-empty {
-  margin: 0;
-}
-
-.detail-action-button.danger {
-  min-width: 72px;
-  padding: 0 var(--md-space-4);
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-}
-
-.detail-action-button.danger:hover {
-  background: color-mix(in srgb, var(--md-sys-color-error-container) 86%, var(--md-sys-color-error));
-}
-
-.detail-side-body {
-  display: flex;
+/* ---------- Scrollable grouped list ---------- */
+.detail-scroll {
+  min-height: 0;
   flex: 1;
+  display: flex;
   flex-direction: column;
   gap: var(--md-space-3);
   overflow-y: auto;
-  padding: var(--md-space-3);
+  padding: 0 var(--md-space-4) var(--md-space-4);
 }
 
-.detail-section-panel {
-  padding: var(--md-space-4);
-  border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-surface-container-low);
-}
-
-.detail-section-title {
-  color: var(--md-sys-color-on-surface);
-  font: var(--md-sys-typescale-title-small);
-}
-
-.detail-kv-list {
+/* A group = stack of rows with 2px gaps; outer corners large, inner corners tight
+   (Android settings list pattern, nng/image-51) */
+.detail-group {
   display: flex;
   flex-direction: column;
-  gap: var(--md-space-2);
-  margin: var(--md-space-3) 0 0;
+  gap: 2px;
 }
 
-.detail-kv-row {
-  min-height: 34px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--md-space-3);
-  align-items: center;
-  padding: 0;
-}
-
-.detail-kv-row + .detail-kv-row {
-  padding-top: var(--md-space-2);
-  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 38%, transparent);
-}
-
-.detail-kv-row dt {
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-medium);
-}
-
-.detail-kv-row dd {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  color: var(--md-sys-color-on-surface);
-  font: var(--md-sys-typescale-label-large);
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detail-card-head {
+.group-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--md-space-3);
+  gap: var(--md-space-4);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--md-space-3) var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  text-align: left;
+  box-sizing: border-box;
 }
 
-.detail-card-head.compact {
-  margin-bottom: var(--md-space-3);
+.detail-group .group-row:first-child {
+  border-top-left-radius: var(--md-sys-shape-corner-large);
+  border-top-right-radius: var(--md-sys-shape-corner-large);
 }
 
-.error-card {
+.detail-group .group-row:last-child {
+  border-bottom-left-radius: var(--md-sys-shape-corner-large);
+  border-bottom-right-radius: var(--md-sys-shape-corner-large);
+}
+
+.group-row.interactive {
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.group-row.interactive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface-container-lowest));
+}
+
+.group-row.interactive:active:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, var(--md-sys-color-surface-container-lowest));
+}
+
+.group-row.interactive:disabled {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, var(--md-sys-color-surface-container-lowest));
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  cursor: default;
+}
+
+.group-row.interactive:disabled .row-text small {
+  color: inherit;
+}
+
+.row-text {
+  min-width: 0;
+}
+
+.row-text strong {
+  display: block;
+  font: var(--md-sys-typescale-title-small);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+.row-text small {
+  display: block;
+  margin-top: 2px;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+.row-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-1);
+  flex: 0 0 auto;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  font-variant-numeric: tabular-nums;
+}
+
+.row-value em {
+  font-style: normal;
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+}
+
+.row-link {
+  max-width: 62%;
+  overflow-wrap: anywhere;
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  text-align: right;
+  text-decoration: none;
+}
+
+.row-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.row-value .arrow {
+  width: 14px;
+  height: 14px;
+  fill: var(--md-sys-color-on-surface-variant);
+}
+
+.m3-icon.chevron {
+  flex: 0 0 auto;
+  fill: var(--md-sys-color-on-surface-variant);
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.m3-icon.chevron.open {
+  transform: rotate(180deg);
+}
+
+/*
+ * Tone variants for backend actions.
+ * All rows share the same surface background (uniform list, per M3 settings
+ * pattern); tone is expressed via title/chevron color only.
+ */
+.group-row.primary .row-text strong {
+  color: var(--md-sys-color-primary);
+}
+
+.group-row.primary .m3-icon.chevron {
+  fill: var(--md-sys-color-primary);
+}
+
+.group-row.warning .row-text strong {
+  color: var(--md-sys-color-tertiary);
+}
+
+.group-row.warning .m3-icon.chevron {
+  fill: var(--md-sys-color-tertiary);
+}
+
+.group-row.danger .row-text strong {
+  color: var(--md-sys-color-error);
+}
+
+.group-row.danger .m3-icon.chevron {
+  fill: var(--md-sys-color-error);
+}
+
+/* Static error alert row keeps the error-container pairing (it is a status, not an action) */
+.group-row.error-row {
   background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
 }
 
-.error-card .detail-section-title {
+.group-row.error-row .row-text small {
   color: var(--md-sys-color-on-error-container);
+  opacity: 0.8;
 }
 
-.error-box {
-  margin-top: var(--md-space-2);
-  color: var(--md-sys-color-on-error-container);
-  font: var(--md-sys-typescale-body-medium);
-}
-
-.small-tonal-button {
-  height: 32px;
-  min-width: 56px;
-  padding: 0 var(--md-space-3);
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-  font: var(--md-sys-typescale-label-medium);
-}
-
-.small-tonal-button:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 88%, var(--md-sys-color-primary));
-}
-
-.version-history,
-.permission-list {
+/* Expanded history rows */
+.group-row.history-rows {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--md-space-2);
-  margin-top: var(--md-space-3);
 }
 
 .history-item {
@@ -351,23 +317,135 @@
   justify-content: space-between;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-small);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  font-variant-numeric: tabular-nums;
 }
 
-.permission-list {
-  align-items: flex-start;
-  flex-direction: row;
+/* Permissions */
+.group-row.wrap {
   flex-wrap: wrap;
 }
 
-.md3-chip {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface-variant);
+.permission-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-space-2);
 }
 
-@media (max-width: 1199px) {
-  .plugin-detail-pane {
-    position: static;
-    height: auto;
-    min-height: auto;
-  }
+.permission-chip {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+  white-space: nowrap;
+}
+
+/* ---------- Footer bar (QS panel: Settings … Done) ---------- */
+.detail-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  padding: var(--md-space-3) var(--md-space-4) var(--md-space-4);
+}
+
+.footer-spacer {
+  flex: 1;
+}
+
+.footer-button {
+  position: relative;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--md-space-1);
+  padding: 0 var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  cursor: pointer;
+  font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.footer-button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+/* Destructive text button */
+.footer-button.danger-text {
+  background: transparent;
+  color: var(--md-sys-color-error);
+}
+
+.footer-button.danger-text:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-error) 8%, transparent);
+}
+
+.footer-button.danger-text:active:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+}
+
+/* Outlined button */
+.footer-button.outlined {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+}
+
+.footer-button.outlined:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.footer-button.outlined:active:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
+}
+
+.footer-button.config-toggle.active {
+  border-color: transparent;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.footer-button.config-toggle.active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
+}
+
+/* Filled button */
+.footer-button.filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.footer-button.filled:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 8%, var(--md-sys-color-primary));
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.footer-button.filled:active:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) 10%, var(--md-sys-color-primary));
+  box-shadow: none;
+}
+
+/* M3 disabled: 12% container / 38% content */
+.footer-button:disabled {
+  border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  cursor: default;
+  box-shadow: none;
+}
+
+.footer-button.danger-text:disabled {
+  background: transparent;
 }

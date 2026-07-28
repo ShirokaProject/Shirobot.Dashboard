@@ -9,7 +9,7 @@ export interface PluginUploadPackageInfo {
 
 export interface PluginUploadConflictInfo {
   exists: boolean
-  installed_version?: string
+  installed_version?: string | null
   uploaded_version?: string
   action?: 'replace' | string
 }
@@ -19,14 +19,14 @@ export interface PluginUploadParsedResponse {
   status: 'parsed'
   source?: {
     type: string
-    repository: string
-    release_name: string
-    release_version: string
-    release_url: string
+    repository: string | null
+    release_name: string | null
+    release_version: string | null
+    release_url: string | null
     asset_name: string
     asset_type: string
   }
-  plugin: BackendPlugin
+  plugin: PluginPackageInfo
   package: PluginUploadPackageInfo
   conflict?: PluginUploadConflictInfo | null
 }
@@ -84,15 +84,18 @@ export interface GithubPluginInstallRequest {
   assetSha256: string
 }
 
-export interface BackendPlugin {
+export interface PluginPackageInfo {
   id: string
   name: string
   version: string
-  enable?: boolean
   author?: string
   repo?: string
   description?: string
   category?: string
+}
+
+export interface BackendPlugin extends PluginPackageInfo {
+  enable: boolean
   status?: Plugin['status']
   latestVersion?: string
   hasUpdate?: boolean
@@ -103,13 +106,16 @@ export interface BackendPlugin {
 
 function normalizePlugin(plugin: BackendPlugin): Plugin {
   const status = plugin.status ?? (plugin.enable ? 'enabled' : 'disabled')
+  const enabled = plugin.enable ?? status !== 'disabled'
 
   return {
     id: plugin.id,
     name: plugin.name,
     author: plugin.author || 'Unknown',
+    repository: plugin.repo,
     version: plugin.version,
     latestVersion: plugin.latestVersion ?? plugin.version,
+    enabled,
     status,
     hasUpdate: plugin.hasUpdate ?? false,
     category: plugin.category || 'Other',

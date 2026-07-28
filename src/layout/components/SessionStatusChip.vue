@@ -1,6 +1,14 @@
 <template>
   <div ref="sessionRoot" class="session-control">
-    <button type="button" class="session-chip" :class="session?.mode ?? 'none'" @click="menuOpen = !menuOpen">
+    <button
+      type="button"
+      class="session-chip"
+      :class="session?.mode ?? 'none'"
+      aria-haspopup="menu"
+      :aria-expanded="menuOpen"
+      @click="menuOpen = !menuOpen"
+      @keydown.escape="menuOpen = false"
+    >
       <span class="status-dot" aria-hidden="true"></span>
       <span class="session-main">
         <strong>{{ modeLabel }}</strong>
@@ -9,9 +17,9 @@
     </button>
 
     <Transition name="session-menu-fade">
-      <div v-if="menuOpen" class="session-menu">
-        <button type="button" @click="goLogin">切换登录</button>
-        <button type="button" class="danger" @click="logout">退出登录</button>
+      <div v-if="menuOpen" class="session-menu" role="menu" @keydown.escape="menuOpen = false">
+        <button type="button" role="menuitem" @click="goLogin">切换登录</button>
+        <button type="button" role="menuitem" class="danger" @click="logout">退出登录</button>
       </div>
     </Transition>
   </div>
@@ -19,13 +27,19 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 import { clearDashboardSession, getDashboardSession, getSessionModeLabel, getSessionStatusLabel } from '../../auth/session'
 
 const router = useRouter()
+const route = useRoute()
 const menuOpen = ref(false)
 const sessionRoot = ref<HTMLElement | null>(null)
-const session = computed(() => getDashboardSession())
+// Session lives in localStorage (not reactive); re-read whenever the route changes
+const session = computed(() => {
+  void route.fullPath
+  return getDashboardSession()
+})
 const modeLabel = computed(() => getSessionModeLabel(session.value))
 const statusLabel = computed(() => getSessionStatusLabel(session.value))
 
@@ -34,8 +48,17 @@ function goLogin() {
   router.push('/login')
 }
 
-function logout() {
+async function logout() {
   menuOpen.value = false
+  try {
+    await ElMessageBox.confirm('退出后需要重新连接才能继续管理。', '退出登录', {
+      type: 'warning',
+      confirmButtonText: '退出',
+      cancelButtonText: '取消'
+    })
+  } catch {
+    return
+  }
   clearDashboardSession()
   router.replace('/login')
 }
@@ -75,11 +98,28 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-secondary-container);
   cursor: pointer;
   text-align: left;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.session-chip:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
+}
+
+.session-chip:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 10%, var(--md-sys-color-secondary-container));
 }
 
 .session-chip.demo {
   background: var(--md-sys-color-tertiary-container);
   color: var(--md-sys-color-on-tertiary-container);
+}
+
+.session-chip.demo:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-tertiary-container) 8%, var(--md-sys-color-tertiary-container));
+}
+
+.session-chip.demo:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-tertiary-container) 10%, var(--md-sys-color-tertiary-container));
 }
 
 .status-dot {
@@ -105,13 +145,16 @@ onBeforeUnmount(() => {
 
 .session-main strong {
   font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
 }
 
 .session-main small {
   opacity: 0.72;
   font: var(--md-sys-typescale-body-small);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
 }
 
+/* M3 menu: small corner, level2 elevation */
 .session-menu {
   position: absolute;
   z-index: 40;
@@ -123,44 +166,48 @@ onBeforeUnmount(() => {
   gap: 2px;
   padding: var(--md-space-2);
   border: 0;
-  border-radius: var(--md-sys-shape-corner-medium);
+  border-radius: var(--md-sys-shape-corner-small);
   background: var(--md-sys-color-surface-container);
   box-shadow: var(--md-sys-elevation-level2);
   transform-origin: top right;
 }
 
-.session-menu-fade-enter-active,
+.session-menu-fade-enter-active {
+  transition:
+    opacity var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-emphasized-decelerate),
+    transform var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
 .session-menu-fade-leave-active {
   transition:
-    opacity 160ms ease,
-    transform 160ms ease,
-    filter 160ms ease;
+    opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized-accelerate),
+    transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-emphasized-accelerate);
 }
 
 .session-menu-fade-enter-from,
 .session-menu-fade-leave-to {
   opacity: 0;
-  filter: blur(2px);
   transform: translateY(-6px) scale(0.98);
 }
 
 .session-menu-fade-enter-to,
 .session-menu-fade-leave-from {
   opacity: 1;
-  filter: blur(0);
   transform: translateY(0) scale(1);
 }
 
 .session-menu button {
   height: 40px;
   border: 0;
-  border-radius: var(--md-sys-shape-corner-medium);
+  border-radius: var(--md-sys-shape-corner-extra-small);
   padding: 0 var(--md-space-3);
   background: transparent;
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
   text-align: left;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .session-menu button:hover {
@@ -168,13 +215,21 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-surface);
 }
 
+.session-menu button:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+}
+
 .session-menu button.danger {
   color: var(--md-sys-color-error);
 }
 
 .session-menu button.danger:hover {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
+  background: color-mix(in srgb, var(--md-sys-color-error) 8%, transparent);
+  color: var(--md-sys-color-error);
+}
+
+.session-menu button.danger:active {
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
 }
 
 @media (max-width: 599px) {

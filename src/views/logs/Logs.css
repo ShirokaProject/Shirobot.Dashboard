@@ -37,11 +37,8 @@
 }
 
 .search-icon svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  font-size: 20px;
+  fill: currentColor;
 }
 
 .search-container input {
@@ -53,27 +50,12 @@
   font: var(--md-sys-typescale-body-medium);
 }
 
+/* Chips inside use the global .md3-chip class */
 .kind-chip-group {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px;
-}
-
-.kind-chip {
-  height: 36px;
-  padding: 0 var(--md-space-3);
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  font: var(--md-sys-typescale-label-large);
-}
-
-.kind-chip.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  gap: var(--md-space-1);
+  padding: var(--md-space-1);
 }
 
 .live-toggle,
@@ -87,26 +69,42 @@
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.live-toggle:hover,
+.refresh-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface-container-low));
+}
+
+.live-toggle:active,
+.refresh-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, var(--md-sys-color-surface-container-low));
 }
 
 .live-toggle.active {
   color: var(--md-sys-color-primary);
 }
 
-.live-indicator,
-.live-dot {
-  border-radius: var(--md-sys-shape-corner-full);
-  background: currentColor;
-}
-
 .live-indicator {
   width: 8px;
   height: 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: currentColor;
 }
 
 .refresh-button {
   background: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
+}
+
+.refresh-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 8%, var(--md-sys-color-primary-container));
+}
+
+.refresh-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 10%, var(--md-sys-color-primary-container));
 }
 
 .logs-layout {
@@ -132,17 +130,7 @@
   font: var(--md-sys-typescale-label-large);
 }
 
-.live-dot {
-  width: 8px;
-  height: 8px;
-  color: #2f9d68;
-  box-shadow: 0 0 0 5px rgb(47 157 104 / 12%);
-}
-
-.live-dot.paused {
-  color: var(--md-sys-color-outline);
-  box-shadow: none;
-}
+/* .live-dot styles come from global styles/components.css (token-based) */
 
 .source-item {
   min-height: 48px;
@@ -159,13 +147,28 @@
   text-align: left;
 }
 
-.source-item:hover {
-  background: var(--md-sys-color-surface-container-low);
+.source-item {
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
+.source-item:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.source-item:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+}
+
+/* Selection: secondary-container per M3 semantics */
 .source-item.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.source-item.active:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
 }
 
 .source-mark {
@@ -221,8 +224,7 @@
 
 .terminal-panel {
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 46%, transparent);
-  border-radius: var(--md-sys-shape-corner-extra-large);
+  border-radius: var(--md-sys-shape-corner-large);
   background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface);
 }
@@ -281,12 +283,38 @@
 }
 
 .terminal-body {
+  position: relative;
   min-height: calc(100vh - 244px);
   max-height: calc(100vh - 186px);
   overflow: hidden;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 80%, transparent), transparent 190px),
     color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 74%, var(--md-sys-color-primary-container));
+}
+
+/* Stick-to-bottom helper: appears when the user scrolls up */
+.scroll-bottom-button {
+  position: absolute;
+  right: var(--md-space-4);
+  bottom: var(--md-space-4);
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-1);
+  padding: 0 var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  cursor: pointer;
+  font: var(--md-sys-typescale-label-large);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  box-shadow: var(--md-sys-elevation-level2);
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.scroll-bottom-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-inverse-on-surface) 8%, var(--md-sys-color-inverse-surface));
 }
 
 .terminal-output {
@@ -300,17 +328,17 @@
 .terminal-line {
   display: block;
   min-height: 28px;
-  padding: 2px 8px;
+  padding: var(--md-space-1) var(--md-space-2);
   border-radius: var(--md-sys-shape-corner-extra-small);
-  cursor: pointer;
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-body-medium);
   font-family: var(--font-mono);
   line-height: 1.7;
 }
 
+/* Read-only rows: subtle hover for scanning, no pointer cursor */
 .terminal-line:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 52%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
 }
 
 .terminal-line code {

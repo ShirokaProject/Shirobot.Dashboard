@@ -16,7 +16,7 @@
           </span>
           Shirobot Dashboard
         </div>
-        <h2>晚上好！</h2>
+        <h2>{{ greeting }}</h2>
         <div class="login-summary-card">
           <span>登录状态</span>
           <strong>{{ loginModeLabel }} · {{ loginStatusLabel }}</strong>
@@ -35,12 +35,12 @@
       </div>
     </section>
 
-    <section class="latest-error-panel">
+    <section class="latest-error-panel" :class="{ 'no-error': !latestError.message }">
       <span class="error-icon" aria-hidden="true"><IconError /></span>
       <div class="error-content">
         <span class="error-label">最近一次报错</span>
-        <strong>{{ latestError.source || '暂无错误数据' }}</strong>
-        <p>{{ latestError.message || '后端接入后将在这里显示最近一次错误。' }}</p>
+        <strong>{{ latestError.message ? '运行时错误' : '暂无错误' }}</strong>
+        <p>{{ latestError.message || '运行正常，后端上报错误后将在这里显示。' }}</p>
       </div>
       <span class="error-time">{{ latestError.time || '—' }}</span>
     </section>
@@ -63,9 +63,13 @@
             <h3>消息频率</h3>
             <p>过去 24 小时消息吞吐概况</p>
           </div>
-          <span class="md3-chip">24h</span>
+          <span class="time-chip">24h</span>
         </div>
-        <div class="chart-surface">
+        <div
+          class="chart-surface"
+          role="img"
+          :aria-label="bars.length ? `过去 24 小时消息频率柱状图，共 ${bars.length} 个时段` : '暂无消息频率数据'"
+        >
           <template v-if="bars.length">
             <div v-for="(bar, index) in bars" :key="`${bar}-${index}`" class="bar" :style="{ height: `${bar}%` }"></div>
           </template>
@@ -98,6 +102,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useOverviewPage } from './Overview'
 
 const {
@@ -115,6 +120,15 @@ const {
   loginStatusLabel,
   loginEndpointLabel
 } = useOverviewPage()
+
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了！'
+  if (hour < 12) return '早上好！'
+  if (hour < 14) return '中午好！'
+  if (hour < 18) return '下午好！'
+  return '晚上好！'
+})
 </script>
 
 <style scoped src="./Overview.css"></style>

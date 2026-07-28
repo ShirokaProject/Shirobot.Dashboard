@@ -28,7 +28,7 @@
 
       <article class="about-card">
         <div class="card-head">
-          <span class="card-icon" aria-hidden="true">✦</span>
+          <span class="card-icon" aria-hidden="true"><MaterialSymbol name="palette" /></span>
           <div>
             <h3>鸣谢</h3>
             <p>感谢这些项目和资源让面板开发更高效。</p>
@@ -46,7 +46,7 @@
 
       <article class="about-card sponsor-card">
         <div class="card-head">
-          <span class="card-icon" aria-hidden="true">♡</span>
+          <span class="card-icon" aria-hidden="true"><MaterialSymbol name="favorite" /></span>
           <div>
             <h3>赞助与支持</h3>
             <p>如果这个项目对你有帮助，欢迎通过 GitHub 支持项目。</p>
@@ -60,7 +60,7 @@
 
       <article class="about-card version-card">
         <div class="card-head">
-          <span class="card-icon" aria-hidden="true">i</span>
+          <span class="card-icon" aria-hidden="true"><MaterialSymbol name="about" /></span>
           <div>
             <h3>版本信息</h3>
             <p>当前 Dashboard 前端版本。</p>
@@ -69,7 +69,7 @@
         <div class="info-list compact">
           <div>
             <span>Dashboard</span>
-            <strong>v0.1.0</strong>
+            <strong>v{{ appVersion }}</strong>
           </div>
           <div>
             <span>技术栈</span>
@@ -83,7 +83,10 @@
 
 <script setup lang="ts">
 import avatarUrl from '../../assets/images/avatar.png'
+import MaterialSymbol from '../../components/MaterialSymbol.vue'
 import { useAboutPage } from './About'
+
+const appVersion = __APP_VERSION__
 
 useAboutPage()
 </script>

@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getLogSources, getLogStreamUrl, type BackendLogLevel, type LogEntry, type LogSourceInfo, type LogStreamMessage } from '../../api'
 import type { KindFilter, LogLevel, RuntimeLog } from '../../features/logs/types'
 import { kindOptions } from '../../features/logs/utils'
@@ -72,6 +72,9 @@ export function useLogsPage() {
   const activeSource = ref('ALL')
   const autoRefresh = ref(true)
   const loadError = ref('')
+  const reconnecting = ref(false)
+  const stickToBottom = ref(true)
+  const outputRef = ref<HTMLElement | null>(null)
 
   const runtimeLogs = ref<RuntimeLog[]>([])
   const logSources = ref<LogSourceInfo[]>([])
@@ -81,6 +84,20 @@ export function useLogsPage() {
   let sourceTimer: ReturnType<typeof window.setInterval> | undefined
   let reconnectTimer: ReturnType<typeof window.setTimeout> | undefined
   let nextLogId = 1
+
+  function scrollToBottom() {
+    const element = outputRef.value
+    if (!element) return
+    element.scrollTop = element.scrollHeight
+    stickToBottom.value = true
+  }
+
+  function handleOutputScroll() {
+    const element = outputRef.value
+    if (!element) return
+    // Follow the stream only while the user stays near the bottom.
+    stickToBottom.value = element.scrollHeight - element.scrollTop - element.clientHeight < 48
+  }
 
   const filteredLogs = computed(() => {
     return runtimeLogs.value.filter(log => {
@@ -127,6 +144,9 @@ export function useLogsPage() {
       ? parseLogLine(entry, nextLogId++)
       : createLogFromEntry(entry, nextLogId++))
     runtimeLogs.value = [...runtimeLogs.value, ...logs].slice(-maxLogLines)
+    if (stickToBottom.value) {
+      void nextTick(scrollToBottom)
+    }
   }
 
   function handleStreamMessage(message: LogStreamMessage) {
@@ -173,11 +193,13 @@ export function useLogsPage() {
 
     socket.onopen = () => {
       loadError.value = ''
+      reconnecting.value = false
     }
 
     socket.onclose = () => {
       socket = null
       if (autoRefresh.value) {
+        reconnecting.value = true
         reconnectTimer = window.setTimeout(connectStream, 2000)
       }
     }
@@ -202,22 +224,36 @@ export function useLogsPage() {
     connectStream()
   }
 
+  function startSourcePolling() {
+    stopSourcePolling()
+    sourceTimer = window.setInterval(() => void refreshSources(), 5000)
+  }
+
+  function stopSourcePolling() {
+    window.clearInterval(sourceTimer)
+    sourceTimer = undefined
+  }
+
   watch(autoRefresh, enabled => {
     if (enabled) {
       connectStream()
+      startSourcePolling()
     } else {
       closeSocket()
+      stopSourcePolling()
+      reconnecting.value = false
     }
   })
 
   onMounted(() => {
     void refreshSources()
-    sourceTimer = window.setInterval(() => void refreshSources(), 5000)
+    startSourcePolling()
     connectStream()
+    void nextTick(scrollToBottom)
   })
 
   onBeforeUnmount(() => {
-    window.clearInterval(sourceTimer)
+    stopSourcePolling()
     closeSocket()
   })
 
@@ -228,10 +264,15 @@ export function useLogsPage() {
     activeLogFileName,
     autoRefresh,
     loadError,
+    reconnecting,
+    stickToBottom,
+    outputRef,
     filteredLogs,
     sourceFilters,
     kindOptions,
     setKind,
-    refreshLogs
+    refreshLogs,
+    scrollToBottom,
+    handleOutputScroll
   }
 }

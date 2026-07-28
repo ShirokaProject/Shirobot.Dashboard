@@ -26,14 +26,13 @@ withDefaults(defineProps<{
   opacity: 1;
 }
 
-/* Material motion: fast Fade through for top-level destination changes.
-   Pure opacity prevents layout-origin artifacts and hidden overlap. */
+/* Material fade-through: exit ~short2 accelerate, enter ~short4 decelerate. */
 :global(.md3-fade-through-enter-active) {
-  transition: opacity 72ms cubic-bezier(0.2, 0, 0, 1);
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard-decelerate);
 }
 
 :global(.md3-fade-through-leave-active) {
-  transition: opacity 36ms cubic-bezier(0.4, 0, 1, 1);
+  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard-accelerate);
 }
 
 :global(.md3-fade-through-enter-from),
@@ -50,8 +49,8 @@ withDefaults(defineProps<{
 :global(.md3-shared-axis-y-enter-active),
 :global(.md3-shared-axis-y-leave-active) {
   transition:
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1),
-    transform 220ms cubic-bezier(0.2, 0, 0, 1);
+    opacity var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 :global(.md3-shared-axis-y-enter-from) {

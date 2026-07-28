@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import {
   cancelPluginUpload,
@@ -11,6 +11,23 @@ import {
   type PluginMarketResponse,
   type PluginUploadParsedResponse
 } from '../../api'
+
+const DAY_MS = 86_400_000
+const PAGE_SIZE = 6
+
+const safeDownloads = (plugin: MarketplacePlugin) =>
+  Number.isFinite(plugin.release.downloadCount) && plugin.release.downloadCount! > 0
+    ? plugin.release.downloadCount!
+    : 0
+
+const dateMs = (value: string | null) => {
+  if (!value) return 0
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? ms : 0
+}
+
+const comparePluginNames = (left: MarketplacePlugin, right: MarketplacePlugin) =>
+  left.name.localeCompare(right.name, 'zh-CN', { sensitivity: 'base' }) || left.id.localeCompare(right.id)
 
 export function usePluginMarketPage() {
   const keyword = ref('')
@@ -30,6 +47,22 @@ export function usePluginMarketPage() {
   const installConfirming = ref(false)
   const installReplace = ref(false)
   const installEnable = ref(true)
+  const currentPage = ref(1)
+  let feedbackTimer: ReturnType<typeof setTimeout> | null = null
+
+  function showFeedback(message: string, type: 'success' | 'error') {
+    if (feedbackTimer) {
+      clearTimeout(feedbackTimer)
+      feedbackTimer = null
+    }
+    feedbackMessage.value = message
+    feedbackType.value = type
+    if (type === 'success') {
+      feedbackTimer = setTimeout(() => {
+        feedbackMessage.value = ''
+      }, 4000)
+    }
+  }
 
   const sortOptions: Array<{ label: string; value: MarketSortKey }> = [
     { label: '下载数量', value: 'downloads' },
@@ -41,6 +74,69 @@ export function usePluginMarketPage() {
   const categories = computed(() => ['全部', ...new Set(marketplacePlugins.value.map(plugin => plugin.category).filter(Boolean))])
   const generatedAt = computed(() => market.value?.generatedAt ? formatDate(market.value.generatedAt) : '—')
   const installDialogTitle = computed(() => installPreview.value ? `确认安装 ${installPreview.value.plugin.name}` : '确认安装插件')
+  const anchorMs = computed(() => {
+    const generatedMs = dateMs(market.value?.generatedAt ?? null)
+    if (generatedMs) return generatedMs
+    return marketplacePlugins.value.reduce((latest, plugin) => Math.max(latest, dateMs(plugin.release.publishedAt)), 0)
+  })
+
+  const recommendedPlugins = computed(() => {
+    const eligible = marketplacePlugins.value.filter(plugin => !plugin.deprecated && canInstallPlugin(plugin))
+    const maxDownloads = eligible.reduce((maximum, plugin) => Math.max(maximum, safeDownloads(plugin)), 0)
+    const ranked = eligible
+      .map(plugin => {
+        const downloads = safeDownloads(plugin)
+        const publishedMs = dateMs(plugin.release.publishedAt)
+        const ageDays = anchorMs.value > 0 && publishedMs > 0
+          ? Math.max(0, (anchorMs.value - publishedMs) / DAY_MS)
+          : 365
+        const recencyScore = 1 - Math.min(ageDays, 365) / 365
+        const downloadScore = maxDownloads > 0 ? Math.log1p(downloads) / Math.log1p(maxDownloads) : 0
+        const stableScore = plugin.release.prerelease ? 0 : 1
+        const licenseScore = plugin.license.trim() && plugin.license !== 'Unknown' ? 1 : 0
+        return {
+          plugin,
+          downloads,
+          publishedMs,
+          score: 0.45 * recencyScore + 0.35 * downloadScore + 0.15 * stableScore + 0.05 * licenseScore
+        }
+      })
+      .sort((left, right) =>
+        right.score - left.score
+        || right.downloads - left.downloads
+        || right.publishedMs - left.publishedMs
+        || comparePluginNames(left.plugin, right.plugin)
+      )
+
+    const selected: MarketplacePlugin[] = []
+    const selectedIds = new Set<string>()
+    const selectedCategories = new Set<string>()
+    for (const entry of ranked) {
+      const category = entry.plugin.category.trim() || 'Other'
+      if (selectedCategories.has(category)) continue
+      selected.push(entry.plugin)
+      selectedIds.add(entry.plugin.id)
+      selectedCategories.add(category)
+      if (selected.length === 2) return selected
+    }
+    for (const entry of ranked) {
+      if (selectedIds.has(entry.plugin.id)) continue
+      selected.push(entry.plugin)
+      if (selected.length === 2) break
+    }
+    return selected
+  })
+
+  const popularPlugins = computed(() => marketplacePlugins.value
+    .filter(plugin => !plugin.deprecated)
+    .sort((left, right) =>
+      safeDownloads(right) - safeDownloads(left)
+      || Number(left.release.prerelease) - Number(right.release.prerelease)
+      || dateMs(right.release.publishedAt) - dateMs(left.release.publishedAt)
+      || comparePluginNames(left, right)
+    )
+    .slice(0, 5))
+  const showDiscovery = computed(() => keyword.value.trim() === '' && activeCategory.value === '全部')
 
   const filteredPlugins = computed(() => {
     const query = keyword.value.trim().toLowerCase()
@@ -69,6 +165,44 @@ export function usePluginMarketPage() {
       return left.name.localeCompare(right.name, 'en', { sensitivity: 'base' })
     })
   })
+  const filteredCount = computed(() => filteredPlugins.value.length)
+  const pageCount = computed(() => Math.ceil(filteredCount.value / PAGE_SIZE))
+  const pageStart = computed(() => (currentPage.value - 1) * PAGE_SIZE)
+  const pagedPlugins = computed(() => filteredPlugins.value.slice(pageStart.value, pageStart.value + PAGE_SIZE))
+  const catalogueRange = computed(() => filteredCount.value === 0
+    ? '0 / 0'
+    : `${pageStart.value + 1}-${Math.min(pageStart.value + PAGE_SIZE, filteredCount.value)} / ${filteredCount.value}`)
+  const pageTokens = computed<Array<number | string>>(() => {
+    if (pageCount.value <= 7) return Array.from({ length: pageCount.value }, (_, index) => index + 1)
+    const pages = new Set([1, pageCount.value, currentPage.value - 1, currentPage.value, currentPage.value + 1])
+    if (currentPage.value <= 4) [2, 3, 4].forEach(page => pages.add(page))
+    if (currentPage.value >= pageCount.value - 3) {
+      [pageCount.value - 3, pageCount.value - 2, pageCount.value - 1].forEach(page => pages.add(page))
+    }
+    const sorted = [...pages].filter(page => page >= 1 && page <= pageCount.value).sort((left, right) => left - right)
+    return sorted.flatMap((page, index) => index > 0 && page - sorted[index - 1]! > 1 ? [`ellipsis-${page}`, page] : [page])
+  })
+
+  watch([keyword, activeCategory, activeSort], () => {
+    currentPage.value = 1
+  }, { flush: 'sync' })
+
+  watch(pageCount, count => {
+    currentPage.value = Math.min(Math.max(currentPage.value, 1), Math.max(1, count))
+  }, { flush: 'sync' })
+
+  async function setPage(target: number) {
+    const nextPage = Math.min(Math.max(target, 1), Math.max(1, pageCount.value))
+    if (nextPage === currentPage.value) return
+    currentPage.value = nextPage
+    await nextTick()
+    const heading = document.querySelector<HTMLElement>('#plugin-catalogue-heading')
+    heading?.focus({ preventScroll: true })
+    heading?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start'
+    })
+  }
 
   async function loadMarketplacePlugins() {
     loading.value = true
@@ -121,8 +255,7 @@ export function usePluginMarketPage() {
       installEnable.value = true
       installDialogVisible.value = true
     } catch (error) {
-      feedbackType.value = 'error'
-      feedbackMessage.value = getApiErrorMessage(error, '插件安装准备失败')
+      showFeedback(getApiErrorMessage(error, '插件安装准备失败'), 'error')
     } finally {
       preparingPluginId.value = ''
     }
@@ -159,8 +292,7 @@ export function usePluginMarketPage() {
 
       installPreview.value = null
       installDialogVisible.value = false
-      feedbackType.value = 'success'
-      feedbackMessage.value = '插件安装成功'
+      showFeedback('插件安装成功', 'success')
       await loadMarketplacePlugins()
     } catch (error) {
       installError.value = getApiErrorMessage(error, '插件确认安装失败')
@@ -228,7 +360,7 @@ export function usePluginMarketPage() {
   function canInstallPlugin(plugin: MarketplacePlugin) {
     return !plugin.deprecated
       && plugin.health.status === 'available'
-      && Boolean(plugin.repository && plugin.release.version && plugin.release.asset?.url && plugin.release.asset.digest)
+      && Boolean(plugin.repository && plugin.release.version && plugin.release.asset?.url && plugin.release.asset.name && plugin.release.asset.digest)
   }
 
   function formatCompatibility(plugin: MarketplacePlugin) {
@@ -263,8 +395,13 @@ export function usePluginMarketPage() {
     void loadMarketplacePlugins()
   })
 
+  onBeforeUnmount(() => {
+    if (feedbackTimer) clearTimeout(feedbackTimer)
+  })
+
   return {
     keyword,
+    loadMarketplacePlugins,
     activeCategory,
     activeSort,
     loading,
@@ -280,18 +417,29 @@ export function usePluginMarketPage() {
     installConfirming,
     installReplace,
     installEnable,
+    currentPage,
     installDialogTitle,
     sortOptions,
     categories,
     generatedAt,
     marketplacePlugins,
     filteredPlugins,
+    filteredCount,
+    pageCount,
+    pagedPlugins,
+    catalogueRange,
+    pageTokens,
+    recommendedPlugins,
+    popularPlugins,
+    showDiscovery,
+    setPage,
     showPluginDetails,
     preparePluginInstall,
     setInstallDialogVisible,
     confirmMarketInstall,
     formatAuthors,
     formatDownloads,
+    safeDownloads,
     formatSize,
     formatDate,
     healthTone,

@@ -1,15 +1,15 @@
 import { apiRequest } from '../core/http'
 
-export type PluginConfigValue = string | number | boolean | null | Array<string | number>
+export type PluginConfigValue = string | number | boolean | null | PluginConfigValue[]
 export type PluginConfigMap = Record<string, PluginConfigValue>
 
 export interface PluginConfigSchemaItem {
   key: string
   label: string
-  type: 'string' | 'text' | 'number' | 'boolean' | 'select' | string
-  description?: string | null
+  type: string
+  description: string
   placeholder?: string | null
-  options?: Array<string | number>
+  options: string[]
   min?: number | null
   max?: number | null
 }
@@ -17,11 +17,11 @@ export interface PluginConfigSchemaItem {
 export interface PluginRoutesConfig {
   configured: boolean
   mode: 'default' | 'blacklist' | 'whitelist' | string
-  groups: number[]
+  groups: string[]
   effective_mode: 'blacklist' | 'whitelist' | string
-  effective_groups: number[]
+  effective_groups: string[]
   default_mode: 'blacklist' | 'whitelist' | string
-  default_groups: number[]
+  default_groups: string[]
 }
 
 export interface PluginConfigResponse {
@@ -35,7 +35,7 @@ export interface PluginConfigUpdateRequest {
   config?: PluginConfigMap
   routes?: {
     mode: string
-    groups: number[]
+    groups: string[]
   }
 }
 

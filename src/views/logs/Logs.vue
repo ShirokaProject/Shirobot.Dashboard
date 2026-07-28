@@ -3,29 +3,33 @@
     <section class="logs-filter-bar">
       <label class="search-container">
         <span class="search-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
-          </svg>
+          <MaterialSymbol name="search" />
         </span>
-        <input v-model="keyword" type="search" placeholder="搜索日志内容" />
+        <input v-model="keyword" type="search" placeholder="搜索日志内容" aria-label="搜索日志内容" />
       </label>
 
-      <div class="kind-chip-group" aria-label="日志类型筛选">
+      <div class="kind-chip-group" role="group" aria-label="日志类型筛选">
         <button
           v-for="option in kindOptions"
           :key="option.value"
           type="button"
-          class="kind-chip"
-          :class="{ active: activeKind === option.value }"
+          class="md3-chip"
+          :aria-pressed="activeKind === option.value"
           @click="setKind(option.value)"
         >
           {{ option.label }}
         </button>
       </div>
 
-      <button type="button" class="live-toggle" :class="{ active: autoRefresh }" @click="autoRefresh = !autoRefresh">
+      <button
+        type="button"
+        class="live-toggle"
+        :class="{ active: autoRefresh }"
+        :aria-pressed="autoRefresh"
+        @click="autoRefresh = !autoRefresh"
+      >
         <span class="live-indicator"></span>
-        <span>{{ autoRefresh ? '实时' : '暂停' }}</span>
+        <span>{{ autoRefresh ? (reconnecting ? '重连中…' : '实时') : '暂停' }}</span>
       </button>
 
       <button type="button" class="refresh-button" @click="refreshLogs">刷新</button>
@@ -75,7 +79,13 @@
         </div>
 
         <div class="terminal-body">
-          <div class="terminal-output" role="log" aria-label="运行时日志文本流">
+          <div
+            :ref="(el) => { outputRef = el as HTMLElement | null }"
+            class="terminal-output"
+            role="log"
+            aria-label="运行时日志文本流"
+            @scroll="handleOutputScroll"
+          >
             <article
               v-for="log in filteredLogs"
               :key="log.id"
@@ -86,9 +96,19 @@
             </article>
 
             <div v-if="filteredLogs.length === 0" class="terminal-empty">
-              No runtime logs. Connect backend endpoint /api/v1/logs/stream to show real logs.
+              暂无运行日志。连接后端后将在此实时显示日志流。
             </div>
           </div>
+
+          <button
+            v-if="!stickToBottom"
+            type="button"
+            class="scroll-bottom-button"
+            aria-label="回到底部"
+            @click="scrollToBottom"
+          >
+            ↓ 回到底部
+          </button>
         </div>
       </main>
     </section>
@@ -96,6 +116,7 @@
 </template>
 
 <script setup lang="ts">
+import MaterialSymbol from '../../components/MaterialSymbol.vue'
 import { useLogsPage } from './Logs'
 
 const {
@@ -105,11 +126,16 @@ const {
   activeLogFileName,
   autoRefresh,
   loadError,
+  reconnecting,
+  stickToBottom,
+  outputRef,
   filteredLogs,
   sourceFilters,
   kindOptions,
   setKind,
-  refreshLogs
+  refreshLogs,
+  scrollToBottom,
+  handleOutputScroll
 } = useLogsPage()
 </script>
 

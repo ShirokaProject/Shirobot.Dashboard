@@ -1,0 +1,161 @@
+/* Web fonts + data-font switching (driven by ThemeControls) */
+
+@font-face {
+  font-family: 'MapleMono';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMono';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMono';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMono';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMonoBold';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMonoSemiBold';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMonoMedium';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapleMonoRegular';
+  src: url('https://cdn.qwq.lu/fonts/MapleMonoNormal-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lolita';
+  src: url('https://cdn.qwq.lu/fonts/Lolita.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Xiaolai';
+  src: url('https://cdn.qwq.lu/fonts/xiaolai/Xiaolai-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'XiaolaiMono';
+  src: url('https://cdn.qwq.lu/fonts/xiaolai/XiaolaiMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SourceHanSansSC';
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SourceHanSansSC';
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SourceHanSansSC';
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SourceHanSansSC';
+  src: url('https://cdn.qwq.lu/fonts/source-han-sans-sc/SourceHanSansSC-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root[data-font='maple-bold'] {
+  --app-font-brand: 'MapleMonoBold', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'MapleMonoBold', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='maple-semibold'] {
+  --app-font-brand: 'MapleMonoSemiBold', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'MapleMonoSemiBold', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='maple-medium'] {
+  --app-font-brand: 'MapleMonoMedium', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'MapleMonoMedium', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='maple-regular'] {
+  --app-font-brand: 'MapleMonoRegular', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'MapleMonoRegular', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='lolita'] {
+  --app-font-brand: 'Lolita', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'Lolita', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='xiaolai'] {
+  --app-font-brand: 'Xiaolai', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'Xiaolai', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='xiaolai-mono'] {
+  --app-font-brand: 'XiaolaiMono', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'XiaolaiMono', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-font='source-han'] {
+  --app-font-brand: 'SourceHanSansSC', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+  --app-font-plain: 'SourceHanSansSC', 'MapleMono', 'Segoe UI', system-ui, sans-serif;
+}

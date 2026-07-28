@@ -1,5 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getApiErrorMessage, verifyApiAccess } from '../../api'
 import {
   getDashboardProfileToken,
   getDashboardProfiles,
@@ -22,6 +23,8 @@ export function useLoginPage() {
   })
 
   const isDemoMode = computed(() => mode.value === 'demo')
+  const loginError = ref('')
+  const submitting = ref(false)
 
   function syncProfiles() {
     profiles.value = getDashboardProfiles()
@@ -33,16 +36,36 @@ export function useLoginPage() {
     form.apiBaseUrl = profile.apiBaseUrl
     form.token = profile.mode === 'api' ? getDashboardProfileToken(profile.id) : ''
     showEndpointSettings.value = Boolean(profile.apiBaseUrl)
+    loginError.value = ''
   }
 
-  function submitLogin() {
-    saveDashboardSession({
-      mode: mode.value,
-      apiBaseUrl: isDemoMode.value ? '' : form.apiBaseUrl.trim(),
-      token: isDemoMode.value ? '' : form.token.trim()
-    })
-    syncProfiles()
-    router.replace('/')
+  async function submitLogin() {
+    if (submitting.value) return
+    loginError.value = ''
+    if (!isDemoMode.value) {
+      const baseUrl = form.apiBaseUrl.trim()
+      if (baseUrl && !/^https?:\/\//i.test(baseUrl)) {
+        loginError.value = '接口地址需要以 http:// 或 https:// 开头。'
+        return
+      }
+    }
+    submitting.value = true
+    try {
+      if (!isDemoMode.value) {
+        await verifyApiAccess(form.apiBaseUrl.trim(), form.token.trim())
+      }
+      saveDashboardSession({
+        mode: mode.value,
+        apiBaseUrl: isDemoMode.value ? '' : form.apiBaseUrl.trim(),
+        token: isDemoMode.value ? '' : form.token.trim()
+      })
+      syncProfiles()
+      await router.replace('/')
+    } catch (error) {
+      loginError.value = getApiErrorMessage(error, '无法连接后端或 Token 无效。')
+    } finally {
+      submitting.value = false
+    }
   }
 
   function toggleEndpointSettings() {
@@ -56,6 +79,8 @@ export function useLoginPage() {
     selectedProfileId,
     isDemoMode,
     showEndpointSettings,
+    loginError,
+    submitting,
     selectProfile,
     submitLogin,
     toggleEndpointSettings

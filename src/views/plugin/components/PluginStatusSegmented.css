@@ -3,14 +3,14 @@
   width: fit-content;
   display: inline-flex;
   overflow: hidden;
-  border: 1px solid var(--md-sys-color-outline);
+  border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-full);
-  background: transparent;
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .status-filter-chip {
   position: relative;
-  min-width: 112px;
+  min-width: 104px;
   height: 40px;
   display: inline-flex;
   align-items: center;
@@ -29,11 +29,15 @@
 }
 
 .status-filter-chip + .status-filter-chip {
-  border-left: 1px solid var(--md-sys-color-outline);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .status-filter-chip:hover {
   background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.status-filter-chip:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
 }
 
 /* M3 selected segment: secondary-container */
@@ -42,21 +46,24 @@
   color: var(--md-sys-color-on-secondary-container);
 }
 
+.status-filter-chip.active:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
+}
+
 .status-filter-chip.error.active {
   background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
 }
 
-.status-segment-icon {
-  width: 20px;
-  height: 20px;
-  display: inline-grid;
+.status-filter-chip.error.active:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-error-container) 8%, var(--md-sys-color-error-container));
+}
+
+.status-segment-check {
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: color-mix(in srgb, currentColor 12%, transparent);
-  font-size: 12px;
-  line-height: 1;
+  fill: currentColor;
 }
 
 .status-segment-label {

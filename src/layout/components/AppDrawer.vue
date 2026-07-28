@@ -34,7 +34,7 @@
     </div>
 
     <button type="button" class="drawer-primary-action" @click="openPluginUpload">
-      <el-icon><Plus /></el-icon>
+      <MaterialSymbol class="action-symbol" name="add" />
       <span>新增插件</span>
     </button>
 
@@ -49,7 +49,7 @@
         @focus="preloadNavTarget(item.path)"
         @click="router.push(item.path)"
       >
-        <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
+        <MaterialSymbol class="nav-icon" :name="isActiveRoute(item.path) ? `${item.icon}-filled` : item.icon" />
         <span class="drawer-label">{{ item.label }}</span>
         <span v-if="item.count" class="drawer-count">{{ item.count }}</span>
       </button>
@@ -67,7 +67,7 @@
 
   <nav class="md3-rail" aria-label="主导航">
     <div class="rail-brand">
-      <el-icon><Box /></el-icon>
+      <MaterialSymbol class="rail-brand-symbol" name="box" />
     </div>
     <button
       v-for="item in menuItems"
@@ -80,7 +80,7 @@
       @click="router.push(item.path)"
     >
       <span class="rail-indicator">
-        <el-icon><component :is="item.icon" /></el-icon>
+        <MaterialSymbol :name="isActiveRoute(item.path) ? `${item.icon}-filled` : item.icon" />
       </span>
       <span class="rail-label">{{ item.short }}</span>
     </button>
@@ -90,8 +90,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Box, Plus } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
+import MaterialSymbol from '../../components/MaterialSymbol.vue'
 import { preloadRouteComponent } from '../../router/pageLoaders'
 import { menuItems } from '../navigation'
 
@@ -405,8 +405,9 @@ function triggerAvatarSpin() {
   box-shadow: var(--md-sys-elevation-level2);
 }
 
-.drawer-primary-action .el-icon {
+.drawer-primary-action .action-symbol {
   font-size: 24px;
+  flex: 0 0 auto;
 }
 
 .md3-drawer.collapsed .drawer-primary-action {
@@ -559,20 +560,21 @@ function triggerAvatarSpin() {
 .nav-icon {
   width: 48px;
   height: 40px;
-  display: grid;
-  place-items: center;
+  padding: 9.5px 13.5px;
+  box-sizing: border-box;
   font-size: 21px;
+  flex: 0 0 auto;
   transition:
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
     height var(--drawer-motion-duration) var(--drawer-motion-easing),
-    font-size var(--drawer-motion-duration) var(--drawer-motion-easing);
+    padding var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .md3-drawer.collapsed .nav-icon {
   justify-self: center;
   width: 56px;
   height: 56px;
-  font-size: 23px;
+  padding: 16.5px;
 }
 
 .md3-rail {
@@ -603,6 +605,10 @@ function triggerAvatarSpin() {
   display: grid;
   place-items: center;
   font-size: 22px;
+}
+
+.rail-brand-symbol {
+  font-size: 24px;
 }
 
 .rail-item.active .rail-indicator {

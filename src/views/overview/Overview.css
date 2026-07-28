@@ -128,6 +128,17 @@
   color: var(--md-sys-color-on-error-container);
 }
 
+/* Neutral styling when there is no error to report (avoid false alarm) */
+.latest-error-panel.no-error {
+  background: var(--app-panel);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.latest-error-panel.no-error .error-icon {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 .error-icon {
   width: 36px;
   height: 36px;
@@ -265,15 +276,17 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.md3-chip {
+/* Static time-range label (not the global interactive .md3-chip) */
+.time-chip {
   height: 32px;
   display: inline-flex;
   align-items: center;
   padding: 0 var(--md-space-3);
-  border-radius: var(--md-sys-shape-corner-small);
+  border-radius: var(--md-sys-shape-corner-full);
   background: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
   font: var(--md-sys-typescale-label-medium);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
 }
 
 .chart-surface {

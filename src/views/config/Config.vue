@@ -9,23 +9,28 @@
       :closable="false"
     />
 
-    <el-alert
-      v-if="saveMessage"
-      class="page-alert"
-      :title="saveMessage"
-      :type="saveMessage.includes('失败') ? 'error' : 'success'"
-      show-icon
-      :closable="false"
-    />
+    <div aria-live="polite">
+      <el-alert
+        v-if="saveMessage"
+        class="page-alert"
+        :title="saveMessage"
+        :type="saveMessageType"
+        show-icon
+        :closable="saveMessageType === 'error'"
+        @close="saveMessage = ''"
+      />
+    </div>
 
     <section class="config-layout">
-      <aside class="config-nav">
+      <aside class="config-nav" role="tablist" aria-label="配置分区">
         <button
           v-for="section in sections"
           :key="section.key"
           type="button"
+          role="tab"
           class="config-nav-item"
           :class="{ active: activeSection === section.key }"
+          :aria-selected="activeSection === section.key"
           @click="activeSection = section.key"
         >
           {{ section.label }}
@@ -34,7 +39,10 @@
 
       <main class="config-panel">
         <div class="panel-head">
-          <h2>{{ currentSection.label }}</h2>
+          <div class="panel-head-title">
+            <h2>{{ currentSection.label }}</h2>
+            <span v-if="isDirty" class="unsaved-chip">有未保存更改</span>
+          </div>
           <p>{{ currentSection.description }}</p>
         </div>
 
@@ -48,35 +56,35 @@
               </el-select>
             </el-form-item>
 
-            <div class="setting-row">
+            <div class="setting-row" @click="form.enable_log = !form.enable_log">
               <div>
                 <div class="setting-label">启用日志</div>
                 <div class="setting-support">对应 enable_log，关闭后将减少运行日志输出。</div>
               </div>
-              <el-switch v-model="form.enable_log" />
+              <el-switch v-model="form.enable_log" aria-label="启用日志" @click.stop />
             </div>
 
-            <div class="setting-row">
+            <div class="setting-row" @click="form.disable_console_input = !form.disable_console_input">
               <div>
                 <div class="setting-label">禁用控制台输入</div>
                 <div class="setting-support">对应 disable_console_input，开启后控制台不再接收交互输入。</div>
               </div>
-              <el-switch v-model="form.disable_console_input" />
+              <el-switch v-model="form.disable_console_input" aria-label="禁用控制台输入" @click.stop />
             </div>
 
             <el-form-item label="GitHub 代理地址">
-              <input v-model="form.github_proxy" class="config-text-input" placeholder="https://gh-proxy.com/" />
+              <el-input v-model="form.github_proxy" placeholder="https://gh-proxy.com/" />
             </el-form-item>
 
             <el-form-item label="主程序更新仓库">
-              <input v-model="form.host_update_repository" class="config-text-input" placeholder="ShirokaProject/ShiroBot" />
+              <el-input v-model="form.host_update_repository" placeholder="ShirokaProject/ShiroBot" />
             </el-form-item>
 
             <el-form-item label="Avalonia 主题">
               <el-select v-model="form.avalonia_theme" placeholder="选择界面主题" style="width: 100%">
                 <el-option label="Light" value="Light" />
                 <el-option label="Dark" value="Dark" />
-                <el-option label="System" value="System" />
+                <el-option label="Auto" value="Auto" />
               </el-select>
             </el-form-item>
           </template>
@@ -90,12 +98,12 @@
               <el-input v-model="form.admin_list" placeholder="多个 ID 可用逗号或空格分隔" />
             </el-form-item>
 
-            <div class="setting-row">
+            <div class="setting-row" @click="form.api_enable = !form.api_enable">
               <div>
                 <div class="setting-label">启用 API</div>
                 <div class="setting-support">对应 api.enable，开启后 Dashboard 可通过接口管理配置。</div>
               </div>
-              <el-switch v-model="form.api_enable" />
+              <el-switch v-model="form.api_enable" aria-label="启用 API" @click.stop />
             </div>
 
             <el-form-item label="API 监听地址">
@@ -115,12 +123,12 @@
               <el-input v-model="form.api_public_base_url" placeholder="留空表示 null" />
             </el-form-item>
 
-            <div class="setting-row">
+            <div class="setting-row" @click="form.api_auth_enable = !form.api_auth_enable">
               <div>
                 <div class="setting-label">启用 API 认证</div>
                 <div class="setting-support">对应 api.auth_enable，开启后访问接口需要令牌。</div>
               </div>
-              <el-switch v-model="form.api_auth_enable" />
+              <el-switch v-model="form.api_auth_enable" aria-label="启用 API 认证" @click.stop />
             </div>
 
             <el-form-item label="API Token">
@@ -128,9 +136,9 @@
             </el-form-item>
           </template>
 
-          <div class="form-actions">
-            <el-button round @click="resetConfig">重置</el-button>
-            <el-button round type="primary" @click="saveConfig">保存配置</el-button>
+          <div class="m3-form-actions">
+            <el-button round :disabled="!isDirty || saving" @click="resetConfig">重置</el-button>
+            <el-button round type="primary" :disabled="!isDirty" :loading="saving" @click="saveConfig">保存配置</el-button>
           </div>
         </el-form>
       </main>
@@ -141,7 +149,19 @@
 <script setup lang="ts">
 import { useConfigPage } from './Config'
 
-const { sections, activeSection, currentSection, form, loadError, saveMessage, saveConfig, resetConfig } = useConfigPage()
+const {
+  sections,
+  activeSection,
+  currentSection,
+  form,
+  isDirty,
+  saving,
+  loadError,
+  saveMessage,
+  saveMessageType,
+  saveConfig,
+  resetConfig
+} = useConfigPage()
 </script>
 
 <style scoped src="./Config.css"></style>
