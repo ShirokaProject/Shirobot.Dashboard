@@ -11,7 +11,7 @@ export interface OverviewLatestError {
   time: string
 }
 
-export type OverviewMetricKey = 'plugins' | 'adapters' | 'messages' | 'health'
+export type OverviewMetricKey = 'plugins' | 'models' | 'adapters' | 'messages' | 'health'
 
 export interface OverviewMetric {
   key: OverviewMetricKey
@@ -36,6 +36,7 @@ export interface OverviewResponse {
   bot_version: string
   uptime_seconds: number
   plugins_count: number
+  models_count: number
   adapter: string
   adapter_status?: 'connected' | 'disconnected' | 'unknown'
   message_count: number

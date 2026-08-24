@@ -20,10 +20,12 @@ const IconTimer = makeIcon('M10 2h4M12 14l3-3M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 1
 const IconError = makeIcon('M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z')
 const IconEvent = makeIcon('M22 12h-4l-3 8L9 4l-3 8H2')
 const IconCpu = makeIcon('M9 9h6v6H9V9Zm-3 0H3m3 6H3m18-6h-3m3 6h-3M9 3v3m6-3v3M9 18v3m6-3v3')
+const IconLayers = makeIcon('m12 2 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5')
 const IconCheck = makeIcon('m5 12 4 4L19 6')
 
 const metricIconMap: Record<OverviewMetricKey, ReturnType<typeof makeIcon>> = {
   plugins: IconPackage,
+  models: IconLayers,
   adapters: IconCpu,
   messages: IconEvent,
   health: IconCheck
@@ -64,6 +66,7 @@ function buildStats(response: OverviewResponse): OverviewMetric[] {
 
   return [
     { key: 'plugins', label: '活跃插件', value: String(response.plugins_count ?? 0), support: '当前已加载插件数量' },
+    { key: 'models', label: '平台 Models', value: String(response.models_count ?? 0), support: '当前共享平台契约数量' },
     { key: 'adapters', label: '适配器', value: response.adapter || '—', support: `当前适配器${adapterStatus}` },
     { key: 'messages', label: '今日消息', value: String(response.message_count ?? 0), support: '过去 24 小时消息统计' },
     { key: 'health', label: '健康状态', value: healthStatus, support: '核心服务运行状态' }

@@ -98,7 +98,8 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 }
 
 .bottom-item {
-  min-width: 64px;
+  min-width: 0;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -153,7 +154,18 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 
   .md3-bottom-bar {
     display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
     order: 2;
+  }
+
+  .bottom-indicator {
+    width: min(48px, 100%);
+  }
+
+  .bottom-item {
+    font-size: 11px;
   }
 }
 </style>

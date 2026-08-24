@@ -1,4 +1,4 @@
-import type { AdapterInfo } from './adapters/adapters'
+import type { AdapterStatus, ModelInfo } from './adapters/adapters'
 import type { AppConfig } from './config/config'
 import type { LogSourceInfo, RuntimeLogsResponse } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
@@ -11,6 +11,7 @@ const demoOverview: OverviewResponse = {
   bot_version: 'v0.1.0-demo',
   uptime_seconds: 130320,
   plugins_count: 12,
+  models_count: 2,
   adapter: 'OneBot v11',
   adapter_status: 'connected',
   message_count: 1200,
@@ -41,6 +42,30 @@ const demoOverview: OverviewResponse = {
     { message: '演示：Schedule 插件已停用', time: '09:52', level: 'warning' }
   ]
 }
+
+let demoAdapter: AdapterStatus = {
+  loaded: true,
+  id: 'shirobot.adapter.onebot',
+  name: 'OneBot Adapter',
+  version: '0.1.0',
+  platform: 'qq',
+  assembly_path: '/opt/shirobot/adapters/ShiroBot.Adapter.OneBot/ShiroBot.Adapter.OneBot.dll'
+}
+
+const demoModels: ModelInfo[] = [
+  {
+    id: 'shirobot.model.qq',
+    version: '1.0.0',
+    assembly: 'ShiroBot.Model.QQ',
+    path: '/opt/shirobot/Models/ShiroBot.Model.QQ.dll'
+  },
+  {
+    id: 'community.model.discord',
+    version: '0.4.2',
+    assembly: 'Community.Model.Discord',
+    path: '/opt/shirobot/Models/Community.Model.Discord.dll'
+  }
+]
 
 const demoPlugins: BackendPlugin[] = [
   {
@@ -108,12 +133,6 @@ const demoPlugins: BackendPlugin[] = [
       { version: '0.5.2', date: '2026-05-22' }
     ]
   }
-]
-
-const demoAdapters: AdapterInfo[] = [
-  { type: 'OneBot v11', account: '100000001', connected: true, events: 842 },
-  { type: 'Telegram', account: '@demo_bot', connected: false, events: 0 },
-  { type: 'Discord', account: 'shirobot-demo', connected: true, events: 126 }
 ]
 
 const demoConfig: AppConfig = {
@@ -355,6 +374,27 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
   if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/adapter') return clone(demoAdapter) as T
+  if (method === 'POST' && pathname === '/api/v1/adapter/reload') {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { assembly_path?: string }
+    demoAdapter = {
+      ...demoAdapter,
+      loaded: true,
+      assembly_path: payload.assembly_path || demoAdapter.assembly_path
+    }
+    return { ok: true, adapter: clone(demoAdapter) } as T
+  }
+  if (method === 'POST' && pathname === '/api/v1/adapter/stop') {
+    demoAdapter = { ...demoAdapter, loaded: false, platform: null }
+    return { ok: true, adapter: clone(demoAdapter) } as T
+  }
+  if (method === 'GET' && pathname === '/api/v1/models/list') return clone(demoModels) as T
+  if (method === 'POST' && pathname === '/api/v1/models/reload') {
+    return { ok: true, models: clone(demoModels) } as T
+  }
+  if (method === 'POST' && pathname === '/api/v1/models/install') {
+    return { ok: true, models: clone(demoModels) } as T
+  }
 
   const pluginActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(enable|disable)$/)
   if (method === 'POST' && pluginActionMatch) {
@@ -548,7 +588,6 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     }) as T
   }
 
-  if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
   if (method === 'GET' && pathname === '/api/v1/config') return clone(demoConfig) as T
   if (method === 'PATCH' && pathname === '/api/v1/config') {
     const payload = JSON.parse(String(init?.body ?? '{}')) as Partial<AppConfig>

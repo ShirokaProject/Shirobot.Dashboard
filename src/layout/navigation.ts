@@ -1,4 +1,4 @@
-import { Box, Document, InfoFilled, Monitor, Setting } from '@element-plus/icons-vue'
+import { Box, Connection, Document, InfoFilled, Monitor, Setting } from '@element-plus/icons-vue'
 
 export const menuItems = [
   {
@@ -19,6 +19,12 @@ export const menuItems = [
     short: '插件',
     icon: Box,
     count: 4
+  },
+  {
+    path: '/adapters',
+    label: '运行组件',
+    short: '组件',
+    icon: Connection
   },
   {
     path: '/config',
