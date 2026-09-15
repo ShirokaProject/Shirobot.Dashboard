@@ -13,22 +13,14 @@ export interface ModelInfo {
   id: string
   version: string
   assembly: string
-  path: string
+  path: string | null
+  source: 'built_in'
+  reloadable: false
 }
 
 interface AdapterOperationResponse {
   ok: boolean
   adapter: AdapterStatus
-}
-
-interface ModelOperationResponse {
-  ok: boolean
-  models: Array<ModelInfo | {
-    id: string
-    version: string
-    assemblyName: string
-    assemblyPath: string
-  }>
 }
 
 export function getAdapterStatus() {
@@ -49,17 +41,4 @@ export function stopAdapter() {
 
 export function getModels() {
   return apiRequest<ModelInfo[]>('/api/v1/models/list')
-}
-
-export function reloadModels() {
-  return apiRequest<ModelOperationResponse>('/api/v1/models/reload', { method: 'POST' })
-}
-
-export function installModel(file: File) {
-  const body = new FormData()
-  body.append('file', file)
-  return apiRequest<ModelOperationResponse>('/api/v1/models/install', {
-    method: 'POST',
-    body
-  })
 }

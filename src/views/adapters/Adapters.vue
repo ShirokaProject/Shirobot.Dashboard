@@ -4,7 +4,7 @@
       <div>
         <span class="hero-kicker">Runtime components</span>
         <h2>运行组件</h2>
-        <p>管理平台 Model 与当前 Adapter。重载操作会自动协调 Plugin 卸载、程序集切换和状态恢复。</p>
+        <p>查看宿主内置平台契约，并管理当前 Adapter 的加载状态。</p>
       </div>
       <el-button round :loading="loading" :disabled="busy" @click="loadComponents">刷新状态</el-button>
     </section>
@@ -85,7 +85,7 @@
         <div class="section-heading">
           <div>
             <span class="section-label">Platform models</span>
-            <h3>已安装 Models</h3>
+            <h3>内置 Models</h3>
           </div>
           <span class="model-count">{{ models.length }}</span>
         </div>
@@ -96,47 +96,22 @@
             <div class="model-copy">
               <strong>{{ model.assembly }}</strong>
               <span>{{ model.id }}</span>
-              <small :title="model.path">{{ model.path }}</small>
+              <small>{{ model.source === 'built_in' ? '随宿主内置，不支持运行时替换' : model.source }}</small>
             </div>
             <span class="version-chip">{{ model.version }}</span>
           </div>
         </div>
-        <el-empty v-else description="Models 目录中还没有平台 Model" />
-
-        <div class="model-actions">
-          <el-button
-            round
-            :loading="modelOperation === 'reload'"
-            :disabled="busy"
-            @click="handleReloadModels"
-          >
-            重载全部 Models
-          </el-button>
-
-          <label class="file-picker" :class="{ disabled: busy }">
-            <input type="file" accept=".dll" :disabled="busy" @change="selectModelFile">
-            <span>{{ selectedModelFile?.name || '选择 Model DLL' }}</span>
-          </label>
-          <el-button
-            round
-            type="primary"
-            :loading="modelOperation === 'install'"
-            :disabled="busy || !selectedModelFile"
-            @click="handleInstallModel"
-          >
-            安装 / 替换
-          </el-button>
-        </div>
+        <el-empty v-else description="宿主未包含平台 Model" />
       </article>
     </section>
 
     <section class="reload-notes">
       <div class="note-number">01</div>
-      <div><strong>Models 优先</strong><span>Model 更新时会先卸载依赖 Plugin 与 Adapter，再恢复运行链路。</span></div>
+      <div><strong>Models 内置</strong><span>Discord、QQ 与 Telegram 契约随宿主发布，不支持运行时替换。</span></div>
       <div class="note-number">02</div>
       <div><strong>真实程序集卸载</strong><span>只有 collectible ALC 确认释放后，DLL 才会被替换或重新加载。</span></div>
       <div class="note-number">03</div>
-      <div><strong>自动文件监听</strong><span>直接覆盖 Models、Adapter 或 Plugin DLL 也会触发对应热重载流程。</span></div>
+      <div><strong>第三方扩展</strong><span>新的业务与平台能力应实现为标准 Plugin，并通过 Plugins 页面管理。</span></div>
     </section>
   </div>
 </template>
@@ -148,10 +123,8 @@ const {
   adapter,
   models,
   adapterPath,
-  selectedModelFile,
   loading,
   adapterOperation,
-  modelOperation,
   busy,
   loadError,
   actionMessage,
@@ -159,10 +132,7 @@ const {
   adapterDisplayName,
   loadComponents,
   handleReloadAdapter,
-  handleStopAdapter,
-  handleReloadModels,
-  selectModelFile,
-  handleInstallModel
+  handleStopAdapter
 } = useAdaptersPage()
 </script>
 

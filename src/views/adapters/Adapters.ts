@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from 'vue'
-import { getAdapterStatus, getApiErrorMessage, getModels, installModel, reloadAdapter, reloadModels, stopAdapter } from '../../api'
+import { getAdapterStatus, getApiErrorMessage, getModels, reloadAdapter, stopAdapter } from '../../api'
 import type { AdapterStatus, ModelInfo } from '../../api'
 
 const emptyAdapter: AdapterStatus = {
@@ -15,15 +15,13 @@ export function useAdaptersPage() {
   const adapter = ref<AdapterStatus>({ ...emptyAdapter })
   const models = ref<ModelInfo[]>([])
   const adapterPath = ref('')
-  const selectedModelFile = ref<File | null>(null)
   const loading = ref(false)
   const adapterOperation = ref<'reload' | 'stop' | ''>('')
-  const modelOperation = ref<'reload' | 'install' | ''>('')
   const loadError = ref('')
   const actionMessage = ref('')
   const actionMessageType = ref<'success' | 'error'>('success')
 
-  const busy = computed(() => loading.value || Boolean(adapterOperation.value) || Boolean(modelOperation.value))
+  const busy = computed(() => loading.value || Boolean(adapterOperation.value))
   const adapterDisplayName = computed(() => adapter.value.name || adapter.value.id || '未加载 Adapter')
 
   function showActionMessage(message: string, type: 'success' | 'error' = 'success') {
@@ -78,42 +76,6 @@ export function useAdaptersPage() {
     }
   }
 
-  async function handleReloadModels() {
-    if (busy.value) return
-    modelOperation.value = 'reload'
-    try {
-      await reloadModels()
-      models.value = await getModels()
-      adapter.value = await getAdapterStatus()
-      showActionMessage('Models、Adapter 与 Plugins 已按依赖顺序完成热重载。')
-    } catch (error) {
-      showActionMessage(getApiErrorMessage(error, 'Model 热重载失败。'), 'error')
-    } finally {
-      modelOperation.value = ''
-    }
-  }
-
-  function selectModelFile(event: Event) {
-    const input = event.target as HTMLInputElement
-    selectedModelFile.value = input.files?.[0] ?? null
-  }
-
-  async function handleInstallModel() {
-    if (busy.value || !selectedModelFile.value) return
-    modelOperation.value = 'install'
-    try {
-      await installModel(selectedModelFile.value)
-      models.value = await getModels()
-      adapter.value = await getAdapterStatus()
-      showActionMessage(`${selectedModelFile.value.name} 已安装并完成依赖组件恢复。`)
-      selectedModelFile.value = null
-    } catch (error) {
-      showActionMessage(getApiErrorMessage(error, 'Model 安装失败。'), 'error')
-    } finally {
-      modelOperation.value = ''
-    }
-  }
-
   onMounted(() => {
     void loadComponents()
   })
@@ -122,10 +84,8 @@ export function useAdaptersPage() {
     adapter,
     models,
     adapterPath,
-    selectedModelFile,
     loading,
     adapterOperation,
-    modelOperation,
     busy,
     loadError,
     actionMessage,
@@ -133,9 +93,6 @@ export function useAdaptersPage() {
     adapterDisplayName,
     loadComponents,
     handleReloadAdapter,
-    handleStopAdapter,
-    handleReloadModels,
-    selectModelFile,
-    handleInstallModel
+    handleStopAdapter
   }
 }
