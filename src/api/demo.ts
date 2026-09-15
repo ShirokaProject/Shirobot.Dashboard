@@ -55,7 +55,7 @@ let demoAdapter: AdapterStatus = {
 const demoModels: ModelInfo[] = [
   {
     id: 'shirobot.model.discord',
-    version: '0.9.0',
+    version: '0.9.1',
     assembly: 'ShiroBot.Model.Discord',
     path: null,
     source: 'built_in',
@@ -63,7 +63,7 @@ const demoModels: ModelInfo[] = [
   },
   {
     id: 'shirobot.model.qq',
-    version: '0.9.0',
+    version: '0.9.1',
     assembly: 'ShiroBot.Model.QQ',
     path: null,
     source: 'built_in',
@@ -71,7 +71,7 @@ const demoModels: ModelInfo[] = [
   },
   {
     id: 'shirobot.model.telegram',
-    version: '0.9.0',
+    version: '0.9.1',
     assembly: 'ShiroBot.Model.Telegram',
     path: null,
     source: 'built_in',
