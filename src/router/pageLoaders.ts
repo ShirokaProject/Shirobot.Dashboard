@@ -5,6 +5,7 @@ const routeComponentLoaders = {
   '/plugin-market': () => import('../views/pluginMarket/PluginMarket.vue'),
   '/plugins/:pluginId/config': () => import('../views/pluginConfig/PluginConfig.vue'),
   '/adapters': () => import('../views/adapters/Adapters.vue'),
+  '/adapter-market': () => import('../views/adapterMarket/AdapterMarket.vue'),
   '/logs': () => import('../views/logs/Logs.vue'),
   '/config': () => import('../views/config/Config.vue'),
   '/about': () => import('../views/about/About.vue')
@@ -59,6 +60,10 @@ export function loadAdaptersPage() {
   return preloadByKey('/adapters')
 }
 
+export function loadAdapterMarketPage() {
+  return preloadByKey('/adapter-market')
+}
+
 export function loadLogsPage() {
   return preloadByKey('/logs')
 }
@@ -82,6 +87,7 @@ export function preloadDashboardPages() {
     '/plugin-market',
     '/logs',
     '/adapters',
+    '/adapter-market',
     '/config',
     '/about',
     '/plugins/:pluginId/config'

@@ -1,4 +1,4 @@
-import type { AdapterStatus, ModelInfo } from './adapters/adapters'
+import type { AdapterMarketEntry, AdapterStatus, ModelInfo } from './adapters/adapters'
 import type { AppConfig } from './config/config'
 import type { LogSourceInfo, RuntimeLogsResponse } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
@@ -49,8 +49,23 @@ let demoAdapter: AdapterStatus = {
   name: 'OneBot Adapter',
   version: '0.1.0',
   platform: 'qq',
-  assembly_path: '/opt/shirobot/adapters/ShiroBot.Adapter.OneBot/ShiroBot.Adapter.OneBot.dll'
+  assemblyPath: '/opt/shirobot/adapters/ShiroBot.Adapter.OneBot/ShiroBot.Adapter.OneBot.dll',
+  description: 'OneBot v11 平台连接 Adapter。',
+  error: null,
+  restartRequired: false,
+  rollback: null
 }
+
+const demoAdapters: AdapterStatus[] = [demoAdapter, {
+  id: 'shirobot.adapter.telegram', name: 'Telegram Adapter', version: '0.1.0', platform: 'telegram', loaded: false,
+  assemblyPath: '/opt/shirobot/adapters/ShiroBot.Adapter.Telegram.dll', description: 'Telegram Bot API 平台连接 Adapter。', error: null, restartRequired: false, rollback: null
+}]
+
+const demoAdapterMarket: AdapterMarketEntry[] = [
+  { id: 'shirobot.adapter.onebot', name: 'OneBot Adapter', version: '0.2.0', platform: 'qq', description: 'OneBot v11 协议适配，支持 QQ 平台连接。', repository: 'ShirokaProject/ShiroBot.Adapter.OneBot', authors: ['Shirobot Core'], downloadCount: 12400, installedVersion: '0.1.0', health: 'available', asset: { url: 'https://github.com/ShirokaProject/ShiroBot.Adapter.OneBot/releases/download/v0.2.0/ShiroBot.Adapter.OneBot.zip', name: 'ShiroBot.Adapter.OneBot.zip', digest: `sha256:${'4'.repeat(64)}`, size: 256000 } },
+  { id: 'shirobot.adapter.telegram', name: 'Telegram Adapter', version: '0.1.0', platform: 'telegram', description: 'Telegram Bot API 平台连接。', repository: 'ShirokaProject/ShiroBot.Adapter.Telegram', authors: ['Community'], downloadCount: 4600, installedVersion: null, health: 'available', asset: { url: 'https://github.com/ShirokaProject/ShiroBot.Adapter.Telegram/releases/download/v0.1.0/ShiroBot.Adapter.Telegram.zip', name: 'ShiroBot.Adapter.Telegram.zip', digest: `sha256:${'5'.repeat(64)}`, size: 198000 } }
+]
+const demoPendingAdapterInstalls = new Map<string, AdapterStatus>()
 
 const demoModels: ModelInfo[] = [
   {
@@ -386,21 +401,79 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
   if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
+  if (method === 'GET' && pathname === '/api/v1/adapter-market/adapters') return clone(demoAdapterMarket) as T
   if (method === 'GET' && pathname === '/api/v1/adapter') return clone(demoAdapter) as T
   if (method === 'POST' && pathname === '/api/v1/adapter/reload') {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { assembly_path?: string }
     demoAdapter = {
       ...demoAdapter,
       loaded: true,
-      assembly_path: payload.assembly_path || demoAdapter.assembly_path
+      assemblyPath: payload.assembly_path || demoAdapter.assemblyPath
     }
     return { ok: true, adapter: clone(demoAdapter) } as T
   }
   if (method === 'POST' && pathname === '/api/v1/adapter/stop') {
-    demoAdapter = { ...demoAdapter, loaded: false, platform: null }
+    demoAdapter = { ...demoAdapter, loaded: false, platform: '未声明' }
     return { ok: true, adapter: clone(demoAdapter) } as T
   }
   if (method === 'GET' && pathname === '/api/v1/models/list') return clone(demoModels) as T
+
+  const adapterActionMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)\/(start|stop|reload)$/)
+  if (method === 'POST' && adapterActionMatch) {
+    const id = decodeURIComponent(adapterActionMatch[1] ?? '')
+    const adapter = demoAdapters.find(item => item.id === id)
+    if (!adapter) throw new Error('Demo adapter not found')
+    const action = adapterActionMatch[2]
+    adapter.loaded = action !== 'stop'
+    if (adapter.id === demoAdapter.id) demoAdapter = adapter
+    return { ok: true, message: `${adapter.name} 已${action === 'start' ? '启动' : action === 'stop' ? '停止' : '重载'}。`, adapter: clone(adapter), restart_required: false } as T
+  }
+
+  const deleteAdapterMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)$/)
+  if (method === 'DELETE' && deleteAdapterMatch) {
+    const id = decodeURIComponent(deleteAdapterMatch[1] ?? '')
+    const index = demoAdapters.findIndex(item => item.id === id)
+    if (index < 0) throw new Error('Demo adapter not found')
+    const [adapter] = demoAdapters.splice(index, 1)
+    return { ok: true, message: `${adapter?.name ?? 'Adapter'} 已删除。`, restart_required: false } as T
+  }
+
+  if (method === 'POST' && pathname === '/api/v1/adapters/upload') {
+    const preview: AdapterStatus = { id: 'shirobot.adapter.local-preview', name: '本地 Adapter', version: '1.0.0', platform: 'custom', loaded: false, assemblyPath: null, description: '本地上传包预览。', error: null, restartRequired: false, rollback: null }
+    demoPendingAdapterInstalls.set('demo-adapter-upload', preview)
+    return { upload_id: 'demo-adapter-upload', adapter: preview, package: { file_name: 'ShiroBot.Adapter.Local.zip', type: 'zip', size: 123456 }, conflict: { exists: false } } as T
+  }
+
+  if (method === 'POST' && pathname === '/api/v1/adapters/install/github') {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { repository?: string }
+    const entry = demoAdapterMarket.find(item => item.repository === payload.repository)
+    if (!entry) throw new Error('演示目录中未找到该 GitHub 仓库。')
+    const preview: AdapterStatus = { id: entry.id, name: entry.name, version: entry.version, platform: entry.platform, loaded: false, assemblyPath: null, description: entry.description, error: null, restartRequired: false, rollback: null }
+    const uploadId = `demo-adapter-${entry.id}`
+    demoPendingAdapterInstalls.set(uploadId, preview)
+    return { upload_id: uploadId, adapter: preview, package: { file_name: entry.asset?.name, type: 'zip', size: entry.asset?.size }, source: { type: 'github' }, conflict: { exists: Boolean(entry.installedVersion), installed_version: entry.installedVersion } } as T
+  }
+
+  const confirmAdapterUploadMatch = pathname.match(/^\/api\/v1\/adapters\/upload\/([^/]+)\/confirm$/)
+  if (method === 'POST' && confirmAdapterUploadMatch) {
+    const uploadId = decodeURIComponent(confirmAdapterUploadMatch[1] ?? '')
+    const adapter = demoPendingAdapterInstalls.get(uploadId)
+    if (!adapter) throw new Error('演示安装预览已过期。')
+    const existing = demoAdapters.findIndex(item => item.id === adapter.id)
+    adapter.loaded = true
+    if (existing >= 0) demoAdapters.splice(existing, 1, adapter)
+    else demoAdapters.push(adapter)
+    if (adapter.id === demoAdapter.id) demoAdapter = adapter
+    demoPendingAdapterInstalls.delete(uploadId)
+    return { ok: true, message: `${adapter.name} 已安装并重载。`, adapter, restart_required: false } as T
+  }
+
+  const cancelAdapterUploadMatch = pathname.match(/^\/api\/v1\/adapters\/upload\/([^/]+)$/)
+  if (method === 'DELETE' && cancelAdapterUploadMatch) {
+    demoPendingAdapterInstalls.delete(decodeURIComponent(cancelAdapterUploadMatch[1] ?? ''))
+    return { ok: true } as T
+  }
 
   const pluginActionMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/(enable|disable)$/)
   if (method === 'POST' && pluginActionMatch) {

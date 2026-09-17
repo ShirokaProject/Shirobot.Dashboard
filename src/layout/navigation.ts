@@ -22,8 +22,14 @@ export const menuItems = [
   },
   {
     path: '/adapters',
-    label: '运行组件',
-    short: '组件',
+    label: 'Adapter 管理',
+    short: 'Adapter',
+    icon: Connection
+  },
+  {
+    path: '/adapter-market',
+    label: 'Adapter 市场',
+    short: '市场',
     icon: Connection
   },
   {

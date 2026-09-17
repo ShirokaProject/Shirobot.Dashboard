@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { hasDashboardSession } from '../auth/session'
 import {
   loadAboutPage,
+  loadAdapterMarketPage,
   loadAdaptersPage,
   loadConfigPage,
   loadLoginPage,
@@ -49,6 +50,11 @@ const router = createRouter({
           path: 'adapters',
           name: 'Adapters',
           component: loadAdaptersPage
+        },
+        {
+          path: 'adapter-market',
+          name: 'AdapterMarket',
+          component: loadAdapterMarketPage
         },
         {
           path: 'logs',
