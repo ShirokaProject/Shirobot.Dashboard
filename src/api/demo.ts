@@ -70,7 +70,7 @@ const demoPendingAdapterInstalls = new Map<string, AdapterStatus>()
 const demoModels: ModelInfo[] = [
   {
     id: 'shirobot.model.discord',
-    version: '0.9.1',
+    version: '0.9.2',
     assembly: 'ShiroBot.Model.Discord',
     path: null,
     source: 'built_in',
@@ -78,7 +78,7 @@ const demoModels: ModelInfo[] = [
   },
   {
     id: 'shirobot.model.qq',
-    version: '0.9.1',
+    version: '0.9.2',
     assembly: 'ShiroBot.Model.QQ',
     path: null,
     source: 'built_in',
@@ -86,7 +86,7 @@ const demoModels: ModelInfo[] = [
   },
   {
     id: 'shirobot.model.telegram',
-    version: '0.9.1',
+    version: '0.9.2',
     assembly: 'ShiroBot.Model.Telegram',
     path: null,
     source: 'built_in',
