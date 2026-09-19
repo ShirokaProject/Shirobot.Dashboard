@@ -162,16 +162,12 @@ function triggerAvatarSpin() {
 
 .md3-drawer.collapsed .drawer-top {
   align-self: stretch;
-  width: auto;
   gap: 0;
-  justify-content: flex-start;
-  padding-inline: 0;
 }
 
 .md3-drawer.collapsed .drawer-menu-button {
   width: 56px;
   height: 56px;
-  margin-left: 8px;
 }
 
 .drawer-top {
@@ -394,10 +390,10 @@ function triggerAvatarSpin() {
   font: var(--md-sys-typescale-label-large);
   box-shadow: var(--md-sys-elevation-level1);
   transition:
-    width var(--drawer-motion-duration) var(--drawer-motion-easing),
     height var(--drawer-motion-duration) var(--drawer-motion-easing),
     margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
     padding var(--drawer-motion-duration) var(--drawer-motion-easing),
+    gap var(--drawer-motion-duration) var(--drawer-motion-easing),
     border-radius var(--drawer-motion-duration) var(--drawer-motion-easing),
     box-shadow var(--md-sys-motion-duration-short4);
 }
@@ -411,19 +407,14 @@ function triggerAvatarSpin() {
 }
 
 .md3-drawer.collapsed .drawer-primary-action {
-  width: 56px;
-  height: 56px;
   margin-left: 8px;
   gap: 0;
-  padding: 0;
-  border-radius: var(--md-sys-shape-corner-large);
+  padding: 0 var(--md-space-4);
 }
 
 .md3-drawer.collapsed .drawer-primary-action span {
   max-width: 0;
   opacity: 0;
-  transform: translateX(-8px);
-  transition-duration: 0ms;
 }
 
 .drawer-primary-action span {
