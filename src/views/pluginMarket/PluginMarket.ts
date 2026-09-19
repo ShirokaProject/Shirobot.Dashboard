@@ -37,6 +37,25 @@ export function usePluginMarketPage() {
     { label: 'A-z', value: 'name' }
   ]
 
+  const categoryLabels: Record<string, string> = {
+    ai: 'AI',
+    utility: '实用工具',
+    media: '媒体',
+    infrastructure: '基础设施',
+    chat: '聊天',
+    download: '下载',
+    render: '渲染',
+    management: '管理',
+    integration: '集成',
+    game: '游戏',
+    development: '开发',
+    other: '其他'
+  }
+
+  function categoryLabel(category: string) {
+    return categoryLabels[category.toLowerCase()] ?? category
+  }
+
   const marketplacePlugins = computed(() => market.value?.plugins ?? [])
   const categories = computed(() => ['全部', ...new Set(marketplacePlugins.value.map(plugin => plugin.category).filter(Boolean))])
   const generatedAt = computed(() => market.value?.generatedAt ? formatDate(market.value.generatedAt) : '—')
@@ -298,6 +317,7 @@ export function usePluginMarketPage() {
     healthLabel,
     installButtonLabel,
     canInstallPlugin,
-    formatCompatibility
+    formatCompatibility,
+    categoryLabel
   }
 }

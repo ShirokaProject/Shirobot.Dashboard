@@ -74,12 +74,15 @@ function buildStats(response: OverviewResponse): OverviewMetric[] {
 }
 
 function buildBars(response: OverviewResponse) {
-  const counts = Array.isArray(response.message_freq) ? response.message_freq.map(item => Number(item.count) || 0) : []
+  const buckets = Array.isArray(response.message_freq) ? response.message_freq : []
+  const counts = buckets.map(item => Number(item.count) || 0)
   const maxCount = Math.max(...counts, 0)
 
-  if (maxCount <= 0) return counts.map(() => 0)
-
-  return counts.map(count => Math.max(8, Math.round((count / maxCount) * 100)))
+  return buckets.map((bucket, index) => ({
+    count: counts[index],
+    time: bucket.start_time,
+    height: maxCount > 0 ? Math.max(8, Math.round((counts[index] / maxCount) * 100)) : 0
+  }))
 }
 
 function buildEvents(events: OverviewEvent[]) {
@@ -94,7 +97,7 @@ export function useOverviewPage() {
   const shirobotInfo = ref<OverviewInfo>({ ...emptyShirobotInfo })
   const latestError = ref<OverviewLatestError>({ ...emptyLatestError })
   const overviewStats = ref<OverviewMetric[]>([])
-  const bars = ref<number[]>([])
+  const bars = ref<Array<{ count: number; time: string; height: number }>>([])
   const events = ref<Array<{ title: string; time: string }>>([])
   const loadError = ref('')
   const session = computed(() => getDashboardSession())

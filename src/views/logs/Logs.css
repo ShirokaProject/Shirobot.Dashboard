@@ -284,9 +284,7 @@
   min-height: calc(100vh - 244px);
   max-height: calc(100vh - 186px);
   overflow: hidden;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 80%, transparent), transparent 190px),
-    color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 74%, var(--md-sys-color-primary-container));
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .terminal-output {

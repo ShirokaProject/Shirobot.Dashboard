@@ -1,5 +1,4 @@
 import { getDashboardSession, isDemoMode } from '../../auth/session'
-import { getDemoApiResponse } from '../demo'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -28,18 +27,11 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-function getActiveApiBaseUrl() {
-  const session = getDashboardSession()
-  return session?.apiBaseUrl ?? API_BASE_URL
-}
-
-function buildApiUrl(path: string) {
+export function buildApiUrl(path: string) {
   if (/^https?:\/\//i.test(path)) return path
+  if (!API_BASE_URL) return path
 
-  const apiBaseUrl = getActiveApiBaseUrl()
-  if (!apiBaseUrl) return path
-
-  return `${apiBaseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
+  return `${API_BASE_URL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
 }
 
 function buildRequestInit(init?: RequestInit): RequestInit | undefined {
@@ -70,7 +62,9 @@ async function readResponseBody(response: Response) {
 }
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  if (isDemoMode()) {
+  // Dev-only: the demo dataset is dropped from production builds.
+  if (import.meta.env.DEV && isDemoMode()) {
+    const { getDemoApiResponse } = await import('../demo')
     return getDemoApiResponse<T>(path, init)
   }
 

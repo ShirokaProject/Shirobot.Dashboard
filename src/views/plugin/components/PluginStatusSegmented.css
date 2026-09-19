@@ -1,16 +1,39 @@
-/* M3 segmented button group: outlined, 40dp height, full-corner ends */
+/* M3 segmented button group: tonal container, no outline, sliding selection block */
+/* Grid (not flex) so every segment is exactly 1/n wide - the sliding
+   indicator's translateX(index * 100%) depends on strictly equal segments. */
 .plugin-status-filters {
+  position: relative;
   width: fit-content;
-  display: inline-flex;
-  overflow: hidden;
-  border: 1px solid var(--md-sys-color-outline);
+  display: inline-grid;
+  grid-template-columns: repeat(var(--segment-count), minmax(112px, 1fr));
+  padding: var(--md-space-1);
   border-radius: var(--md-sys-shape-corner-full);
-  background: transparent;
+  background: var(--md-sys-color-surface-container);
+}
+
+.status-indicator {
+  position: absolute;
+  z-index: 0;
+  top: var(--md-space-1);
+  bottom: var(--md-space-1);
+  left: var(--md-space-1);
+  width: calc((100% - var(--md-space-2)) / var(--segment-count));
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  transform: translateX(calc(var(--active-index) * 100%));
+  transition:
+    transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.plugin-status-filters.indicator-error .status-indicator {
+  background: var(--md-sys-color-error-container);
 }
 
 .status-filter-chip {
   position: relative;
-  min-width: 112px;
+  z-index: 1;
+  min-width: 0;
   height: 40px;
   display: inline-flex;
   align-items: center;
@@ -18,32 +41,39 @@
   gap: var(--md-space-2);
   padding: 0 var(--md-space-4);
   border: 0;
-  border-radius: 0;
+  border-radius: var(--md-sys-shape-corner-full);
   background: transparent;
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
-  transition:
-    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition: color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.status-filter-chip + .status-filter-chip {
-  border-left: 1px solid var(--md-sys-color-outline);
+/* M3 state layer, kept above the sliding block so hover stays legible */
+.status-filter-chip::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  content: '';
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.status-filter-chip:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+.status-filter-chip:hover::before {
+  opacity: 0.08;
 }
 
-/* M3 selected segment: secondary-container */
+.status-filter-chip:active::before {
+  opacity: 0.12;
+}
+
 .status-filter-chip.active {
-  background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
 
 .status-filter-chip.error.active {
-  background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
 }
 
@@ -77,11 +107,16 @@
 @media (max-width: 839px) {
   .plugin-status-filters {
     width: 100%;
-    overflow-x: auto;
+    grid-template-columns: repeat(var(--segment-count), minmax(0, 1fr));
   }
 
   .status-filter-chip {
-    min-width: 96px;
-    flex: 1 0 auto;
+    padding: 0 var(--md-space-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-indicator {
+    transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
   }
 }

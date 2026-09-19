@@ -27,7 +27,7 @@
           <div class="brand-name">Shirobot</div>
           <div class="brand-caption">
             <span>Dashboard</span>
-            <span class="version-pill">v0.1.0</span>
+            <span class="version-pill">v{{ DASHBOARD_VERSION }}</span>
           </div>
         </div>
       </div>
@@ -94,6 +94,7 @@ import { Box, Plus } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
 import { preloadRouteComponent } from '../../router/pageLoaders'
 import { menuItems } from '../navigation'
+import { DASHBOARD_VERSION } from '../../version'
 
 const route = useRoute()
 const router = useRouter()

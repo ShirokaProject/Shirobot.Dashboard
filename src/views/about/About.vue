@@ -63,13 +63,17 @@
           <span class="card-icon" aria-hidden="true">i</span>
           <div>
             <h3>版本信息</h3>
-            <p>当前 Dashboard 前端版本。</p>
+            <p>前端与后端独立发版，版本号互不关联。</p>
           </div>
         </div>
         <div class="info-list compact">
           <div>
-            <span>Dashboard</span>
-            <strong>v0.1.0</strong>
+            <span>Dashboard 前端</span>
+            <strong>v{{ dashboardVersion }}</strong>
+          </div>
+          <div>
+            <span>Shirobot 后端</span>
+            <strong>{{ backendVersion }}</strong>
           </div>
           <div>
             <span>技术栈</span>
@@ -85,7 +89,7 @@
 import avatarUrl from '../../assets/images/avatar.png'
 import { useAboutPage } from './About'
 
-useAboutPage()
+const { dashboardVersion, backendVersion } = useAboutPage()
 </script>
 
 <style scoped src="./About.css"></style>

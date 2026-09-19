@@ -36,7 +36,14 @@
     </section>
 
     <section class="config-layout">
-      <aside class="config-sections">
+      <aside
+        class="config-sections"
+        :style="{
+          '--section-count': sections.length,
+          '--active-index': Math.max(0, sections.findIndex(section => section.key === activeSection))
+        }"
+      >
+        <span class="section-indicator" aria-hidden="true"></span>
         <button
           v-for="section in sections"
           :key="section.key"

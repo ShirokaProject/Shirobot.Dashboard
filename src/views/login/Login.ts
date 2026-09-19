@@ -1,63 +1,73 @@
-import { computed, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  getDashboardProfileToken,
-  getDashboardProfiles,
-  getInitialLoginSession,
-  saveDashboardSession,
-  type DashboardProfile,
-  type DashboardSessionMode
-} from '../../auth/session'
+import { verifyApiKey, type ApiKeyCheck } from '../../api'
+import { getInitialLoginSession, saveDashboardSession } from '../../auth/session'
+
+const DEMO_HASH = '#demo'
+
+function describeFailure(result: Extract<ApiKeyCheck, { ok: false }>, token: string) {
+  if (result.reason === 'unauthorized') {
+    return token ? '登录密钥不正确，请重新输入。' : '后端已启用鉴权，请输入登录密钥。'
+  }
+  if (result.reason === 'unreachable') {
+    return '无法连接到后端，请确认 Shirobot 正在运行。'
+  }
+  return `后端返回异常（HTTP ${result.status}），请稍后重试。`
+}
 
 export function useLoginPage() {
   const router = useRouter()
-  const initialSession = getInitialLoginSession()
-  const profiles = ref<DashboardProfile[]>(getDashboardProfiles())
-  const selectedProfileId = ref(initialSession.profileId)
-  const mode = ref<DashboardSessionMode>(initialSession.mode)
-  const showEndpointSettings = ref(Boolean(initialSession.apiBaseUrl))
-  const form = reactive({
-    apiBaseUrl: initialSession.apiBaseUrl,
-    token: initialSession.token
+  const form = reactive({ token: getInitialLoginSession().token })
+  const verifying = ref(false)
+  const errorMessage = ref('')
+  const demoEntryVisible = ref(false)
+
+  function syncDemoEntry() {
+    // Dev-only: production builds talk to the backend exclusively.
+    demoEntryVisible.value = import.meta.env.DEV && window.location.hash.toLowerCase() === DEMO_HASH
+  }
+
+  async function submitLogin() {
+    if (verifying.value) return
+
+    const token = form.token.trim()
+    verifying.value = true
+    errorMessage.value = ''
+
+    try {
+      const result = await verifyApiKey(token)
+      if (!result.ok) {
+        errorMessage.value = describeFailure(result, token)
+        return
+      }
+
+      saveDashboardSession({ mode: 'api', token })
+      await router.replace('/')
+    } finally {
+      verifying.value = false
+    }
+  }
+
+  function enterDemoMode() {
+    saveDashboardSession({ mode: 'demo', token: '' })
+    void router.replace('/')
+  }
+
+  onMounted(() => {
+    syncDemoEntry()
+    window.addEventListener('hashchange', syncDemoEntry)
   })
 
-  const isDemoMode = computed(() => mode.value === 'demo')
-
-  function syncProfiles() {
-    profiles.value = getDashboardProfiles()
-  }
-
-  function selectProfile(profile: DashboardProfile) {
-    selectedProfileId.value = profile.id
-    mode.value = profile.mode
-    form.apiBaseUrl = profile.apiBaseUrl
-    form.token = profile.mode === 'api' ? getDashboardProfileToken(profile.id) : ''
-    showEndpointSettings.value = Boolean(profile.apiBaseUrl)
-  }
-
-  function submitLogin() {
-    saveDashboardSession({
-      mode: mode.value,
-      apiBaseUrl: isDemoMode.value ? '' : form.apiBaseUrl.trim(),
-      token: isDemoMode.value ? '' : form.token.trim()
-    })
-    syncProfiles()
-    router.replace('/')
-  }
-
-  function toggleEndpointSettings() {
-    showEndpointSettings.value = !showEndpointSettings.value
-  }
+  onBeforeUnmount(() => {
+    window.removeEventListener('hashchange', syncDemoEntry)
+  })
 
   return {
-    mode,
     form,
-    profiles,
-    selectedProfileId,
-    isDemoMode,
-    showEndpointSettings,
-    selectProfile,
+    verifying,
+    errorMessage,
+    demoEntryVisible,
     submitLogin,
-    toggleEndpointSettings
+    enterDemoMode
   }
 }

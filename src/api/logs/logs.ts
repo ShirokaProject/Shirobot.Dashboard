@@ -61,11 +61,10 @@ export function getLogSources() {
 
 export function getLogStreamUrl() {
   const session = getDashboardSession()
-  const apiBaseUrl = session?.apiBaseUrl || API_BASE_URL
   const path = '/api/v1/logs/stream'
 
-  const url = apiBaseUrl
-    ? new URL(path, `${apiBaseUrl.replace(/\/$/, '')}/`)
+  const url = API_BASE_URL
+    ? new URL(path, `${API_BASE_URL.replace(/\/$/, '')}/`)
     : new URL(path, window.location.origin)
 
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'

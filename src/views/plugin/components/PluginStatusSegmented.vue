@@ -1,5 +1,11 @@
 <template>
-  <section class="plugin-status-filters" aria-label="插件状态分类">
+  <section
+    class="plugin-status-filters"
+    :class="`indicator-${activeStatus}`"
+    :style="{ '--segment-count': filters.length, '--active-index': activeIndex }"
+    aria-label="插件状态分类"
+  >
+    <span class="status-indicator" aria-hidden="true"></span>
     <button
       v-for="filter in filters"
       :key="filter.key"
@@ -16,9 +22,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { PluginStatusFilter } from '../Plugins'
 
-defineProps<{
+const props = defineProps<{
   filters: PluginStatusFilter[]
   activeStatus: PluginStatusFilter['key']
 }>()
@@ -26,6 +33,8 @@ defineProps<{
 const emit = defineEmits<{
   'update:activeStatus': [value: PluginStatusFilter['key']]
 }>()
+
+const activeIndex = computed(() => Math.max(0, props.filters.findIndex(filter => filter.key === props.activeStatus)))
 </script>
 
 <style scoped src="./PluginStatusSegmented.css"></style>

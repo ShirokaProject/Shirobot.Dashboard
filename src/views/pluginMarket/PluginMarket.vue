@@ -27,14 +27,23 @@
             :class="{ active: activeCategory === category }"
             @click="activeCategory = category"
           >
-            {{ category }}
+            {{ category === '全部' ? category : categoryLabel(category) }}
           </button>
         </div>
       </div>
 
       <div class="market-control-group align-end">
         <span class="control-label">排序</span>
-        <div class="control-segmented" role="group" aria-label="排序">
+        <div
+          class="control-segmented"
+          role="group"
+          aria-label="排序"
+          :style="{
+            '--segment-count': sortOptions.length,
+            '--active-index': Math.max(0, sortOptions.findIndex(option => option.value === activeSort))
+          }"
+        >
+          <span class="control-indicator" aria-hidden="true"></span>
           <button
             v-for="option in sortOptions"
             :key="option.value"
@@ -87,7 +96,7 @@
         </div>
 
         <div class="market-badges">
-          <span class="market-badge category">{{ plugin.category }}</span>
+          <span class="market-badge category">{{ categoryLabel(plugin.category) }}</span>
           <span class="market-badge health" :class="healthTone(plugin.health.status)">{{ healthLabel(plugin.health.status) }}</span>
           <span v-if="plugin.release.prerelease" class="market-badge warning">预发布</span>
           <span v-if="plugin.deprecated" class="market-badge error">已弃用</span>
@@ -225,7 +234,8 @@ const {
   healthLabel,
   installButtonLabel,
   canInstallPlugin,
-  formatCompatibility
+  formatCompatibility,
+  categoryLabel
 } = usePluginMarketPage()
 </script>
 

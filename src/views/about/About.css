@@ -12,9 +12,7 @@
   align-items: center;
   padding: var(--md-space-6);
   border-radius: var(--md-sys-shape-corner-extra-large);
-  background:
-    radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent), transparent 30%),
-    var(--md-sys-color-surface-container-lowest);
+  background: var(--md-sys-color-surface-container-low);
 }
 
 .about-avatar {

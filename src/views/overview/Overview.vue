@@ -9,26 +9,25 @@
       :closable="false"
     />
     <section class="welcome-panel">
-      <div>
-        <div class="welcome-kicker">
-          <span class="material-icon soft">
-            <svg viewBox="0 0 24 24"><path d="M6.76 4.84 4.96 3.05 3.55 4.46l1.79 1.79 1.42-1.41ZM1 13h3v-2H1v2Zm10-12h2v3h-2V1Zm8.04 2.05-1.79 1.79 1.41 1.41 1.79-1.79-1.41-1.41ZM17.24 19.16l1.79 1.8 1.41-1.42-1.79-1.79-1.41 1.41ZM20 11v2h3v-2h-3ZM4.96 20.95l1.8-1.79-1.42-1.41-1.79 1.79 1.41 1.41ZM11 20h2v3h-2v-3Zm1-14a6 6 0 1 0 0 12A6 6 0 0 0 12 6Z" /></svg>
-          </span>
-          Shirobot Dashboard
-        </div>
-        <h2>晚上好！</h2>
-        <div class="login-summary-card">
+      <div class="welcome-kicker">
+        <span class="material-icon soft">
+          <svg viewBox="0 0 24 24"><path d="M6.76 4.84 4.96 3.05 3.55 4.46l1.79 1.79 1.42-1.41ZM1 13h3v-2H1v2Zm10-12h2v3h-2V1Zm8.04 2.05-1.79 1.79 1.41 1.41 1.79-1.79-1.41-1.41ZM17.24 19.16l1.79 1.8 1.41-1.42-1.79-1.79-1.41 1.41ZM20 11v2h3v-2h-3ZM4.96 20.95l1.8-1.79-1.42-1.41-1.79 1.79 1.41 1.41ZM11 20h2v3h-2v-3Zm1-14a6 6 0 1 0 0 12A6 6 0 0 0 12 6Z" /></svg>
+        </span>
+        Shirobot Dashboard
+      </div>
+      <h2>晚上好！</h2>
+
+      <div class="welcome-tiles">
+        <div class="welcome-tile session">
           <span>登录状态</span>
           <strong>{{ loginModeLabel }} · {{ loginStatusLabel }}</strong>
           <small>{{ loginEndpointLabel }}</small>
         </div>
-      </div>
-      <div class="version-panel">
-        <div class="version-item">
+        <div class="welcome-tile">
           <span><IconPackage /> Shirobot 版本</span>
           <strong>{{ shirobotInfo.version }}</strong>
         </div>
-        <div class="version-item">
+        <div class="welcome-tile">
           <span><IconTimer /> 稳定运行</span>
           <strong>{{ shirobotInfo.uptime }}</strong>
         </div>
@@ -67,7 +66,14 @@
         </div>
         <div class="chart-surface">
           <template v-if="bars.length">
-            <div v-for="(bar, index) in bars" :key="`${bar}-${index}`" class="bar" :style="{ height: `${bar}%` }"></div>
+            <div v-for="(bar, index) in bars" :key="`${bar.time}-${index}`" class="bar-column">
+              <div class="bar-track">
+                <div class="bar" :style="{ height: `${bar.height}%` }">
+                  <span class="bar-value">{{ bar.count }}</span>
+                </div>
+              </div>
+              <span class="bar-time">{{ bar.time }}</span>
+            </div>
           </template>
           <div v-else class="empty-state">暂无消息频率数据</div>
         </div>

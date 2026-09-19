@@ -6,21 +6,12 @@
   gap: var(--md-space-8);
 }
 
+/* One card: greeting on top, a row of equal tiles below. No two columns
+   fighting over height, so no stretched voids. */
 .welcome-panel {
-  display: grid;
-  grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.1fr);
-  gap: var(--md-space-6);
-  align-items: stretch;
-}
-
-.welcome-panel > div:first-child,
-.version-panel {
+  padding: var(--md-space-6);
   border-radius: var(--md-sys-shape-corner-large);
   background: var(--md-sys-color-surface-container-lowest);
-}
-
-.welcome-panel > div:first-child {
-  padding: var(--md-space-6);
 }
 
 .welcome-kicker {
@@ -36,63 +27,35 @@
   font: var(--md-sys-typescale-headline-medium);
 }
 
-.login-summary-card {
-  max-width: 360px;
-  margin-top: var(--md-space-6);
-  padding: var(--md-space-4);
-  border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.login-summary-card span,
-.login-summary-card small {
-  display: block;
-  opacity: 0.78;
-  font: var(--md-sys-typescale-label-medium);
-}
-
-.login-summary-card strong {
-  display: block;
-  margin-top: var(--md-space-1);
-  overflow: hidden;
-  font: var(--md-sys-typescale-title-small);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.login-summary-card small {
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .welcome-panel p {
   margin: var(--md-space-2) 0 0;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-medium);
 }
 
-.version-panel {
+.welcome-tiles {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--md-space-4);
-  padding: var(--md-space-5);
+  margin-top: var(--md-space-6);
 }
 
-.version-item {
+.welcome-tile {
   min-width: 0;
-  min-height: 100px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: var(--md-space-2);
   padding: var(--md-space-5);
   border-radius: var(--md-sys-shape-corner-large);
   background: var(--md-sys-color-surface-container-low);
 }
 
-.version-item span {
+.welcome-tile.session {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.welcome-tile span {
   display: flex;
   align-items: center;
   gap: var(--md-space-2);
@@ -100,20 +63,38 @@
   font: var(--md-sys-typescale-label-large);
 }
 
-.version-item span svg {
+.welcome-tile span svg {
   width: 17px;
   height: 17px;
+  flex: 0 0 auto;
   stroke-width: 2;
 }
 
-.version-item strong {
-  display: block;
-  margin-top: var(--md-space-2);
+.welcome-tile strong {
   overflow: hidden;
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-title-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.welcome-tile small {
+  margin-top: auto;
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.welcome-tile.session span,
+.welcome-tile.session small {
+  color: inherit;
+  opacity: 0.78;
+}
+
+.welcome-tile.session strong {
+  color: inherit;
 }
 
 .latest-error-panel {
@@ -279,19 +260,80 @@
 .chart-surface {
   height: 240px;
   display: flex;
-  align-items: end;
+  align-items: stretch;
   gap: var(--md-space-3);
   padding: var(--md-space-6);
   border-radius: var(--md-sys-shape-corner-large);
   background: var(--app-panel-soft);
 }
 
-.bar {
+.bar-column {
   flex: 1;
   min-width: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Top padding reserves a lane for the hover value, so the tallest bar's
+   label can never overflow the chart surface. */
+.bar-track {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  padding-top: 30px;
+  cursor: default;
+}
+
+.bar-time {
+  margin-top: var(--md-space-2);
+  font: var(--md-sys-typescale-label-small);
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.bar {
+  position: relative;
+  width: 100%;
+  min-height: 6px;
   border-radius: var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-small) var(--md-sys-shape-corner-small);
-  background: linear-gradient(180deg, var(--md-sys-color-primary-container), var(--app-hover));
+  background: var(--md-sys-color-primary-container);
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.bar-column:hover .bar {
+  background: var(--md-sys-color-primary);
+}
+
+.bar-value {
+  position: absolute;
+  bottom: calc(100% + var(--md-space-2));
+  left: 50%;
+  padding: 2px var(--md-space-2);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font: var(--md-sys-typescale-label-medium);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.bar-column:hover .bar-value {
   opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar-value {
+    transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+    transform: translate(-50%, 0);
+  }
 }
 
 .event-list {
@@ -337,15 +379,9 @@
     margin-left: 0;
   }
 
-  .welcome-panel,
   .metric-grid,
   .content-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .welcome-panel > div:first-child,
-  .version-panel {
-    grid-column: 1 / -1;
   }
 
   .activity-card {
@@ -354,10 +390,9 @@
 }
 
 @media (max-width: 599px) {
-  .welcome-panel,
   .metric-grid,
   .content-grid,
-  .version-panel {
+  .welcome-tiles {
     grid-template-columns: 1fr;
   }
 }
