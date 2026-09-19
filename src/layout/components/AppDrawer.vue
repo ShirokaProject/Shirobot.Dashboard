@@ -464,9 +464,9 @@ function triggerAvatarSpin() {
   height: 56px;
   margin-left: var(--md-space-2);
   border-radius: var(--md-sys-shape-corner-full);
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
+  overflow: hidden;
   padding: 0 var(--md-space-6) 0 var(--md-space-2);
   font: var(--md-sys-typescale-label-large);
   text-align: left;
@@ -481,10 +481,7 @@ function triggerAvatarSpin() {
 
 .md3-drawer.collapsed .drawer-item {
   width: 56px;
-  height: 56px;
   margin-left: 8px;
-  grid-template-columns: 56px;
-  justify-items: center;
   padding: 0;
   border-radius: var(--md-sys-shape-corner-large);
 }
@@ -492,6 +489,7 @@ function triggerAvatarSpin() {
 .drawer-label {
   min-width: 0;
   max-width: 160px;
+  flex: 0 1 auto;
   overflow: hidden;
   opacity: 1;
   text-overflow: ellipsis;
@@ -507,12 +505,12 @@ function triggerAvatarSpin() {
 .md3-drawer.collapsed .drawer-count {
   max-width: 0;
   opacity: 0;
-  transform: translateX(-8px);
-  transition-duration: 0ms;
 }
 
 .drawer-count {
   max-width: 40px;
+  flex: 0 0 auto;
+  margin-left: auto;
   overflow: hidden;
   opacity: 1;
   transform: translateX(0);
@@ -551,6 +549,7 @@ function triggerAvatarSpin() {
 .nav-icon {
   width: 48px;
   height: 40px;
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
   font-size: 21px;
@@ -561,7 +560,6 @@ function triggerAvatarSpin() {
 }
 
 .md3-drawer.collapsed .nav-icon {
-  justify-self: center;
   width: 56px;
   height: 56px;
   font-size: 23px;
