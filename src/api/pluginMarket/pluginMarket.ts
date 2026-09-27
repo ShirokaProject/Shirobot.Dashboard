@@ -61,6 +61,7 @@ export interface PluginMarketResponse {
   plugins: MarketplacePlugin[]
 }
 
-export function getPluginMarketPlugins() {
-  return apiRequest<PluginMarketResponse>('/api/v1/plugin-market/plugins')
+export function getPluginMarketPlugins(forceRefresh = false) {
+  const path = '/api/v1/plugin-market/plugins'
+  return apiRequest<PluginMarketResponse>(forceRefresh ? `${path}?refresh=1` : path)
 }

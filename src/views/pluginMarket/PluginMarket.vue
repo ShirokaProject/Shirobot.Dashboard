@@ -13,6 +13,19 @@
         </svg>
         <input v-model="keyword" type="search" placeholder="搜索插件、作者、仓库或健康状态" />
       </label>
+
+      <button
+        type="button"
+        class="market-refresh"
+        :disabled="loading"
+        :title="refreshing ? '正在刷新目录' : '从远端重新拉取插件目录'"
+        @click="refreshMarketplacePlugins"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" :class="{ spinning: refreshing }">
+          <path d="M12 5V2L8 6l4 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z" />
+        </svg>
+        <span>{{ refreshing ? '刷新中' : '刷新' }}</span>
+      </button>
     </section>
 
     <section class="market-controls" aria-label="插件市场筛选">
@@ -204,6 +217,7 @@ const {
   activeCategory,
   activeSort,
   loading,
+  refreshing,
   loadError,
   feedbackMessage,
   feedbackType,
@@ -222,6 +236,7 @@ const {
   generatedAt,
   marketplacePlugins,
   filteredPlugins,
+  refreshMarketplacePlugins,
   showPluginDetails,
   preparePluginInstall,
   setInstallDialogVisible,

@@ -17,6 +17,7 @@ export function usePluginMarketPage() {
   const activeCategory = ref('全部')
   const activeSort = ref<MarketSortKey>('downloads')
   const loading = ref(false)
+  const refreshing = ref(false)
   const loadError = ref('')
   const feedbackMessage = ref('')
   const feedbackType = ref<'success' | 'error'>('success')
@@ -89,11 +90,12 @@ export function usePluginMarketPage() {
     })
   })
 
-  async function loadMarketplacePlugins() {
+  async function loadMarketplacePlugins(forceRefresh = false) {
+    if (forceRefresh) refreshing.value = true
     loading.value = true
     loadError.value = ''
     try {
-      const response = await getPluginMarketPlugins()
+      const response = await getPluginMarketPlugins(forceRefresh)
       market.value = response
       if (selectedPlugin.value) {
         selectedPlugin.value = response.plugins.find(plugin => plugin.id === selectedPlugin.value?.id) ?? null
@@ -106,7 +108,13 @@ export function usePluginMarketPage() {
       loadError.value = getApiErrorMessage(error, '插件市场加载失败')
     } finally {
       loading.value = false
+      refreshing.value = false
     }
+  }
+
+  function refreshMarketplacePlugins() {
+    if (loading.value) return
+    void loadMarketplacePlugins(true)
   }
 
   function showPluginDetails(plugin: MarketplacePlugin) {
@@ -287,6 +295,7 @@ export function usePluginMarketPage() {
     activeCategory,
     activeSort,
     loading,
+    refreshing,
     loadError,
     feedbackMessage,
     feedbackType,
@@ -305,6 +314,7 @@ export function usePluginMarketPage() {
     generatedAt,
     marketplacePlugins,
     filteredPlugins,
+    refreshMarketplacePlugins,
     showPluginDetails,
     preparePluginInstall,
     setInstallDialogVisible,
