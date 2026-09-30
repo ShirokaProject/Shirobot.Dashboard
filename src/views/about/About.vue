@@ -1,95 +1,67 @@
 <template>
   <div class="about-page">
-    <section class="about-hero-card">
-      <img class="about-avatar" :src="avatarUrl" alt="Shirobot" />
-      <div class="about-hero-main">
-        <div class="eyebrow">关于 Shirobot Dashboard</div>
+    <!-- One connected group: hero, then versions | links, then credits -->
+    <section class="hero panel">
+      <img class="hero-avatar" :src="avatarUrl" alt="" />
+      <div class="hero-text">
         <h2>Shirobot Dashboard</h2>
+        <p>Shirobot 的网页管理面板<span class="sep">·</span>v{{ dashboardVersion }}</p>
+      </div>
+      <div class="button-group">
+        <a class="md-button tonal" :href="DOCS_URL" target="_blank" rel="noreferrer"><MdIcon name="link" />文档</a>
+        <a class="md-button filled" :href="ORG_URL" target="_blank" rel="noreferrer"><GitHubIcon />GitHub</a>
       </div>
     </section>
 
-    <section class="about-grid">
-      <article class="about-card project-card">
-        <div class="card-head">
-          <span class="card-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path d="M12 2C6.48 2 2 6.58 2 12.22c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.63.07-.63 1 .07 1.53 1.05 1.53 1.05.9 1.56 2.35 1.11 2.92.85.09-.66.35-1.11.63-1.36-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.35 9.35 0 0 1 12 5.95c.85 0 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.59.69.49A10.09 10.09 0 0 0 22 12.22C22 6.58 17.52 2 12 2z" />
-            </svg>
+    <div class="middle">
+      <section class="panel versions">
+        <h3>版本</h3>
+        <dl class="facts">
+          <div v-for="fact in versionFacts" :key="fact.label">
+            <dt>{{ fact.label }}<small v-if="fact.note">{{ fact.note }}</small></dt>
+            <dd>{{ fact.value }}</dd>
+          </div>
+        </dl>
+        <p class="footnote">Dashboard 与 Shirobot 主程序独立发版，版本号互不关联。</p>
+      </section>
+
+      <section class="panel links">
+        <h3>链接</h3>
+        <a v-for="link in links" :key="link.href" class="link-row" :href="link.href" target="_blank" rel="noreferrer">
+          <span class="link-icon" aria-hidden="true">
+            <GitHubIcon v-if="link.icon === 'github'" />
+            <MdIcon v-else :name="link.icon" />
           </span>
-          <div>
-            <h3>项目地址</h3>
-            <p>ShirokaProject 相关项目与源码入口。</p>
-          </div>
-        </div>
-        <a class="link-panel" href="https://github.com/ShirokaProject" target="_blank" rel="noreferrer">
-          https://github.com/ShirokaProject
+          <span class="link-text">
+            <strong>{{ link.label }}</strong>
+            <small>{{ link.detail }}</small>
+          </span>
+          <MdIcon name="open_in_new" class="link-external" />
         </a>
-      </article>
+        <div class="diagnostics">
+          <p>提交问题时，附上版本和运行环境能更快定位。</p>
+          <button type="button" class="md-button tonal" @click="copyDiagnostics">
+            <MdIcon name="content_copy" />复制诊断信息
+          </button>
+        </div>
+      </section>
+    </div>
 
-      <article class="about-card">
-        <div class="card-head">
-          <span class="card-icon" aria-hidden="true">✦</span>
-          <div>
-            <h3>鸣谢</h3>
-            <p>感谢这些项目和资源让面板开发更高效。</p>
-          </div>
-        </div>
-        <div class="chip-list">
-          <span>Vue 3</span>
-          <span>Vite</span>
-          <span>TypeScript</span>
-          <span>Element Plus</span>
-          <span>Material Design 3</span>
-          <span>Maple Mono</span>
-        </div>
-      </article>
-
-      <article class="about-card sponsor-card">
-        <div class="card-head">
-          <span class="card-icon" aria-hidden="true">♡</span>
-          <div>
-            <h3>赞助与支持</h3>
-            <p>如果这个项目对你有帮助，欢迎通过 GitHub 支持项目。</p>
-          </div>
-        </div>
-        <div class="sponsor-panel">
-          <strong>感谢每一位使用者、反馈者和贡献者。</strong>
-          <p>赞助入口可后续接入 GitHub Sponsors、爱发电或其他平台。</p>
-        </div>
-      </article>
-
-      <article class="about-card version-card">
-        <div class="card-head">
-          <span class="card-icon" aria-hidden="true">i</span>
-          <div>
-            <h3>版本信息</h3>
-            <p>前端与后端独立发版，版本号互不关联。</p>
-          </div>
-        </div>
-        <div class="info-list compact">
-          <div>
-            <span>Dashboard 前端</span>
-            <strong>v{{ dashboardVersion }}</strong>
-          </div>
-          <div>
-            <span>Shirobot 后端</span>
-            <strong>{{ backendVersion }}</strong>
-          </div>
-          <div>
-            <span>技术栈</span>
-            <strong>Vue 3 + Vite + TypeScript</strong>
-          </div>
-        </div>
-      </article>
+    <section class="panel credits">
+      <h3>鸣谢</h3>
+      <p>感谢每一位使用者、反馈者和贡献者。</p>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import avatarUrl from '../../assets/images/avatar.png'
-import { useAboutPage } from './About'
+import GitHubIcon from '../../components/GitHubIcon.vue'
+import MdIcon from '../../components/MdIcon.vue'
+import { DOCS_URL } from '../../features/docs'
+import { links, ORG_URL, useAboutPage } from './About'
 
-const { dashboardVersion, backendVersion } = useAboutPage()
+const { dashboardVersion, versionFacts, copyDiagnostics } = useAboutPage()
 </script>
 
 <style scoped src="./About.css"></style>
