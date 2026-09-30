@@ -33,10 +33,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Build
         env:
-          # Project pages live under /<repo>/
-          VITE_BASE: /${{ github.event.repository.name }}/
+          # '' with a custom domain (served from the root), '/<repo>' on github.io
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/
           VITE_ENABLE_BACKEND_SWITCH: 'true'
         run: npm run build
 
