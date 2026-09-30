@@ -43,7 +43,10 @@ export function useAdaptersPage() {
       notify(response.message || `Adapter ${action} 完成。`, response.ok ? (response.restartRequired ? 'warning' : 'success') : 'error')
       if (response.rollback) notify(`${response.message || '操作未完成'} 回滚状态：${response.rollback}`, 'warning')
       await loadAdapters()
-    } catch (cause) { notify(getApiErrorMessage(cause, `Adapter ${action} 失败。`), 'error') } finally { operation.value = '' }
+    } catch (cause) {
+      notify(getApiErrorMessage(cause, `Adapter ${action} 失败。`), 'error')
+      await loadAdapters()
+    } finally { operation.value = '' }
   }
   async function submitInstall() {
     if (!installFile.value) return
@@ -57,7 +60,10 @@ export function useAdaptersPage() {
       const response = await confirmAdapterUpload(installPreview.value.uploadId, installReplace.value)
       notify(response.restartRequired ? 'Adapter 已安装，需要重启宿主后生效。' : (response.message || 'Adapter 已安装并重载。'), response.rollback ? 'warning' : 'success')
       installVisible.value = false; await loadAdapters()
-    } catch (cause) { installError.value = getApiErrorMessage(cause, 'Adapter 确认安装失败。') } finally { installBusy.value = false }
+    } catch (cause) {
+      installError.value = getApiErrorMessage(cause, 'Adapter 确认安装失败。')
+      await loadAdapters()
+    } finally { installBusy.value = false }
   }
   async function closeInstall(visible: boolean) {
     installVisible.value = visible

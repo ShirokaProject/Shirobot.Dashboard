@@ -1,10 +1,13 @@
 import { apiRequest } from '../core/http'
+import type { ConfigApplyStatus, PluginConfigMap, PluginConfigSchemaItem } from '../plugins/config'
 
 export interface AdapterStatus {
   id: string
   name: string
   version: string
   platform: string
+  /** Whether the adapter is configured to start with the host. */
+  enabled?: boolean
   loaded: boolean
   assemblyPath: string | null
   description: string
@@ -43,7 +46,16 @@ export interface AdapterMarketEntry {
   downloadCount: number | null
   installedVersion: string | null
   health: string
+  /** Why the entry isn't installable, when the backend explains it */
+  healthMessage?: string
   asset?: { url: string; name: string; digest?: string; size?: number }
+}
+
+export interface AdapterConfigResponse {
+  adapter_id?: string
+  config: PluginConfigMap
+  schema?: PluginConfigSchemaItem[]
+  apply_status?: ConfigApplyStatus
 }
 
 export interface ModelInfo {
@@ -76,6 +88,7 @@ export function normalizeAdapter(value: unknown): AdapterStatus {
     name: stringValue(item.name || item.display_name || item.id || item.adapter_id, '未命名 Adapter'),
     version: stringValue(item.version, '—'),
     platform: stringValue(item.platform || item.platform_id, '未声明'),
+    enabled: booleanValue(item.enabled, booleanValue(item.loaded ?? item.running ?? item.is_loaded)),
     loaded: booleanValue(item.loaded ?? item.running ?? item.is_loaded),
     assemblyPath: stringValue(item.assemblyPath || item.assembly_path || item.path) || null,
     description: stringValue(item.description),
@@ -163,22 +176,54 @@ export function cancelAdapterUpload(uploadId: string) {
   return apiRequest<unknown>(`/api/v1/adapters/upload/${encodeURIComponent(uploadId)}`, { method: 'DELETE' })
 }
 
-export async function getAdapterMarketAdapters() {
-  const response = await apiRequest<unknown>('/api/v1/adapter-market/adapters')
+function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
+  const item = record(value)
+  const release = record(item.release)
+  const asset = record(item.asset ?? release.asset)
+  return {
+    id: stringValue(item.id), name: stringValue(item.name || item.id), version: stringValue(item.version || release.version, '—'),
+    platform: stringValue(item.platform || item.category, '未声明'), description: stringValue(item.description), repository: stringValue(item.repository),
+    authors: Array.isArray(item.authors) ? item.authors.map(author => stringValue(record(author).name || author)).filter(Boolean) : [stringValue(item.author)].filter(Boolean),
+    downloadCount: typeof (item.downloadCount ?? item.download_count ?? release.downloadCount) === 'number' ? Number(item.downloadCount ?? item.download_count ?? release.downloadCount) : null,
+    installedVersion: stringValue(record(item.installed).version || item.installed_version) || null,
+    health: stringValue(record(item.health).status || item.health, 'unknown'),
+    healthMessage: stringValue(record(item.health).message || item.health_message) || undefined,
+    asset: Object.keys(asset).length ? { url: stringValue(asset.url), name: stringValue(asset.name), digest: stringValue(asset.digest) || undefined, size: typeof asset.size === 'number' ? asset.size : undefined } : undefined
+  }
+}
+
+/**
+ * @param source '' for the backend's default (official) catalog, otherwise a third-party
+ *   `owner/repo` or catalog URL, forwarded as `?source=`.
+ */
+export async function getAdapterMarketAdapters(forceRefresh = false, source = '') {
+  const params = new URLSearchParams()
+  if (source) params.set('source', source)
+  if (forceRefresh) params.set('refresh', '1')
+  const query = params.toString()
+  const response = await apiRequest<unknown>(`/api/v1/adapter-market/adapters${query ? `?${query}` : ''}`)
   const entries = Array.isArray(response) ? response : record(response).adapters
-  return (Array.isArray(entries) ? entries : []).map(value => {
-    const item = record(value)
-    const release = record(item.release)
-    const asset = record(item.asset ?? release.asset)
-    return {
-      id: stringValue(item.id), name: stringValue(item.name || item.id), version: stringValue(item.version || release.version, '—'),
-      platform: stringValue(item.platform || item.category, '未声明'), description: stringValue(item.description), repository: stringValue(item.repository),
-      authors: Array.isArray(item.authors) ? item.authors.map(author => stringValue(record(author).name || author)).filter(Boolean) : [stringValue(item.author)].filter(Boolean),
-      downloadCount: typeof (item.downloadCount ?? item.download_count ?? release.downloadCount) === 'number' ? Number(item.downloadCount ?? item.download_count ?? release.downloadCount) : null,
-      installedVersion: stringValue(record(item.installed).version || item.installed_version) || null,
-      health: stringValue(record(item.health).status || item.health, 'unknown'),
-      asset: Object.keys(asset).length ? { url: stringValue(asset.url), name: stringValue(asset.name), digest: stringValue(asset.digest) || undefined, size: typeof asset.size === 'number' ? asset.size : undefined } : undefined
-    }
+  return (Array.isArray(entries) ? entries : []).map(normalizeMarketEntry)
+}
+
+/**
+ * Resolve one adapter repository (GitHub, Gitea, …) outside any catalog. The backend checks
+ * it against the Shirobot release rules; `health` is not `available` when it doesn't qualify.
+ */
+export async function resolveRepositoryAdapter(repository: string) {
+  return normalizeMarketEntry(await apiRequest<unknown>(`/api/v1/adapter-market/resolve?repository=${encodeURIComponent(repository)}`))
+}
+
+/** Adapter settings share the plugin config shape; `routes` does not apply to adapters. */
+export function getAdapterConfig(adapterId: string) {
+  return apiRequest<AdapterConfigResponse>(`/api/v1/adapters/${encodeURIComponent(adapterId)}/config`)
+}
+
+export function updateAdapterConfig(adapterId: string, config: PluginConfigMap) {
+  return apiRequest<AdapterConfigResponse | null>(`/api/v1/adapters/${encodeURIComponent(adapterId)}/config`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config })
   })
 }
 
