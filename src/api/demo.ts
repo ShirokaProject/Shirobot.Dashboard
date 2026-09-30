@@ -1,6 +1,6 @@
 import type { AdapterMarketEntry, AdapterStatus, ModelInfo } from './adapters/adapters'
 import type { AppConfig } from './config/config'
-import type { LogSourceInfo, RuntimeLogsResponse } from './logs/logs'
+import type { LogEntry, LogSourceInfo, LogStreamMessage, RuntimeLogsResponse } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
 import type { PluginMarketResponse } from './pluginMarket/pluginMarket'
 import type { PluginConfigResponse } from './plugins/config'
@@ -8,6 +8,16 @@ import type { BackendPlugin, PluginActionDefinition, PluginUploadParsedResponse,
 import type { RuntimeLog } from '../features/logs/types'
 
 const demoOverview: OverviewResponse = {
+  runtime: {
+    mode: 'docker',
+    os: 'Debian GNU/Linux 12 (bookworm)',
+    arch: 'x64',
+    version_tag: 'v0.9.3',
+    framework: '.NET 10.0.0',
+    memory_bytes: 84 * 1024 * 1024,
+    gc_heap_bytes: 32 * 1024 * 1024,
+    build_time: '2026-09-28T06:12:00Z'
+  },
   bot_version: 'v0.1.0-demo',
   uptime_seconds: 130320,
   plugins_count: 12,
@@ -66,6 +76,23 @@ const demoAdapterMarket: AdapterMarketEntry[] = [
   { id: 'shirobot.adapter.telegram', name: 'Telegram Adapter', version: '0.1.0', platform: 'telegram', description: 'Telegram Bot API 平台连接。', repository: 'ShirokaProject/ShiroBot.Adapter.Telegram', authors: ['Community'], downloadCount: 4600, installedVersion: null, health: 'available', asset: { url: 'https://github.com/ShirokaProject/ShiroBot.Adapter.Telegram/releases/download/v0.1.0/ShiroBot.Adapter.Telegram.zip', name: 'ShiroBot.Adapter.Telegram.zip', digest: `sha256:${'5'.repeat(64)}`, size: 198000 } }
 ]
 const demoPendingAdapterInstalls = new Map<string, AdapterStatus>()
+
+const demoAdapterConfig: { config: PluginConfigResponse['config']; schema: NonNullable<PluginConfigResponse['schema']> } = {
+  config: {
+    ws_url: 'ws://127.0.0.1:3001',
+    access_token: '',
+    reconnect_interval: 5,
+    heartbeat: true,
+    message_format: 0
+  },
+  schema: [
+    { key: 'ws_url', label: '【连接】WebSocket 地址', type: 'string', description: 'OneBot 实现端的正向 WebSocket 地址。', placeholder: 'ws://127.0.0.1:3001', options: [], min: null, max: null },
+    { key: 'access_token', label: '【连接】Access Token', type: 'string', description: '与实现端一致的鉴权令牌，未启用鉴权时留空。', placeholder: null, options: [], min: null, max: null },
+    { key: 'reconnect_interval', label: '【连接】重连间隔（秒）', type: 'number', description: '连接断开后重试的间隔。', placeholder: null, options: [], min: 1, max: 300 },
+    { key: 'heartbeat', label: '【行为】心跳检测', type: 'boolean', description: '定期检查连接是否存活，异常时自动重连。', placeholder: null, options: [], min: null, max: null },
+    { key: 'message_format', label: '【行为】消息格式', type: 'number', description: '上报消息格式：0=数组，1=CQ 码。', placeholder: null, options: [], min: 0, max: 1 }
+  ]
+}
 
 const demoModels: ModelInfo[] = [
   {
@@ -184,20 +211,27 @@ const demoConfig: AppConfig = {
 const demoPluginConfig: PluginConfigResponse = {
   plugin_id: 'JmParser',
   config: {
+    dev_mode: false,
+    send_cover: true,
     proxy: '',
     output_mode: 'file',
+    video_segment_protocol: 1,
+    max_video_mb: 1024,
+    prefer_codec: 0,
     delete_after_minutes: 60,
-    max_concurrency: 16,
-    send_cover: true,
-    cover_blur_radius: 12
+    max_concurrency: 16
   },
+  // Mirrors a real plugin's schema: 【group】 label prefixes and enum-style number descriptions.
   schema: [
-    { key: 'proxy', label: '代理地址', type: 'string', description: '下载请求使用的代理地址，留空表示直连。', placeholder: 'http://127.0.0.1:7890', options: [], min: null, max: null },
-    { key: 'output_mode', label: '输出模式', type: 'select', description: 'file 上传 PDF，url 发送临时预览链接，both 两者都发送。', placeholder: null, options: ['file', 'url', 'both'], min: null, max: null },
-    { key: 'delete_after_minutes', label: '删除等待分钟', type: 'number', description: '生成文件保留时间。', placeholder: null, options: [], min: 1, max: 1440 },
-    { key: 'max_concurrency', label: '最大并发', type: 'number', description: '同时处理的最大任务数量。', placeholder: null, options: [], min: 1, max: 64 },
-    { key: 'send_cover', label: '发送封面', type: 'boolean', description: '是否发送封面图片。', placeholder: null, options: [], min: null, max: null },
-    { key: 'cover_blur_radius', label: '封面模糊半径', type: 'number', description: '封面图片的模糊强度。', placeholder: null, options: [], min: 0, max: 32 }
+    { key: 'dev_mode', label: '【通用设置】开发模式', type: 'boolean', description: '启用后只解析并发送文本/卡片，不下载或发送视频。', placeholder: null, options: [], min: null, max: null },
+    { key: 'send_cover', label: '【通用设置】发送封面（总开关）', type: 'boolean', description: '是否发送各平台封面图片和封面卡片，不影响正文图片。', placeholder: null, options: [], min: null, max: null },
+    { key: 'proxy', label: '【通用设置】代理地址', type: 'string', description: '下载请求使用的代理地址，留空表示直连。', placeholder: 'http://127.0.0.1:7890', options: [], min: null, max: null },
+    { key: 'output_mode', label: '【通用设置】输出模式', type: 'select', description: 'file 上传文件，url 发送临时预览链接，both 两者都发送。', placeholder: null, options: ['file', 'url', 'both'], min: null, max: null },
+    { key: 'video_segment_protocol', label: '【视频】VideoSegment 协议', type: 'number', description: 'VideoSegment 发送 URI 协议：0=Base64，1=File（默认），2=Http。', placeholder: null, options: [], min: 0, max: 2 },
+    { key: 'max_video_mb', label: '【视频】最大视频下载 MB', type: 'number', description: '单个视频最大下载大小，单位 MB。', placeholder: null, options: [], min: 1, max: 4096 },
+    { key: 'prefer_codec', label: '【视频】优先视频编码', type: 'number', description: '优先视频编码：0=H265，1=H264，2=AV1。', placeholder: null, options: [], min: 0, max: 2 },
+    { key: 'delete_after_minutes', label: '【任务】删除等待分钟', type: 'number', description: '生成文件保留时间。', placeholder: null, options: [], min: 1, max: 1440 },
+    { key: 'max_concurrency', label: '【任务】最大并发', type: 'number', description: '同时处理的最大任务数量。', placeholder: null, options: [], min: 1, max: 64 }
   ],
   routes: {
     configured: false,
@@ -275,7 +309,7 @@ const demoMarketplace: PluginMarketResponse = {
       description: '演示：天气查询、空气质量、灾害预警与城市订阅。',
       category: '工具',
       authors: [{ name: 'Mika', url: 'https://github.com/mika' }],
-      repository: 'ShirokaProject/ShiroBot.Plugin.Weather',
+      repository: 'https://github.com/ShirokaProject/ShiroBot.Plugin.Weather',
       license: 'MIT',
       compatibility: { shirobot: '>=0.1.0', framework: 'net10.0' },
       deprecated: false,
@@ -394,6 +428,49 @@ function createDemoPluginActions(plugin: BackendPlugin): PluginActionDefinition[
   return actions
 }
 
+// ---------- demo log stream (stands in for the /api/v1/logs/stream WebSocket) ----------
+
+const demoStreamLines: Array<Omit<LogEntry, 'time'>> = [
+  { source: 'system', level: 'info', message: 'Shirobot 主程序启动，运行方式 docker。' },
+  { source: 'Plugin Loader', level: 'success', message: 'Echo v1.0.0 已加载，耗时 42ms。' },
+  { source: 'Plugin Loader', level: 'success', message: 'Admin v0.4.2 已加载，耗时 18ms。' },
+  { source: 'OneBot v11', level: 'info', message: 'WebSocket 已连接 ws://127.0.0.1:3001' },
+  { source: 'OneBot v11', level: 'log', message: '收到群消息 示例群聊(100000001) 200000001: 你好，Shirobot' },
+  { source: 'OneBot v11', level: 'log', message: '发送群消息 示例群聊(100000001): 你好呀～' },
+  { source: 'Schedule Plugin', level: 'warning', message: '心跳任务延迟 132ms。' },
+  { source: 'AI Chat Plugin', level: 'error', message: '缺少 API Key，请在插件配置中填写服务商凭据。' },
+  { source: 'OneBot v11', level: 'log', message: '收到私聊消息 200000002: /help' },
+  { source: 'Plugin Loader', level: 'info', message: '检查插件更新：2 个可更新。' },
+  { source: 'system', level: 'info', message: 'GC 完成，堆内存 32 MB。' }
+]
+
+function demoLogTime(offsetSeconds = 0) {
+  return new Date(Date.now() - offsetSeconds * 1000).toTimeString().slice(0, 8)
+}
+
+/** Replays some history, then emits a line every few seconds. Returns a stop function. */
+export function openDemoLogStream(onMessage: (message: LogStreamMessage) => void) {
+  const history = Array.from({ length: 36 }, (_, index) => ({
+    ...demoStreamLines[index % demoStreamLines.length],
+    time: demoLogTime((36 - index) * 7)
+  }))
+  const start = window.setTimeout(() => {
+    onMessage({ type: 'connected', source: 'ALL', tail: history.length })
+    onMessage({ type: 'history', data: history })
+  }, 200)
+  let cursor = 0
+  const tick = window.setInterval(() => {
+    // Mostly chat traffic, with the occasional warning or error
+    const pool = demoStreamLines.slice(3)
+    const line = pool[(cursor++ * 7) % pool.length]
+    onMessage({ type: 'logs', data: [{ ...line, time: demoLogTime() }] })
+  }, 2500)
+  return () => {
+    window.clearTimeout(start)
+    window.clearInterval(tick)
+  }
+}
+
 export async function getDemoApiResponse<T>(path: string, init?: RequestInit): Promise<T> {
   const url = new URL(path, 'https://demo.shirobot.local')
   const method = methodOf(init)
@@ -402,7 +479,42 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
   if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
   if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
-  if (method === 'GET' && pathname === '/api/v1/adapter-market/adapters') return clone(demoAdapterMarket) as T
+  if (method === 'GET' && pathname === '/api/v1/adapter-market/adapters') {
+    // Demo: a third-party catalog lists one community adapter so switching is visible.
+    if (url.searchParams.get('source')) {
+      return [{ id: 'community.adapter.kook', name: 'KOOK Adapter', version: '0.3.1', platform: 'kook', description: '演示：社区维护的 KOOK 平台连接 Adapter。', repository: 'community/ShiroBot.Adapter.Kook', authors: ['Community'], downloadCount: 320, installedVersion: null, health: 'available', asset: { url: 'https://github.com/community/ShiroBot.Adapter.Kook/releases/download/v0.3.1/Kook.zip', name: 'Kook.zip', digest: `sha256:${'7'.repeat(64)}`, size: 142000 } }] as T
+    }
+    return clone(demoAdapterMarket) as T
+  }
+
+  if (method === 'GET' && pathname === '/api/v1/adapter-market/resolve') {
+    const repository = url.searchParams.get('repository') ?? ''
+    const [owner = 'unknown', repo = 'adapter'] = new URL(repository).pathname.split('/').filter(Boolean)
+    // Demo: repos whose name mentions "draft" have no qualifying release.
+    const qualifies = !/draft/i.test(repo)
+    return {
+      id: `${owner}.${repo}`.toLowerCase(),
+      name: repo.replace(/^ShiroBot\.Adapter\./i, ''),
+      version: qualifies ? '0.2.0' : '—',
+      platform: repo.replace(/^ShiroBot\.Adapter\./i, '').toLowerCase(),
+      description: qualifies ? '演示：直接从仓库识别的 Adapter，未收录在任何目录中。' : '演示：该仓库暂未提供符合规则的发布。',
+      repository,
+      authors: [owner],
+      downloadCount: qualifies ? 8 : null,
+      installedVersion: null,
+      health: qualifies ? 'available' : 'no-release',
+      health_message: qualifies ? '最新 Release 符合 Shirobot 发布规则。' : '未找到符合 Shirobot 规则的 Release（需要附带 Adapter 包与 sha256 校验）。',
+      asset: qualifies ? { url: `${repository}/releases/download/v0.2.0/${repo}.zip`, name: `${repo}.zip`, digest: `sha256:${'8'.repeat(64)}`, size: 96000 } : undefined
+    } as T
+  }
+
+  const adapterConfigMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)\/config$/)
+  if (adapterConfigMatch && method === 'GET') return clone({ adapter_id: decodeURIComponent(adapterConfigMatch[1]), ...demoAdapterConfig }) as T
+  if (adapterConfigMatch && method === 'PATCH') {
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoAdapterConfig.config }
+    if (payload.config) demoAdapterConfig.config = { ...demoAdapterConfig.config, ...payload.config }
+    return clone({ adapter_id: decodeURIComponent(adapterConfigMatch[1]), ...demoAdapterConfig }) as T
+  }
   if (method === 'GET' && pathname === '/api/v1/adapter') return clone(demoAdapter) as T
   if (method === 'POST' && pathname === '/api/v1/adapter/reload') {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { assembly_path?: string }
@@ -682,7 +794,45 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && pathname === '/api/v1/logs/sources') return clone(demoLogSources) as T
 
-  if (method === 'GET' && pathname === '/api/v1/plugin-market/plugins') return clone(demoMarketplace) as T
+  if (method === 'GET' && pathname === '/api/v1/plugin-market/resolve') {
+    const repository = url.searchParams.get('repository') ?? ''
+    const [owner = 'unknown', repo = 'plugin'] = new URL(repository).pathname.split('/').filter(Boolean)
+    // Demo: repos whose name mentions "draft" have no qualifying release.
+    const qualifies = !/draft/i.test(repo)
+    return {
+      id: `${owner}.${repo}`.toLowerCase(),
+      kind: 'plugin',
+      name: repo.replace(/^ShiroBot\.Plugin\./i, ''),
+      description: qualifies ? '演示：直接从仓库识别的插件，未收录在任何目录中。' : '演示：该仓库暂未提供符合规则的发布。',
+      category: 'other',
+      authors: [{ name: owner }],
+      repository,
+      license: qualifies ? 'MIT' : '',
+      compatibility: { shirobot: '>=0.9.1 <1.0.0', framework: 'net10.0' },
+      deprecated: false,
+      release: qualifies
+        ? { version: '0.3.0', prerelease: false, publishedAt: '2026-09-20T08:00:00Z', pageUrl: null, downloadCount: 12, asset: { name: `${repo}.zip`, url: `${repository}/releases/download/v0.3.0/${repo}.zip`, size: 84000, digest: `sha256:${'6'.repeat(64)}` } }
+        : { version: null, prerelease: false, publishedAt: null, pageUrl: null, downloadCount: null, asset: null },
+      health: qualifies
+        ? { status: 'available', message: '最新 Release 符合 Shirobot 发布规则。' }
+        : { status: 'no-release', message: '未找到符合 Shirobot 规则的 Release（需要附带插件包与 sha256 校验）。' }
+    } as T
+  }
+
+  if (method === 'GET' && pathname === '/api/v1/plugin-market/plugins') {
+    const source = url.searchParams.get('source')
+    const response = clone(demoMarketplace)
+    // Demo: a third-party source serves a single community entry so switching is visible.
+    if (source) {
+      return { ...response, plugins: response.plugins.filter(plugin => plugin.id === 'rss'), source: { repository: source } } as T
+    }
+    return { ...response, source: { name: '官方源', repository: 'ShirokaProject/awesome-shirobot' } } as T
+  }
+
+  const powerMatch = pathname.match(/^\/api\/v1\/system\/(restart|shutdown)$/)
+  if (method === 'POST' && powerMatch) {
+    return { ok: true, message: `演示：已发送${powerMatch[1] === 'restart' ? '重启' : '关机'}指令。` } as T
+  }
 
   throw new Error(`Demo endpoint not implemented: ${method} ${pathname}`)
 }
