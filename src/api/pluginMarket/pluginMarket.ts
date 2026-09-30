@@ -59,9 +59,27 @@ export interface PluginMarketResponse {
   schemaVersion: number
   generatedAt: string
   plugins: MarketplacePlugin[]
+  /** Where the catalog actually came from, when the backend reports it. */
+  source?: { name?: string; repository?: string; url?: string }
 }
 
-export function getPluginMarketPlugins(forceRefresh = false) {
-  const path = '/api/v1/plugin-market/plugins'
-  return apiRequest<PluginMarketResponse>(forceRefresh ? `${path}?refresh=1` : path)
+/**
+ * Resolve one plugin repository (GitHub, Gitea, …) that isn't in any catalog. The backend
+ * checks it against the Shirobot release rules and returns a catalog-shaped entry; when the
+ * repo doesn't qualify, `health.status` is not `available` and `health.message` says why.
+ */
+export function resolveRepositoryPlugin(repository: string) {
+  return apiRequest<MarketplacePlugin>(`/api/v1/plugin-market/resolve?repository=${encodeURIComponent(repository)}`)
+}
+
+/**
+ * @param source '' for the backend's default (official) catalog, otherwise a third-party
+ *   `owner/repo` or catalog URL, forwarded as `?source=`.
+ */
+export function getPluginMarketPlugins(forceRefresh = false, source = '') {
+  const params = new URLSearchParams()
+  if (source) params.set('source', source)
+  if (forceRefresh) params.set('refresh', '1')
+  const query = params.toString()
+  return apiRequest<PluginMarketResponse>(`/api/v1/plugin-market/plugins${query ? `?${query}` : ''}`)
 }

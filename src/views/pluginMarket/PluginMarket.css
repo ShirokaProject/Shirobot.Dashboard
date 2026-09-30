@@ -1,65 +1,100 @@
+/*
+ * Plugin market: header card (summary, search, connected filter groups) above a grid of
+ * plugin cards. Same language as the overview: paper cards with hairline + soft shadow,
+ * inner/outer corner scale, ink primary, a single accent, status as small dots.
+ */
 .market-page {
-  --market-page-max-width: 1440px;
   display: flex;
-  width: min(100%, var(--market-page-max-width));
+  width: min(100%, 1360px);
   margin-inline: auto;
   flex-direction: column;
-  gap: var(--md-space-5);
+  gap: var(--md-space-2);
 }
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.sep {
+  margin: 0 var(--md-space-2);
+  color: var(--md-sys-color-outline);
+}
+
+.accent {
+  color: var(--app-accent);
+}
+
+.panel {
+  min-width: 0;
+  border-radius: var(--corner-inner);
+  background: var(--app-card);
+  box-shadow: var(--app-card-shadow);
+}
+
+/* ---------- header card ---------- */
 
 .market-hero {
   display: flex;
+  flex-direction: column;
+  gap: var(--md-space-6);
+  padding: var(--md-space-8) var(--md-space-8) var(--md-space-6);
+  border-top-left-radius: var(--corner-outer);
+  border-top-right-radius: var(--corner-outer);
+}
+
+.hero-row {
+  display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--md-space-5);
+  gap: var(--md-space-6);
 }
 
-.market-heading {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.market-heading span,
-.market-heading small {
-  color: var(--md-sys-color-on-surface-variant);
+.eyebrow {
+  color: var(--app-accent);
   font: var(--md-sys-typescale-label-medium);
+  letter-spacing: 0.08em;
 }
 
-.market-heading strong {
+.market-heading h2 {
+  margin: var(--md-space-1) 0 0;
   color: var(--md-sys-color-on-surface);
-  font: var(--md-sys-typescale-title-large);
+  font: var(--md-sys-typescale-headline-medium);
+  font-weight: 700;
+}
+
+.market-heading p {
+  margin: var(--md-space-1) 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.hero-tools {
+  display: flex;
+  flex: 0 1 440px;
+  align-items: center;
+  gap: var(--md-space-2);
 }
 
 .market-search {
-  width: min(100%, 360px);
-  min-height: 48px;
+  height: 44px;
+  min-width: 0;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: var(--md-space-2);
+  gap: var(--md-space-3);
   padding: 0 var(--md-space-4);
   border-radius: var(--md-sys-shape-corner-full);
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
-  box-shadow: inset 0 0 0 0 transparent;
-  transition:
-    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .market-search:focus-within {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-primary);
   box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
 }
 
-.market-search svg {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 auto;
-  fill: currentColor;
+.market-search .md-icon {
+  font-size: 20px;
 }
 
 .market-search input {
@@ -76,346 +111,230 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.market-controls {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--md-space-4);
-}
-
-.market-control-group {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--md-space-2);
-}
-
-.market-control-group:first-child {
-  flex: 1;
-}
-
-.market-control-group.align-end {
-  align-items: flex-end;
-}
-
-.control-label {
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-medium);
-}
-
-/* Grid (not flex) so every segment is exactly 1/n wide - the sliding
-   indicator's translateX(index * 100%) depends on strictly equal segments. */
-.control-segmented {
-  position: relative;
-  display: inline-grid;
-  grid-template-columns: repeat(var(--segment-count), minmax(0, 1fr));
-  padding: var(--md-space-1);
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container);
-}
-
-.control-indicator {
-  position: absolute;
-  z-index: 0;
-  top: var(--md-space-1);
-  bottom: var(--md-space-1);
-  left: var(--md-space-1);
-  width: calc((100% - var(--md-space-2)) / var(--segment-count));
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-secondary-container);
-  transform: translateX(calc(var(--active-index) * 100%));
-  transition: transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
-}
-
-.control-segment {
-  position: relative;
-  z-index: 1;
-  height: 36px;
-  padding: 0 var(--md-space-4);
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  font: var(--md-sys-typescale-label-large);
-  white-space: nowrap;
-  transition: color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.control-segment::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  background: currentColor;
-  opacity: 0;
-  content: '';
-  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.control-segment:hover::before {
-  opacity: 0.08;
-}
-
-.control-segment:active::before {
-  opacity: 0.12;
-}
-
-.control-segment.active {
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .control-indicator {
-    transition: none;
-  }
-}
-
-.market-category-row {
+.filter-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--md-space-2);
-}
-
-.category-chip {
-  height: 36px;
-  padding: 0 var(--md-space-4);
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  font: var(--md-sys-typescale-label-large);
-  transition:
-    background var(--md-sys-motion-duration-short4),
-    color var(--md-sys-motion-duration-short4);
-}
-
-.category-chip:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
-}
-
-.category-chip.active {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.market-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  justify-content: space-between;
   gap: var(--md-space-4);
+  padding-top: var(--md-space-5);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.market-card {
-  min-width: 0;
+.filter-row .button-group {
+  flex-wrap: wrap;
+}
+
+.sort-group {
   display: flex;
-  flex-direction: column;
-  padding: var(--md-space-5);
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  background: var(--md-sys-color-surface-container-lowest);
-  transition:
-    background var(--md-sys-motion-duration-short4),
-    transform var(--md-sys-motion-duration-short4);
-}
-
-
-.market-card:hover {
-  background: var(--md-sys-color-surface-container-low);
-  transform: translateY(-1px);
-}
-
-.market-card-top {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--md-space-3);
 }
 
-.plugin-avatar {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+.sort-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
 }
 
-.plugin-avatar svg {
-  width: 25px;
-  height: 25px;
-  fill: currentColor;
+/* ---------- card grid ---------- */
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--md-space-2);
+}
+
+.market-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-3);
+  padding: var(--md-space-5) var(--md-space-5) var(--md-space-4);
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.market-card:hover {
+  box-shadow: var(--app-card-shadow-hover);
+}
+
+.market-card-top {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--md-space-3);
+}
+
+/* Initial-letter avatar: distinct per plugin, unlike one repeated generic icon */
+.plugin-avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font: var(--md-sys-typescale-title-large);
+  font-weight: 700;
 }
 
 .market-card-title {
   min-width: 0;
 }
 
-.market-card h3 {
-  overflow: hidden;
+.market-card-title h3 {
   margin: 0;
+  overflow: hidden;
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-title-medium);
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.market-card-top p {
+.market-card-title p {
+  margin: 2px 0 0;
   overflow: hidden;
-  margin: 0;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-small);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.market-card-title .sep {
+  margin: 0 var(--md-space-1);
+}
+
 .market-version {
+  align-self: start;
+  padding: 2px var(--md-space-2);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container);
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-medium);
+  font-size: 12px;
 }
 
 .market-desc {
-  min-height: 44px;
   display: -webkit-box;
+  min-height: 40px;
+  margin: 0;
   overflow: hidden;
-  margin: var(--md-space-4) 0 0;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-body-medium);
-  line-height: 1.65;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.market-badges {
+.market-flags {
   display: flex;
   flex-wrap: wrap;
   gap: var(--md-space-2);
-  margin-top: var(--md-space-4);
 }
 
-.market-badge {
-  min-height: 24px;
+.flag {
+  height: 24px;
   display: inline-flex;
   align-items: center;
-  padding: 0 var(--md-space-3);
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-high);
+  gap: var(--md-space-2);
+  padding: 0 var(--md-space-2);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small);
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-label-medium);
-}
-
-.market-badge.category,
-.market-badge.health.healthy {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-}
-
-.market-badge.health.warning,
-.market-badge.warning {
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
-}
-
-.market-badge.health.error,
-.market-badge.error {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-}
-
-.market-health-message {
-  overflow: hidden;
-  margin: var(--md-space-2) 0 0;
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-small);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .market-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--md-space-3);
-  margin-top: var(--md-space-4);
+  align-items: center;
+  gap: var(--md-space-1) var(--md-space-4);
+  margin-top: auto;
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-medium);
+  font: var(--md-sys-typescale-body-small);
 }
 
-.market-meta span:first-child {
-  color: var(--md-sys-color-primary);
+.market-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-1);
+  min-width: 0;
 }
 
-.market-installed {
+.market-meta .md-icon {
+  font-size: 16px;
+}
+
+.market-meta .compat {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--md-space-3);
-  margin-top: var(--md-space-4);
-  padding: var(--md-space-2) var(--md-space-3);
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-medium);
+  padding-top: var(--md-space-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.market-installed.enabled {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.market-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--md-space-1);
-  margin-top: auto;
-  padding-top: var(--md-space-5);
-}
-
-.market-action {
-  height: 38px;
-  min-width: 68px;
+.installed-state {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 var(--md-space-4);
-  border: 0;
+  gap: var(--md-space-2);
+  min-width: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+  white-space: nowrap;
+}
+
+.installed-state .mono {
+  font-size: 11px;
+}
+
+.market-card-footer .button-group {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* ---------- empty ---------- */
+
+.market-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--md-space-1);
+  padding: var(--md-space-12) var(--md-space-4);
+  text-align: center;
+}
+
+.market-empty .md-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--md-space-2);
+  padding: 12px;
   border-radius: var(--md-sys-shape-corner-full);
-  cursor: pointer;
-  font: var(--md-sys-typescale-label-large);
-  transition:
-    background var(--md-sys-motion-duration-short4),
-    color var(--md-sys-motion-duration-short4);
-}
-
-.market-action.text {
-  background: transparent;
-  color: var(--md-sys-color-primary);
-}
-
-.market-action.text:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
-}
-
-.market-action.tonal {
-  background: color-mix(in srgb, var(--md-sys-color-primary-container) 56%, var(--md-sys-color-surface-container-lowest));
-  color: var(--md-sys-color-on-primary-container);
-}
-
-.market-action.tonal:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
-}
-
-.market-action:disabled,
-.market-action:disabled:hover {
   background: var(--md-sys-color-surface-container-high);
-  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
-  cursor: default;
+  color: var(--md-sys-color-on-surface-variant);
 }
+
+.market-empty strong {
+  font: var(--md-sys-typescale-title-small);
+}
+
+.market-empty p {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+/* ---------- detail dialog ---------- */
 
 :global(.market-detail-dialog) {
   width: min(640px, calc(100vw - 32px)) !important;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-extra-large);
-  background: var(--md-sys-color-surface-container-lowest);
 }
 
 :global(.market-detail-dialog .el-dialog__header) {
@@ -454,7 +373,7 @@
   min-width: 0;
   padding: var(--md-space-3);
   border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--md-sys-color-surface-container);
 }
 
 .market-detail-list > div.wide {
@@ -486,10 +405,11 @@
 }
 
 .market-dialog-actions {
-  display: flex;
   justify-content: flex-end;
-  gap: var(--md-space-2);
+  width: 100%;
 }
+
+/* ---------- responsive ---------- */
 
 @media (max-width: 1199px) {
   .market-grid {
@@ -497,46 +417,26 @@
   }
 }
 
+@media (max-width: 839px) {
+  .hero-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hero-tools {
+    flex-basis: auto;
+  }
+}
+
 @media (max-width: 599px) {
-  .market-page {
-    gap: var(--md-space-4);
-  }
-
   .market-hero {
-    align-items: stretch;
-    flex-direction: column;
+    padding: var(--md-space-5) var(--md-space-4);
+    border-radius: var(--md-sys-shape-corner-large);
   }
 
-  .market-search {
-    width: 100%;
-  }
-
-  .market-controls {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .market-control-group,
-  .market-control-group.align-end {
-    align-items: stretch;
-  }
-
-  .market-category-row {
+  .filter-row .button-group {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-bottom: var(--md-space-1);
-  }
-
-  .category-chip {
-    flex: 0 0 auto;
-  }
-
-  .control-segmented {
-    width: 100%;
-  }
-
-  .control-segment {
-    padding: 0 var(--md-space-2);
   }
 
   .market-grid {
@@ -556,52 +456,5 @@
   :global(.market-detail-dialog .el-dialog__footer) {
     padding-left: var(--md-space-4);
     padding-right: var(--md-space-4);
-  }
-}
-
-.market-refresh {
-  height: 48px;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: var(--md-space-2);
-  padding: 0 var(--md-space-5);
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  cursor: pointer;
-  font: var(--md-sys-typescale-label-large);
-  white-space: nowrap;
-  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.market-refresh:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
-}
-
-.market-refresh:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.market-refresh svg {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  fill: currentColor;
-}
-
-.market-refresh svg.spinning {
-  animation: market-refresh-spin 900ms linear infinite;
-}
-
-@keyframes market-refresh-spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .market-refresh svg.spinning {
-    animation: none;
   }
 }

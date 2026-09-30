@@ -1,73 +1,68 @@
 <template>
   <div class="market-page">
-    <section class="market-hero">
-      <div class="market-heading">
-        <span>插件目录</span>
-        <strong>{{ marketplacePlugins.length }} 个插件</strong>
-        <small>目录生成于 {{ generatedAt }}</small>
+    <!-- Header card: catalog summary, search, then category + sort as connected groups -->
+    <section class="market-hero panel" aria-label="插件目录">
+      <div class="hero-row">
+        <div class="market-heading">
+          <span class="eyebrow">插件目录</span>
+          <h2>{{ marketplacePlugins.length }} 个插件</h2>
+          <p>
+            目录生成于 {{ generatedAt }}
+            <template v-if="installedCount"><span class="sep">·</span>已安装 {{ installedCount }}</template>
+            <template v-if="updatableCount"><span class="sep">·</span><span class="accent">{{ updatableCount }} 个可更新</span></template>
+          </p>
+        </div>
+
+        <div class="hero-tools">
+          <label class="market-search" aria-label="搜索插件">
+            <MdIcon name="search" />
+            <input v-model="keyword" type="search" placeholder="搜索插件、作者或仓库" />
+          </label>
+          <button
+            type="button"
+            class="md-button tonal icon-only"
+            :disabled="loading"
+            :aria-label="refreshing ? '正在刷新目录' : '刷新目录'"
+            :title="refreshing ? '正在刷新目录' : '从远端重新拉取插件目录'"
+            @click="refreshMarketplacePlugins"
+          >
+            <MdIcon name="refresh" :class="{ spinning: refreshing }" />
+          </button>
+        </div>
       </div>
 
-      <label class="market-search" aria-label="搜索插件">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9.5 4a5.5 5.5 0 0 1 4.39 8.81l4.65 4.65-1.08 1.08-4.65-4.65A5.5 5.5 0 1 1 9.5 4Zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
-        </svg>
-        <input v-model="keyword" type="search" placeholder="搜索插件、作者、仓库或健康状态" />
-      </label>
-
-      <button
-        type="button"
-        class="market-refresh"
-        :disabled="loading"
-        :title="refreshing ? '正在刷新目录' : '从远端重新拉取插件目录'"
-        @click="refreshMarketplacePlugins"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" :class="{ spinning: refreshing }">
-          <path d="M12 5V2L8 6l4 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z" />
-        </svg>
-        <span>{{ refreshing ? '刷新中' : '刷新' }}</span>
-      </button>
-    </section>
-
-    <section class="market-controls" aria-label="插件市场筛选">
-      <div class="market-control-group">
-        <span class="control-label">分类</span>
-        <div class="market-category-row" aria-label="插件分类">
+      <div class="filter-row">
+        <div class="button-group" role="radiogroup" aria-label="插件分类">
           <button
             v-for="category in categories"
             :key="category"
             type="button"
-            class="category-chip"
-            :class="{ active: activeCategory === category }"
+            role="radio"
+            class="md-button compact toggle"
+            :class="{ selected: activeCategory === category }"
+            :aria-checked="activeCategory === category"
             @click="activeCategory = category"
           >
             {{ category === '全部' ? category : categoryLabel(category) }}
           </button>
         </div>
-      </div>
 
-      <div class="market-control-group align-end">
-        <span class="control-label">排序</span>
-        <div
-          class="control-segmented"
-          role="group"
-          aria-label="排序"
-          :style="{
-            '--segment-count': sortOptions.length,
-            '--active-index': Math.max(0, sortOptions.findIndex(option => option.value === activeSort))
-          }"
-        >
-          <span class="control-indicator" aria-hidden="true"></span>
-          <button
-            v-for="option in sortOptions"
-            :key="option.value"
-            type="button"
-            class="control-segment"
-            :class="{ active: activeSort === option.value }"
-            :aria-pressed="activeSort === option.value"
-            @click="activeSort = option.value"
-          >
-            {{ option.label }}
-          </button>
+        <div class="sort-group">
+          <span class="sort-label">排序</span>
+          <div class="button-group" role="radiogroup" aria-label="排序">
+            <button
+              v-for="option in sortOptions"
+              :key="option.value"
+              type="button"
+              role="radio"
+              class="md-button compact toggle"
+              :class="{ selected: activeSort === option.value }"
+              :aria-checked="activeSort === option.value"
+              @click="activeSort = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -92,62 +87,64 @@
     />
 
     <section class="market-grid" :aria-busy="loading">
-      <article v-for="plugin in filteredPlugins" :key="plugin.id" class="market-card">
-        <div class="market-card-top">
-          <div class="plugin-avatar" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M9.5 3a2.5 2.5 0 0 1 4.9.5H16a2 2 0 0 1 2 2v3.1a2.5 2.5 0 0 1 .5 4.9H18V18a2 2 0 0 1-2 2h-3.1a2.5 2.5 0 0 1-4.8 0H5a2 2 0 0 1-2-2v-3.1a2.5 2.5 0 0 1 0-4.8V5.5a2 2 0 0 1 2-2h4.1A2.5 2.5 0 0 1 9.5 3Zm0 1.5a1 1 0 0 0-1 1v1.4H5a.5.5 0 0 0-.5.5v4.4l-.62-.14a1 1 0 1 0 0 1.95l.62-.14V18a.5.5 0 0 0 .5.5h4.4l-.14.62a1 1 0 1 0 1.95 0l-.14-.62H16a.5.5 0 0 0 .5-.5v-6h1.4a1 1 0 1 0 0-2h-1.4V5.5A.5.5 0 0 0 16 5h-3.1l.14-.62a1 1 0 1 0-1.95 0L11.24 5H9.5a1 1 0 0 1 0-.5Z" />
-            </svg>
-          </div>
-
+      <article v-for="plugin in filteredPlugins" :key="plugin.id" class="market-card panel">
+        <header class="market-card-top">
+          <span class="plugin-avatar" aria-hidden="true">{{ plugin.name.slice(0, 1).toUpperCase() }}</span>
           <div class="market-card-title">
             <h3>{{ plugin.name }}</h3>
-            <p>{{ formatAuthors(plugin) }}</p>
+            <p>{{ formatAuthors(plugin) }}<span class="sep">·</span>{{ categoryLabel(plugin.category) }}</p>
           </div>
-
-          <span class="market-version">{{ plugin.release.version ? `v${plugin.release.version}` : '无版本' }}</span>
-        </div>
-
-        <div class="market-badges">
-          <span class="market-badge category">{{ categoryLabel(plugin.category) }}</span>
-          <span class="market-badge health" :class="healthTone(plugin.health.status)">{{ healthLabel(plugin.health.status) }}</span>
-          <span v-if="plugin.release.prerelease" class="market-badge warning">预发布</span>
-          <span v-if="plugin.deprecated" class="market-badge error">已弃用</span>
-        </div>
+          <span class="market-version mono">{{ plugin.release.version ? `v${plugin.release.version}` : '无版本' }}</span>
+        </header>
 
         <p class="market-desc">{{ plugin.description }}</p>
-        <p class="market-health-message" :title="plugin.health.message">{{ plugin.health.message }}</p>
+
+        <!-- Only exceptions get badges; a healthy, stable release shows none -->
+        <div v-if="!isHealthy(plugin) || plugin.release.prerelease || plugin.deprecated" class="market-flags">
+          <span v-if="!isHealthy(plugin)" class="flag" :class="healthTone(plugin.health.status)" :title="plugin.health.message">
+            <span class="status-dot" :class="healthTone(plugin.health.status) === 'error' ? 'error' : 'warning'" aria-hidden="true"></span>
+            {{ healthLabel(plugin.health.status) }}
+          </span>
+          <span v-if="plugin.release.prerelease" class="flag"><span class="status-dot warning" aria-hidden="true"></span>预发布</span>
+          <span v-if="plugin.deprecated" class="flag"><span class="status-dot error" aria-hidden="true"></span>已弃用</span>
+        </div>
 
         <div class="market-meta">
-          <span :title="plugin.release.downloadCount === null ? '' : `${plugin.release.downloadCount.toLocaleString()} downloads`">{{ formatDownloads(plugin.release.downloadCount) }} 次下载</span>
-          <span>{{ formatDate(plugin.release.publishedAt) }}</span>
-          <span>{{ plugin.kind }}</span>
-          <span>{{ formatCompatibility(plugin) }}</span>
+          <span :title="plugin.release.downloadCount === null ? '' : `${plugin.release.downloadCount.toLocaleString()} 次下载`">
+            <MdIcon name="download" />{{ formatDownloads(plugin.release.downloadCount) }}
+          </span>
+          <span><MdIcon name="calendar_today" />{{ formatDate(plugin.release.publishedAt) }}</span>
+          <span class="mono compat" :title="formatCompatibility(plugin)">{{ formatCompatibility(plugin) }}</span>
         </div>
 
-        <div v-if="plugin.installed" class="market-installed" :class="{ enabled: plugin.installed.enabled }">
-          <span>{{ plugin.installed.enabled ? '已安装并启用' : '已安装但未启用' }}</span>
-          <strong>v{{ plugin.installed.version }}</strong>
-        </div>
+        <footer class="market-card-footer">
+          <span v-if="plugin.installed" class="installed-state">
+            <span class="status-dot" :class="plugin.installed.enabled ? 'primary' : ''" aria-hidden="true"></span>
+            {{ plugin.installed.enabled ? '已启用' : '已安装未启用' }}
+            <span class="mono">v{{ plugin.installed.version }}</span>
+          </span>
+          <span v-else></span>
 
-        <div class="market-actions">
-          <button type="button" class="market-action text" @click="showPluginDetails(plugin)">详情</button>
-          <button
-            type="button"
-            class="market-action tonal"
-            :disabled="!canInstallPlugin(plugin) || Boolean(preparingPluginId)"
-            :title="canInstallPlugin(plugin) ? '' : '该目录项当前不可安全安装'"
-            @click="preparePluginInstall(plugin)"
-          >
-            {{ installButtonLabel(plugin) }}
-          </button>
-        </div>
+          <div class="button-group" role="group" :aria-label="`${plugin.name} 操作`">
+            <button type="button" class="md-button compact tonal" @click="showPluginDetails(plugin)">详情</button>
+            <button
+              type="button"
+              class="md-button compact filled"
+              :disabled="!canInstallPlugin(plugin) || Boolean(preparingPluginId)"
+              :title="canInstallPlugin(plugin) ? '' : '该目录项当前不可安全安装'"
+              @click="preparePluginInstall(plugin)"
+            >
+              {{ installButtonLabel(plugin) }}
+            </button>
+          </div>
+        </footer>
       </article>
 
-      <el-empty
-        v-if="!loading && !filteredPlugins.length"
-        :description="marketplacePlugins.length ? '没有匹配当前搜索或分类的插件。' : '插件目录暂无数据。'"
-      />
+      <div v-if="!loading && !filteredPlugins.length" class="market-empty panel">
+        <MdIcon name="search" />
+        <strong>{{ marketplacePlugins.length ? '没有匹配的插件' : '插件目录暂无数据' }}</strong>
+        <p>{{ marketplacePlugins.length ? '换个关键词或分类试试' : '点击右上角刷新重新拉取目录' }}</p>
+      </div>
     </section>
 
     <el-dialog
@@ -175,12 +172,12 @@
       </div>
 
       <template #footer>
-        <div class="market-dialog-actions">
-          <button type="button" class="market-action text" @click="detailVisible = false">关闭</button>
+        <div class="market-dialog-actions button-group">
+          <button type="button" class="md-button tonal" @click="detailVisible = false">关闭</button>
           <button
             v-if="selectedPlugin"
             type="button"
-            class="market-action tonal"
+            class="md-button filled"
             :disabled="!canInstallPlugin(selectedPlugin) || Boolean(preparingPluginId)"
             @click="preparePluginInstall(selectedPlugin)"
           >
@@ -209,6 +206,7 @@
 </template>
 
 <script setup lang="ts">
+import MdIcon from '../../components/MdIcon.vue'
 import PluginUploadDialog from '../plugin/components/PluginUploadDialog.vue'
 import { usePluginMarketPage } from './PluginMarket'
 
@@ -231,6 +229,9 @@ const {
   installReplace,
   installEnable,
   installDialogTitle,
+  installedCount,
+  updatableCount,
+  isHealthy,
   sortOptions,
   categories,
   generatedAt,

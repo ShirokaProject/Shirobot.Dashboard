@@ -11,8 +11,6 @@ export type PluginStatusFilter = {
   count: number
 }
 
-const pluginToggleCooldownMs = 5000
-
 export function usePluginsPage() {
   const route = useRoute()
   const router = useRouter()
@@ -83,30 +81,31 @@ export function usePluginsPage() {
 
   function lockPluginToggle(pluginId: string) {
     toggleLockedPluginIds.value = new Set(toggleLockedPluginIds.value).add(pluginId)
-    window.setTimeout(() => {
-      const nextLockedIds = new Set(toggleLockedPluginIds.value)
-      nextLockedIds.delete(pluginId)
-      toggleLockedPluginIds.value = nextLockedIds
-    }, pluginToggleCooldownMs)
+  }
+
+  function unlockPluginToggle(pluginId: string) {
+    const nextLockedIds = new Set(toggleLockedPluginIds.value)
+    nextLockedIds.delete(pluginId)
+    toggleLockedPluginIds.value = nextLockedIds
   }
 
   async function togglePlugin(plugin: Plugin, enabled: boolean) {
     if (isPluginToggleLocked(plugin)) return
 
-    const previousStatus = plugin.status
-    plugin.status = enabled ? 'enabled' : 'disabled'
     lockPluginToggle(plugin.id)
 
     try {
       const response = await setPluginEnabled(plugin.id, enabled)
       actionMessage.value = response.message
       actionMessageType.value = response.ok ? 'success' : 'error'
-      await loadInstalledPlugins(plugin.id)
-      await loadPluginActions(selectedPlugin.value)
     } catch (error) {
-      plugin.status = previousStatus
       actionMessageType.value = 'error'
       actionMessage.value = getApiErrorMessage(error, '插件状态更新失败')
+    } finally {
+      // The backend is authoritative, including partial failures.
+      await loadInstalledPlugins(plugin.id)
+      await loadPluginActions(selectedPlugin.value)
+      unlockPluginToggle(plugin.id)
     }
   }
 
@@ -155,12 +154,12 @@ export function usePluginsPage() {
       const response = await updateInstalledPlugin(plugin.id)
       actionMessage.value = response.message
       actionMessageType.value = response.ok ? 'success' : 'error'
-      await loadInstalledPlugins(plugin.id)
-      await loadPluginActions(selectedPlugin.value)
     } catch (error) {
       actionMessageType.value = 'error'
       actionMessage.value = getApiErrorMessage(error, '插件更新失败')
     } finally {
+      await loadInstalledPlugins(plugin.id)
+      await loadPluginActions(selectedPlugin.value)
       hostOperation.value = ''
     }
   }
@@ -183,11 +182,11 @@ export function usePluginsPage() {
       const response = await deleteInstalledPlugin(plugin.id)
       actionMessage.value = response.message
       actionMessageType.value = response.ok ? 'success' : 'error'
-      await loadInstalledPlugins()
     } catch (error) {
       actionMessageType.value = 'error'
       actionMessage.value = getApiErrorMessage(error, '插件卸载失败')
     } finally {
+      await loadInstalledPlugins()
       hostOperation.value = ''
     }
   }
@@ -228,6 +227,8 @@ export function usePluginsPage() {
     } catch (error) {
       actionMessageType.value = 'error'
       actionMessage.value = getApiErrorMessage(error, `${action.label}执行失败`)
+      await loadInstalledPlugins(plugin.id)
+      await loadPluginActions(selectedPlugin.value)
     } finally {
       runningPluginActionId.value = ''
     }
@@ -307,6 +308,7 @@ export function usePluginsPage() {
       await loadInstalledPlugins(response.plugin.id)
     } catch (error) {
       pluginUploadError.value = getApiErrorMessage(error, '插件确认安装失败')
+      await loadInstalledPlugins()
     } finally {
       pluginUploadInstalling.value = false
     }
@@ -350,6 +352,8 @@ export function usePluginsPage() {
   )
 
   return {
+    installedPlugins,
+    reloadInstalled: loadInstalledPlugins,
     keyword,
     activeStatus,
     uploadDialogVisible,

@@ -1,0 +1,276 @@
+/* Detail pane shared by 已安装 / 发现: header, description, one notice, facts, actions. */
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-4);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.muted {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.sep {
+  margin: 0 var(--md-space-1);
+  color: var(--md-sys-color-outline);
+}
+
+.detail-head {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--md-space-4);
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font: var(--md-sys-typescale-headline-small);
+  font-weight: 700;
+}
+
+.detail-title {
+  min-width: 0;
+}
+
+.detail-title h2 {
+  margin: 0;
+  overflow: hidden;
+  font: var(--md-sys-typescale-title-large);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-title p {
+  margin: 2px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.version {
+  padding: 2px var(--md-space-2);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--app-inset);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
+}
+
+.detail-desc {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-large);
+}
+
+.notice {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--md-space-3);
+  padding: var(--md-space-3) var(--md-space-3) var(--md-space-3) var(--md-space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--app-inset);
+}
+
+.notice > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notice strong {
+  font: var(--md-sys-typescale-label-large);
+}
+
+.notice span {
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.notice-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+  color: var(--app-accent);
+  font: var(--md-sys-typescale-label-medium);
+  text-decoration: none;
+}
+
+.notice-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.notice-link .md-icon {
+  font-size: 14px;
+}
+
+.notice-icon {
+  font-size: 20px;
+}
+
+.notice-icon.error { color: var(--md-sys-color-error); }
+.notice-icon.warning { color: var(--md-sys-color-warning); }
+.notice-icon.accent { color: var(--app-accent); }
+
+/* Compact key/value rows: label column + value, hairline between rows */
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--md-space-1) var(--md-space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--app-inset);
+}
+
+.facts > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--md-space-3);
+  padding: var(--md-space-2) 0;
+}
+
+.facts > div + div {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+.facts dt .md-icon,
+.facts dt .github-mark {
+  font-size: 16px;
+}
+
+.repo-avatar {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-high);
+  box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant);
+}
+
+.facts dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.facts dd.mono,
+.facts dd .mono {
+  font-size: 13px;
+}
+
+.repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  max-width: 100%;
+  color: var(--app-accent);
+  font: 400 13px / 20px var(--font-mono);
+  text-decoration: none;
+}
+
+.repo-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repo-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.repo-link .github-mark {
+  font-size: 16px;
+}
+
+.repo-link .external {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actions h3 {
+  margin: 0 0 var(--md-space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
+}
+
+.action-row {
+  display: flex;
+  padding: var(--md-space-3) var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--app-inset);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.action-row:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), var(--app-inset));
+}
+
+.action-row:disabled {
+  cursor: default;
+}
+
+.action-row span {
+  display: flex;
+  flex-direction: column;
+}
+
+.action-row strong {
+  font: var(--md-sys-typescale-label-large);
+}
+
+.action-row small {
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.footnote {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+/* Actions follow the content directly instead of sinking to the pane's bottom edge */
+.detail-foot {
+  margin-top: var(--md-space-1);
+}
+
+.md-button.wide {
+  width: 100%;
+  justify-content: center;
+}

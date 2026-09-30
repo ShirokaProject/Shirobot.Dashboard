@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import {
   cancelPluginUpload,
@@ -11,8 +11,81 @@ import {
   type PluginMarketResponse,
   type PluginUploadParsedResponse
 } from '../../api'
+import { resolveRepositoryPlugin } from '../../api/pluginMarket/pluginMarket'
+import {
+  addCatalogSource,
+  addDirectRepo,
+  getActiveCatalogSource,
+  listCatalogSources,
+  listDirectRepos,
+  removeCatalogSource,
+  removeDirectRepo,
+  setActiveCatalogSource,
+  type CatalogSource,
+  type DirectRepository,
+  type ParsedRepository
+} from '../../features/plugins/catalogSources'
 
-export function usePluginMarketPage() {
+export interface DirectEntry {
+  repo: DirectRepository
+  /** Resolved entry; while loading or on network failure a placeholder with that status. */
+  plugin: MarketplacePlugin
+  loading: boolean
+}
+
+/** Stand-in entry so an unresolved repo still renders (and explains itself) in the list. */
+function placeholderFor(repo: DirectRepository, status: string, message: string): MarketplacePlugin {
+  return {
+    id: `direct:${repo.url}`,
+    kind: 'plugin',
+    name: repo.repo,
+    description: message,
+    category: 'other',
+    authors: [{ name: repo.owner }],
+    repository: repo.url,
+    license: '',
+    compatibility: { shirobot: '', framework: '' },
+    deprecated: false,
+    release: { version: null, prerelease: false, publishedAt: null, pageUrl: null, downloadCount: null, asset: null },
+    health: { status, message }
+  }
+}
+
+export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) {
+  const sources = ref<CatalogSource[]>(listCatalogSources())
+  const activeSource = ref<CatalogSource>(getActiveCatalogSource())
+  const directEntries = ref<DirectEntry[]>(listDirectRepos().map(repo => ({
+    repo,
+    plugin: placeholderFor(repo, 'resolving', '正在识别仓库…'),
+    loading: true
+  })))
+
+  async function resolveDirect(entry: DirectEntry) {
+    entry.loading = true
+    try {
+      entry.plugin = await resolveRepositoryPlugin(entry.repo.url)
+    } catch (error) {
+      entry.plugin = placeholderFor(entry.repo, 'error', getApiErrorMessage(error, '无法访问该仓库'))
+    } finally {
+      entry.loading = false
+    }
+  }
+
+  function resolveAllDirect() {
+    for (const entry of directEntries.value) void resolveDirect(entry)
+  }
+
+  function addDirect(parsed: ParsedRepository) {
+    const repo = addDirectRepo(parsed)
+    const entry = reactive<DirectEntry>({ repo, plugin: placeholderFor(repo, 'resolving', '正在识别仓库…'), loading: true })
+    directEntries.value = [...directEntries.value.filter(item => item.repo.url !== repo.url), entry]
+    void resolveDirect(entry).then(() => { selectedPlugin.value = entry.plugin })
+  }
+
+  function removeDirect(id: string) {
+    removeDirectRepo(id)
+    directEntries.value = directEntries.value.filter(entry => entry.repo.id !== id)
+  }
   const keyword = ref('')
   const activeCategory = ref('全部')
   const activeSort = ref<MarketSortKey>('downloads')
@@ -61,6 +134,15 @@ export function usePluginMarketPage() {
   const categories = computed(() => ['全部', ...new Set(marketplacePlugins.value.map(plugin => plugin.category).filter(Boolean))])
   const generatedAt = computed(() => market.value?.generatedAt ? formatDate(market.value.generatedAt) : '—')
   const installDialogTitle = computed(() => installPreview.value ? `确认安装 ${installPreview.value.plugin.name}` : '确认安装插件')
+  const installedCount = computed(() => marketplacePlugins.value.filter(plugin => plugin.installed).length)
+  const updatableCount = computed(() => marketplacePlugins.value.filter(plugin =>
+    plugin.installed && plugin.release.version && compareVersions(plugin.installed.version, plugin.release.version) < 0
+  ).length)
+
+  /** Healthy entries need no badge or message; only exceptions are called out. */
+  function isHealthy(plugin: MarketplacePlugin) {
+    return healthTone(plugin.health.status) === 'healthy'
+  }
 
   const filteredPlugins = computed(() => {
     const query = keyword.value.trim().toLowerCase()
@@ -95,7 +177,7 @@ export function usePluginMarketPage() {
     loading.value = true
     loadError.value = ''
     try {
-      const response = await getPluginMarketPlugins(forceRefresh)
+      const response = await getPluginMarketPlugins(forceRefresh, activeSource.value.url)
       market.value = response
       if (selectedPlugin.value) {
         selectedPlugin.value = response.plugins.find(plugin => plugin.id === selectedPlugin.value?.id) ?? null
@@ -115,6 +197,37 @@ export function usePluginMarketPage() {
   function refreshMarketplacePlugins() {
     if (loading.value) return
     void loadMarketplacePlugins(true)
+    resolveAllDirect()
+  }
+
+  /** Repository the current catalog comes from: what the backend reports, else what we asked for. */
+  const sourceRepository = computed(() =>
+    market.value?.source?.repository || market.value?.source?.url || activeSource.value.url
+  )
+
+  function selectSource(id: string) {
+    const next = sources.value.find(source => source.id === id)
+    if (!next || next.id === activeSource.value.id) return
+    activeSource.value = next
+    setActiveCatalogSource(next.id)
+    market.value = null
+    void loadMarketplacePlugins(true)
+  }
+
+  function addSource(name: string, url: string) {
+    const source = addCatalogSource(name, url)
+    sources.value = listCatalogSources()
+    selectSource(source.id)
+  }
+
+  function removeSource(id: string) {
+    removeCatalogSource(id)
+    sources.value = listCatalogSources()
+    if (activeSource.value.id === id) {
+      activeSource.value = sources.value[0]
+      setActiveCatalogSource(activeSource.value.id)
+      void loadMarketplacePlugins(true)
+    }
   }
 
   function showPluginDetails(plugin: MarketplacePlugin) {
@@ -188,6 +301,7 @@ export function usePluginMarketPage() {
       installDialogVisible.value = false
       feedbackType.value = 'success'
       feedbackMessage.value = '插件安装成功'
+      options.onInstalled?.()
       await loadMarketplacePlugins()
     } catch (error) {
       installError.value = getApiErrorMessage(error, '插件确认安装失败')
@@ -234,6 +348,9 @@ export function usePluginMarketPage() {
       normal: '正常',
       available: '可用',
       warning: '警告',
+      resolving: '识别中',
+      'no-release': '无合规发布',
+      'asset-missing': '缺少插件包',
       degraded: '降级',
       stale: '过期',
       error: '异常',
@@ -288,9 +405,19 @@ export function usePluginMarketPage() {
 
   onMounted(() => {
     void loadMarketplacePlugins()
+    resolveAllDirect()
   })
 
   return {
+    directEntries,
+    addDirect,
+    removeDirect,
+    sources,
+    activeSource,
+    sourceRepository,
+    selectSource,
+    addSource,
+    removeSource,
     keyword,
     activeCategory,
     activeSort,
@@ -309,6 +436,9 @@ export function usePluginMarketPage() {
     installReplace,
     installEnable,
     installDialogTitle,
+    installedCount,
+    updatableCount,
+    isHealthy,
     sortOptions,
     categories,
     generatedAt,
