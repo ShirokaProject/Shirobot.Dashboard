@@ -9,18 +9,45 @@
     </button>
 
     <Transition name="session-menu-fade">
-      <div v-if="menuOpen" class="session-menu">
-        <button type="button" @click="goLogin">切换登录</button>
-        <button type="button" class="danger" @click="logout">退出登录</button>
+      <div v-if="menuOpen" class="session-menu" role="menu">
+        <span class="menu-label">切换后端</span>
+        <button
+          v-for="backend in backends"
+          :key="backend.id"
+          type="button"
+          role="menuitemradio"
+          class="backend-item"
+          :aria-checked="backend.id === session?.backendId"
+          :disabled="switchingId !== ''"
+          @click="switchTo(backend)"
+        >
+          <el-icon class="check"><Check v-if="backend.id === session?.backendId" /></el-icon>
+          <span class="backend-text">
+            <strong>{{ backend.name }}</strong>
+            <small>{{ switchingId === backend.id ? '连接中…' : describeBaseUrl(backend.baseUrl) }}</small>
+          </span>
+          <el-icon v-if="backend.token" class="key" title="已记住密钥"><Key /></el-icon>
+        </button>
+        <hr />
+        <button type="button" role="menuitem" @click="openLogin({ add: '' })">
+          <el-icon class="check"><Plus /></el-icon>添加后端…
+        </button>
+        <button type="button" role="menuitem" class="danger" @click="logout">
+          <el-icon class="check"><SwitchButton /></el-icon>退出登录
+        </button>
       </div>
     </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Check, Key, Plus, SwitchButton } from '@element-plus/icons-vue'
+import { describeBaseUrl, listBackends, type BackendProfile } from '../../auth/backends'
 import { clearDashboardSession, getDashboardSession, getSessionModeLabel, getSessionStatusLabel } from '../../auth/session'
+import { reloadIntoDashboard, signInToBackend } from '../../auth/signIn'
 
 const router = useRouter()
 const menuOpen = ref(false)
@@ -28,10 +55,38 @@ const sessionRoot = ref<HTMLElement | null>(null)
 const session = computed(() => getDashboardSession())
 const modeLabel = computed(() => getSessionModeLabel(session.value))
 const statusLabel = computed(() => getSessionStatusLabel(session.value))
+const backends = ref<BackendProfile[]>([])
+const switchingId = ref('')
 
-function goLogin() {
+watch(menuOpen, open => {
+  if (open) backends.value = listBackends()
+})
+
+function openLogin(query: Record<string, string>) {
   menuOpen.value = false
-  router.push('/login')
+  void router.push({ name: 'Login', query: { switch: '', ...query } })
+}
+
+// A remembered key switches in place; otherwise the login page opens with that backend picked.
+async function switchTo(backend: BackendProfile) {
+  if (backend.id === session.value?.backendId) {
+    menuOpen.value = false
+    return
+  }
+  if (backend.token === undefined) {
+    openLogin({ backend: backend.id })
+    return
+  }
+
+  switchingId.value = backend.id
+  const result = await signInToBackend(backend, backend.token, true)
+  switchingId.value = ''
+  if (result.ok) {
+    reloadIntoDashboard()
+    return
+  }
+  ElMessage.error(result.message)
+  openLogin({ backend: backend.id })
 }
 
 function logout() {
@@ -63,31 +118,39 @@ onBeforeUnmount(() => {
 
 .session-chip {
   min-width: 132px;
-  height: 44px;
+  height: 40px;
   display: inline-grid;
-  grid-template-columns: 10px minmax(0, 1fr);
+  grid-template-columns: 8px minmax(0, 1fr);
   align-items: center;
   gap: var(--md-space-3);
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-full);
-  padding: 0 var(--md-space-4);
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small);
+  padding: 0 var(--md-space-4) 0 var(--md-space-3);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   text-align: left;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.session-chip.demo {
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
+.session-chip:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) var(--md-sys-state-hover-opacity), transparent);
 }
 
+/* Status is carried by the dot alone: success = live backend, warning = demo data */
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: var(--md-sys-shape-corner-full);
-  background: currentColor;
-  opacity: 0.82;
+  background: var(--md-sys-color-outline);
+}
+
+.session-chip.api .status-dot {
+  background: var(--md-sys-color-success);
+}
+
+.session-chip.demo .status-dot {
+  background: var(--md-sys-color-warning);
 }
 
 .session-main {
@@ -104,12 +167,12 @@ onBeforeUnmount(() => {
 }
 
 .session-main strong {
-  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-label-medium);
 }
 
 .session-main small {
-  opacity: 0.72;
-  font: var(--md-sys-typescale-body-small);
+  font: var(--md-sys-typescale-label-small);
 }
 
 .session-menu {
@@ -117,13 +180,12 @@ onBeforeUnmount(() => {
   z-index: 40;
   top: calc(100% + var(--md-space-3));
   right: 0;
-  min-width: 168px;
+  width: 280px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--md-space-2);
+  padding: var(--md-space-2) 0;
   border: 0;
-  border-radius: var(--md-sys-shape-corner-medium);
+  border-radius: var(--md-sys-shape-corner-extra-small);
   background: var(--md-sys-color-surface-container);
   box-shadow: var(--md-sys-elevation-level2);
   transform-origin: top right;
@@ -151,11 +213,27 @@ onBeforeUnmount(() => {
   transform: translateY(0) scale(1);
 }
 
-.session-menu button {
-  height: 40px;
+/* M3 menu: full-bleed 48px items, leading icon slot, state layer on hover */
+.menu-label {
+  padding: var(--md-space-2) var(--md-space-4) var(--md-space-1);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+.session-menu hr {
+  width: 100%;
+  margin: var(--md-space-2) 0;
   border: 0;
-  border-radius: var(--md-sys-shape-corner-medium);
-  padding: 0 var(--md-space-3);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.session-menu button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-3);
+  border: 0;
+  padding: var(--md-space-1) var(--md-space-4) var(--md-space-1) var(--md-space-3);
   background: transparent;
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
@@ -163,18 +241,52 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
-.session-menu button:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-  color: var(--md-sys-color-on-surface);
+.session-menu button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
 }
 
-.session-menu button.danger {
+.session-menu button:disabled {
+  cursor: default;
+}
+
+.session-menu .check {
+  width: 24px;
+  flex: 0 0 auto;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 18px;
+}
+
+.backend-item[aria-checked='true'] .check {
+  color: var(--md-sys-color-primary);
+}
+
+.backend-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.backend-text strong,
+.backend-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backend-text small {
+  color: var(--md-sys-color-on-surface-variant);
+  font: 400 12px / 16px var(--font-mono);
+}
+
+.session-menu .key {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 16px;
+}
+
+.session-menu button.danger,
+.session-menu button.danger .check {
   color: var(--md-sys-color-error);
-}
-
-.session-menu button.danger:hover {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
 }
 
 @media (max-width: 599px) {

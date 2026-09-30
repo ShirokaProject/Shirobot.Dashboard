@@ -6,13 +6,14 @@ export type ApiKeyCheck =
   | { ok: false; reason: 'unreachable' }
   | { ok: false; reason: 'server'; status: number }
 
-export async function verifyApiKey(token: string): Promise<ApiKeyCheck> {
+/** Check a key against a specific backend origin ('' = same origin) before a session exists. */
+export async function verifyApiKey(token: string, baseUrl: string): Promise<ApiKeyCheck> {
   const headers = new Headers()
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
   let response: Response
   try {
-    response = await fetch(buildApiUrl('/api/v1/auth'), { headers })
+    response = await fetch(buildApiUrl('/api/v1/auth', baseUrl), { headers })
   } catch {
     return { ok: false, reason: 'unreachable' }
   }

@@ -1,6 +1,4 @@
-import { getDashboardSession, isDemoMode } from '../../auth/session'
-
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+import { getDashboardSession, getSessionBaseUrl, isDemoMode } from '../../auth/session'
 
 export class ApiError extends Error {
   readonly status: number
@@ -27,11 +25,12 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-export function buildApiUrl(path: string) {
+/** Resolve an API path against a backend origin ('' = same origin); defaults to the session's backend. */
+export function buildApiUrl(path: string, baseUrl = getSessionBaseUrl()) {
   if (/^https?:\/\//i.test(path)) return path
-  if (!API_BASE_URL) return path
+  if (!baseUrl) return path
 
-  return `${API_BASE_URL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
+  return `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
 }
 
 function buildRequestInit(init?: RequestInit): RequestInit | undefined {
