@@ -1,174 +1,189 @@
 <template>
-  <div class="plugin-config-page">
-    <el-alert
-      v-if="loadError"
-      class="page-alert"
-      :title="loadError"
-      type="warning"
-      show-icon
-      :closable="false"
-    />
-
-    <el-alert
-      v-if="saveMessage"
-      class="page-alert"
-      :title="saveMessage"
-      :type="saveMessageType"
-      show-icon
-      :closable="false"
-    />
-
-    <section class="config-header-card">
-      <div class="plugin-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" focusable="false">
-          <path d="M20.5 11H19V7.5C19 6.67 18.33 6 17.5 6H14V4.5C14 3.12 12.88 2 11.5 2S9 3.12 9 4.5V6H5.5C4.67 6 4 6.67 4 7.5V11h1.5C6.88 11 8 12.12 8 13.5S6.88 16 5.5 16H4v3.5c0 .83.67 1.5 1.5 1.5H9v-1.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5V21h3.5c.83 0 1.5-.67 1.5-1.5V16h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11Z" />
-        </svg>
-      </div>
-      <div class="header-main">
-        <div class="eyebrow">插件配置</div>
-        <h2>{{ pluginName }}</h2>
-        <p>配置插件运行参数和群组路由规则。</p>
-      </div>
-      <div class="header-actions">
-        <el-button round @click="$router.push('/plugins')">返回插件</el-button>
-        <el-button round type="primary" @click="savePluginConfig">保存配置</el-button>
-      </div>
-    </section>
-
-    <section class="config-layout">
-      <aside
-        class="config-sections"
-        :style="{
-          '--section-count': sections.length,
-          '--active-index': Math.max(0, sections.findIndex(section => section.key === activeSection))
-        }"
-      >
-        <span class="section-indicator" aria-hidden="true"></span>
-        <button
-          v-for="section in sections"
-          :key="section.key"
-          type="button"
-          class="section-item"
-          :class="{ active: activeSection === section.key }"
-          @click="activeSection = section.key"
-        >
-          <span>
-            <strong>{{ section.label }}</strong>
-            <small>{{ section.description }}</small>
-          </span>
+  <div class="config-page">
+    <!--
+      Config workspace: everything configurable on the left (plugins + adapters), the chosen
+      one's editor on the right. Switching stays on this page.
+    -->
+    <!-- Everything configurable -->
+    <nav class="page-targets panel" aria-label="配置对象">
+      <div class="targets-head">
+        <button type="button" class="md-button text icon-only compact" :aria-label="backLabel" :title="backLabel" @click="goBack">
+          <MdIcon name="arrow_back" />
         </button>
-      </aside>
+        <strong>配置</strong>
+      </div>
+      <template v-for="section in targetSections" :key="section.kind">
+        <h3>{{ section.label }}<span>{{ section.items.length }}</span></h3>
+        <ul class="target-list">
+          <li v-for="item in section.items" :key="`${section.kind}-${item.id}`">
+            <button
+              type="button"
+              class="target-item"
+              :class="{ selected: target === section.kind && pluginId === item.id }"
+              :aria-current="target === section.kind && pluginId === item.id ? 'page' : undefined"
+              @click="switchTo(section.kind, item.id)"
+            >
+              <span class="target-avatar" aria-hidden="true">{{ item.initials }}</span>
+              <span class="target-name">{{ item.name }}</span>
+              <span class="status-dot" :class="item.tone" :title="item.status" aria-hidden="true"></span>
+            </button>
+          </li>
+          <li v-if="!section.items.length" class="target-empty">暂无</li>
+        </ul>
+      </template>
+    </nav>
 
-      <main class="config-editor">
-        <div v-if="activeSection === 'config'" class="form-card">
-          <div class="form-card-head">
-            <h3>插件配置</h3>
-            <p>字段由后端 schema 动态生成。</p>
-          </div>
-
-          <el-empty v-if="!schema.length" description="暂无配置 schema。" />
-
-          <el-form v-else label-position="top" class="m3-form">
-            <el-form-item v-for="item in schema" :key="item.key" :label="item.label || item.key">
-              <template v-if="item.type === 'select'">
-                <el-select v-model="config[item.key]" style="width: 100%" :placeholder="item.placeholder || '请选择'">
-                  <el-option v-for="option in item.options || []" :key="String(option)" :label="String(option)" :value="option" />
-                </el-select>
-              </template>
-
-              <template v-else-if="item.type === 'boolean'">
-                <div class="switch-row compact">
-                  <div>
-                    <strong>{{ item.label || item.key }}</strong>
-                    <p v-if="item.description">{{ item.description }}</p>
-                  </div>
-                  <el-switch v-model="config[item.key]" />
-                </div>
-              </template>
-
-              <template v-else-if="item.type === 'number'">
-                <el-input-number v-model="config[item.key]" :min="item.min ?? undefined" :max="item.max ?? undefined" style="width: 100%" />
-              </template>
-
-              <template v-else-if="item.type === 'text'">
-                <el-input v-model="config[item.key]" type="textarea" :rows="4" :placeholder="item.placeholder || ''" />
-              </template>
-
-              <template v-else>
-                <el-input v-model="config[item.key]" :placeholder="item.placeholder || ''" />
-              </template>
-
-              <p v-if="item.description && item.type !== 'boolean'" class="field-description">{{ item.description }}</p>
-            </el-form-item>
-          </el-form>
+    <!-- The chosen one: header, then its categories | fields -->
+    <section class="page-editor panel">
+      <header class="page-head">
+        <span class="avatar" aria-hidden="true">{{ currentName.slice(0, 1).toUpperCase() }}</span>
+        <div class="head-title">
+          <h2>{{ currentName }}</h2>
+          <p>{{ target === 'adapter' ? 'Adapter 配置' : '插件配置' }}<span class="sep">·</span><span class="mono">{{ pluginId }}</span></p>
         </div>
-
-        <div v-else class="form-card">
-          <div class="form-card-head">
-            <h3>路由配置</h3>
-            <p>控制插件在哪些群组中生效。</p>
-          </div>
-
-          <el-form label-position="top" class="m3-form">
-            <el-form-item label="路由模式">
-              <el-select v-model="routes.mode" style="width: 100%">
-                <el-option label="使用默认规则" value="default" />
-                <el-option label="黑名单" value="blacklist" />
-                <el-option label="白名单" value="whitelist" />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="群组列表">
-              <el-input v-model="routeGroupsInput" placeholder="多个群号可用逗号或空格分隔，例如：123456789, 987654321" />
-              <p class="field-description">当模式为黑名单或白名单时生效。</p>
-            </el-form-item>
-          </el-form>
+        <span v-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
+        <span v-else-if="saveMessage" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
+        <div class="button-group">
+          <button type="button" class="md-button tonal" :disabled="!dirty || saving" @click="discard">放弃修改</button>
+          <button type="button" class="md-button filled" :disabled="!dirty || saving" @click="save">{{ saving ? '保存中…' : '保存' }}</button>
         </div>
-      </main>
+      </header>
 
-      <aside class="config-inspector">
-        <section class="inspector-card">
-          <h3>路由摘要</h3>
-          <div class="kv-list">
-            <div>
-              <span>已单独配置</span>
-              <strong>{{ routes.configured ? '是' : '否' }}</strong>
-            </div>
-            <div>
-              <span>有效模式</span>
-              <strong>{{ routes.effective_mode }}</strong>
-            </div>
-            <div>
-              <span>有效群组</span>
-              <strong>{{ routes.effective_groups.length ? routes.effective_groups.join(', ') : '无' }}</strong>
-            </div>
-            <div>
-              <span>默认模式</span>
-              <strong>{{ routes.default_mode }}</strong>
-            </div>
-          </div>
-        </section>
-      </aside>
+      <p v-if="loadError" class="page-note error">{{ loadError }}</p>
+      <p v-else-if="loading" class="page-note">正在读取配置…</p>
+      <div v-else class="page-body">
+        <ConfigNav v-model:view="view" class="page-nav" :groups="groups" :show-routes="hasRoutes" />
+        <div class="page-main">
+          <PluginConfigForm
+            v-model:route-groups-input="routeGroupsInput"
+            :view="view"
+            :groups="groups"
+            :config="config"
+            :routes="routes"
+          />
+        </div>
+      </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
+import MdIcon from '../../components/MdIcon.vue'
+import { getAdapters, getInstalledPlugins, type AdapterStatus } from '../../api'
+import type { Plugin } from '../../features/plugins/types'
+import ConfigNav from './components/ConfigNav.vue'
+import PluginConfigForm from './components/PluginConfigForm.vue'
 import { usePluginConfigPage } from './PluginConfig'
+import { ROUTES_VIEW, type ConfigTarget } from './usePluginConfig'
 
+const router = useRouter()
 const {
-  pluginName,
-  sections,
-  activeSection,
-  schema,
-  config,
-  routes,
-  routeGroupsInput,
+  pluginId,
+  target,
+  hasRoutes,
+  loading,
+  saving,
   loadError,
   saveMessage,
   saveMessageType,
-  savePluginConfig
+  groups,
+  config,
+  routes,
+  routeGroupsInput,
+  dirty,
+  save,
+  discard
 } = usePluginConfigPage()
+
+// ---------- everything configurable ----------
+
+const plugins = ref<Plugin[]>([])
+const adapters = ref<AdapterStatus[]>([])
+
+onMounted(async () => {
+  // Either list failing just leaves that section empty; the editor still works.
+  const [pluginResult, adapterResult] = await Promise.allSettled([getInstalledPlugins(), getAdapters()])
+  if (pluginResult.status === 'fulfilled') plugins.value = pluginResult.value
+  if (adapterResult.status === 'fulfilled') adapters.value = adapterResult.value
+})
+
+const targetSections = computed(() => [
+  {
+    kind: 'plugin' as ConfigTarget,
+    label: '插件',
+    items: plugins.value.map(plugin => ({
+      id: plugin.id,
+      name: plugin.name,
+      initials: plugin.name.slice(0, 1).toUpperCase(),
+      tone: plugin.status === 'error' ? 'error' : plugin.status === 'enabled' ? 'success' : '',
+      status: { enabled: '启用', disabled: '关闭', error: '错误' }[plugin.status]
+    }))
+  },
+  {
+    kind: 'adapter' as ConfigTarget,
+    label: 'Adapter',
+    items: adapters.value.map(adapter => ({
+      id: adapter.id,
+      name: adapter.name,
+      initials: adapter.platform.slice(0, 2).toUpperCase(),
+      tone: adapter.error ? 'error' : adapter.loaded ? 'success' : '',
+      status: adapter.error ? '异常' : adapter.loaded ? '运行中' : '已停止'
+    }))
+  }
+])
+
+const currentName = computed(() => {
+  const list = target.value === 'adapter' ? adapters.value : plugins.value
+  return list.find(item => item.id === pluginId.value)?.name ?? pluginId.value
+})
+
+const backLabel = computed(() => target.value === 'adapter' ? '返回 Adapter' : '返回插件')
+
+// ---------- switching ----------
+
+async function confirmDiscard() {
+  if (!dirty.value) return true
+  try {
+    await ElMessageBox.confirm('修改还没有保存，切换或离开后会丢失。', '放弃修改？', {
+      confirmButtonText: '放弃修改',
+      cancelButtonText: '继续编辑',
+      confirmButtonClass: 'el-button--danger'
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Unsaved-changes check happens here, before navigating: route guards don't reliably
+// fire when the same component instance moves between the plugin and adapter routes.
+let confirmedSwitch = false
+async function switchTo(kind: ConfigTarget, id: string) {
+  if (kind === target.value && id === pluginId.value) return
+  if (!(await confirmDiscard())) return
+  confirmedSwitch = true
+  await router.replace(`/${kind === 'adapter' ? 'adapters' : 'plugins'}/${encodeURIComponent(id)}/config`)
+  confirmedSwitch = false
+}
+
+// Current category: a group key or ROUTES_VIEW; reset per target, first group once loaded.
+const view = ref('')
+watch([pluginId, target], () => { view.value = '' })
+watch(groups, list => {
+  // Still loading: leave the choice for when the groups arrive.
+  if (!list.length) return
+  if ((view.value === ROUTES_VIEW && hasRoutes.value) || list.some(group => group.key === view.value)) return
+  view.value = list[0].key
+}, { immediate: true })
+
+function goBack() {
+  void router.push(target.value === 'adapter' ? '/adapters' : '/plugins')
+}
+
+onBeforeRouteLeave(async () => confirmedSwitch || confirmDiscard())
 </script>
 
 <style scoped src="./PluginConfig.css"></style>

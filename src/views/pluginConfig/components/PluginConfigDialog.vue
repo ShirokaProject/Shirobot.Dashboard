@@ -1,0 +1,271 @@
+<template>
+  <el-dialog
+    :model-value="visible"
+    class="config-workspace"
+    width="880px"
+    append-to-body
+    align-center
+    :show-close="false"
+    :before-close="requestClose"
+  >
+    <template #header>
+      <div class="ws-head">
+        <span class="avatar" aria-hidden="true">{{ pluginName.slice(0, 1).toUpperCase() }}</span>
+        <div class="ws-title">
+          <h2>{{ pluginName }}</h2>
+          <p>{{ target === 'adapter' ? 'Adapter 配置' : '插件配置' }}</p>
+        </div>
+        <button type="button" class="md-button text icon-only compact" aria-label="关闭" @click="requestClose()">
+          <MdIcon name="close" />
+        </button>
+      </div>
+    </template>
+
+    <p v-if="state.loadError.value" class="ws-note error">{{ state.loadError.value }}</p>
+    <div v-else-if="state.loading.value" class="ws-note">正在读取配置…</div>
+    <!-- Categories on the left as pills; only the chosen one is shown on the right -->
+    <div v-else class="ws-body">
+      <ConfigNav v-model:view="view" class="ws-nav" :groups="state.groups.value" :show-routes="state.hasRoutes.value" />
+      <div class="ws-content">
+        <PluginConfigForm
+          v-model:route-groups-input="state.routeGroupsInput.value"
+          :view="view"
+          :groups="state.groups.value"
+          :config="state.config"
+          :routes="state.routes"
+        />
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="ws-foot">
+        <button type="button" class="md-button text" @click="openFullPage">
+          <MdIcon name="open_in_new" />在完整页面打开
+        </button>
+        <span v-if="state.saveMessage.value && !state.dirty.value" class="ws-saved" :class="state.saveMessageType.value">
+          {{ state.saveMessage.value }}
+        </span>
+        <span v-else-if="state.dirty.value" class="ws-dirty"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
+        <div class="button-group">
+          <button type="button" class="md-button tonal" @click="requestClose()">{{ state.dirty.value ? '取消' : '关闭' }}</button>
+          <button
+            type="button"
+            class="md-button filled"
+            :disabled="!state.dirty.value || state.saving.value"
+            @click="save"
+          >{{ state.saving.value ? '保存中…' : '保存' }}</button>
+        </div>
+      </div>
+    </template>
+  </el-dialog>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import MdIcon from '../../../components/MdIcon.vue'
+import { ROUTES_VIEW, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
+import ConfigNav from './ConfigNav.vue'
+import PluginConfigForm from './PluginConfigForm.vue'
+
+const props = withDefaults(defineProps<{ visible: boolean; pluginId: string; pluginName: string; target?: ConfigTarget }>(), { target: 'plugin' })
+const emit = defineEmits<{ 'update:visible': [visible: boolean] }>()
+
+const router = useRouter()
+
+// Only load while open; reopening the same plugin reloads fresh values.
+const activeId = computed(() => props.visible ? props.pluginId : '')
+const state = usePluginConfig(activeId, () => props.target)
+
+// Current category: a group key or ROUTES_VIEW. Starts on the first group each time.
+const view = ref('')
+watch(() => state.groups.value, groups => {
+  // Still loading: leave the choice for when the groups arrive.
+  if (!groups.length) return
+  if (view.value === ROUTES_VIEW || groups.some(group => group.key === view.value)) return
+  view.value = groups[0].key
+})
+watch(() => props.visible, open => {
+  if (open) view.value = state.groups.value[0]?.key ?? ''
+})
+
+async function confirmDiscard() {
+  if (!state.dirty.value) return true
+  try {
+    await ElMessageBox.confirm('修改还没有保存，关闭后会丢失。', '放弃修改？', {
+      confirmButtonText: '放弃修改',
+      cancelButtonText: '继续编辑',
+      confirmButtonClass: 'el-button--danger'
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function requestClose(done?: () => void) {
+  if (!(await confirmDiscard())) return
+  emit('update:visible', false)
+  done?.()
+}
+
+// Stay open after saving so several changes can be made in one sitting.
+async function save() {
+  if (await state.save()) ElMessage.success('配置已保存')
+}
+
+async function openFullPage() {
+  if (!(await confirmDiscard())) return
+  emit('update:visible', false)
+  const base = props.target === 'adapter' ? 'adapters' : 'plugins'
+  void router.push(`/${base}/${encodeURIComponent(props.pluginId)}/config`)
+}
+</script>
+
+<style scoped>
+.ws-head {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-4);
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font: var(--md-sys-typescale-title-large);
+  font-weight: 700;
+}
+
+.ws-title {
+  min-width: 0;
+  flex: 1;
+}
+
+.ws-title h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-title-large);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-title p {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.md-button.icon-only.compact {
+  width: 36px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Nav | content; height follows the content (no empty well under short categories),
+   capped so long ones scroll inside while header and footer stay put */
+.ws-body {
+  min-height: 360px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--md-space-5);
+}
+
+.ws-nav,
+.ws-content {
+  max-height: min(72vh, 760px);
+  overflow-y: auto;
+}
+
+.ws-nav {
+  padding: var(--md-space-1) 0 var(--md-space-2);
+}
+
+.ws-content {
+  min-width: 0;
+  padding: var(--md-space-1) var(--md-space-1) var(--md-space-4);
+}
+
+@media (max-width: 599px) {
+  .ws-body {
+    height: auto;
+    max-height: 70vh;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ws-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.ws-note {
+  padding: var(--md-space-8) 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+  text-align: center;
+}
+
+.ws-note.error {
+  color: var(--md-sys-color-error);
+}
+
+.ws-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-3);
+}
+
+.ws-foot > .md-button.text {
+  margin-left: calc(var(--md-space-3) * -1);
+}
+
+.ws-foot .md-icon {
+  font-size: 18px;
+}
+
+.ws-dirty,
+.ws-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  margin-left: auto;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.ws-saved.error {
+  color: var(--md-sys-color-error);
+}
+
+.ws-foot .button-group {
+  margin-left: auto;
+}
+
+.ws-dirty + .button-group,
+.ws-saved + .button-group {
+  margin-left: 0;
+}
+
+:global(.config-workspace .el-dialog__header) {
+  padding: var(--md-space-5) var(--md-space-6) var(--md-space-3);
+  margin: 0;
+}
+
+:global(.config-workspace .el-dialog__body) {
+  padding: 0 var(--md-space-6);
+}
+
+:global(.config-workspace .el-dialog__footer) {
+  padding: var(--md-space-3) var(--md-space-6) var(--md-space-5);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+</style>
