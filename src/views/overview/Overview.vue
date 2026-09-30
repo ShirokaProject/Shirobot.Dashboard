@@ -8,118 +8,295 @@
       show-icon
       :closable="false"
     />
-    <section class="welcome-panel">
-      <div class="welcome-kicker">
-        <span class="material-icon soft">
-          <svg viewBox="0 0 24 24"><path d="M6.76 4.84 4.96 3.05 3.55 4.46l1.79 1.79 1.42-1.41ZM1 13h3v-2H1v2Zm10-12h2v3h-2V1Zm8.04 2.05-1.79 1.79 1.41 1.41 1.79-1.79-1.41-1.41ZM17.24 19.16l1.79 1.8 1.41-1.42-1.79-1.79-1.41 1.41ZM20 11v2h3v-2h-3ZM4.96 20.95l1.8-1.79-1.42-1.41-1.79 1.79 1.41 1.41ZM11 20h2v3h-2v-3Zm1-14a6 6 0 1 0 0 12A6 6 0 0 0 12 6Z" /></svg>
-        </span>
-        Shirobot Dashboard
+
+    <!-- Greeting card: the page headline (the app bar is untitled here) -->
+    <header class="panel hero-card">
+      <div class="hero-top">
+        <div class="hero-text">
+          <h2>{{ greeting }}!<span class="hero-emoji" aria-hidden="true">😊</span></h2>
+          <p class="hero-date">{{ dateLabel }}</p>
+          <p class="hero-status">
+            <MdIcon :name="health.tone === 'error' ? 'error' : 'check_circle'" :class="['hero-status-icon', health.tone]" />
+            <span class="hero-status-label">{{ health.label }}</span>
+            <span class="sep">·</span><span>{{ backendLabel }}</span>
+            <template v-if="botVersion"><span class="sep">·</span><span class="mono">Shirobot {{ botVersion }}</span></template>
+          </p>
+        </div>
+        <div class="hero-actions button-group" role="group" aria-label="电源">
+        <button
+          type="button"
+          class="md-button tonal"
+          :disabled="powerPending !== null"
+          @click="confirmPower('restart')"
+        >
+          <MdIcon name="restart_alt" />
+          <span>{{ powerPending === 'restart' ? '重启中…' : '重启' }}</span>
+        </button>
+        <button
+          type="button"
+          class="md-button tonal danger"
+          :disabled="powerPending !== null"
+          @click="confirmPower('shutdown')"
+        >
+          <MdIcon name="power_settings_new" />
+          <span>{{ powerPending === 'shutdown' ? '关机中…' : '关机' }}</span>
+        </button>
+        </div>
       </div>
-      <h2>晚上好！</h2>
+      <dl class="hero-facts">
+        <div v-for="fact in heroFacts" :key="fact.key" class="hero-fact">
+          <dt>{{ fact.label }}</dt>
+          <dd>{{ fact.value }}</dd>
+        </div>
+      </dl>
+    </header>
 
-      <div class="welcome-tiles">
-        <div class="welcome-tile session">
-          <span>登录状态</span>
-          <strong>{{ loginModeLabel }} · {{ loginStatusLabel }}</strong>
-          <small>{{ loginEndpointLabel }}</small>
-        </div>
-        <div class="welcome-tile">
-          <span><IconPackage /> Shirobot 版本</span>
-          <strong>{{ shirobotInfo.version }}</strong>
-        </div>
-        <div class="welcome-tile">
-          <span><IconTimer /> 稳定运行</span>
-          <strong>{{ shirobotInfo.uptime }}</strong>
-        </div>
-      </div>
-    </section>
-
-    <section class="latest-error-panel">
-      <span class="error-icon" aria-hidden="true"><IconError /></span>
-      <div class="error-content">
-        <span class="error-label">最近一次报错</span>
-        <strong>{{ latestError.source || '暂无错误数据' }}</strong>
-        <p>{{ latestError.message || '后端接入后将在这里显示最近一次错误。' }}</p>
-      </div>
-      <span class="error-time">{{ latestError.time || '—' }}</span>
-    </section>
-
-    <section class="metric-grid">
-      <el-card v-for="item in stats" :key="item.label" shadow="never" class="metric-card">
-        <div class="metric-head">
-          <span class="material-icon"><component :is="item.icon" /></span>
-          <div class="metric-label">{{ item.label }}</div>
-        </div>
-        <div class="metric-value">{{ item.value }}</div>
-        <div class="metric-support">{{ item.support }}</div>
-      </el-card>
-    </section>
-
-    <section class="content-grid">
-      <el-card shadow="never" class="activity-card">
-        <div class="section-head">
-          <div>
-            <h3>消息频率</h3>
-            <p>过去 24 小时消息吞吐概况</p>
-          </div>
-          <span class="md3-chip">24h</span>
-        </div>
-        <div class="chart-surface">
-          <template v-if="bars.length">
-            <div v-for="(bar, index) in bars" :key="`${bar.time}-${index}`" class="bar-column">
-              <div class="bar-track">
-                <div class="bar" :style="{ height: `${bar.height}%` }">
-                  <span class="bar-value">{{ bar.count }}</span>
-                </div>
-              </div>
-              <span class="bar-time">{{ bar.time }}</span>
-            </div>
-          </template>
-          <div v-else class="empty-state">暂无消息频率数据</div>
-        </div>
-      </el-card>
-
-      <el-card shadow="never" class="log-card">
-        <div class="section-head compact">
-          <div>
-            <h3>最近事件</h3>
-            <p>系统关键运行日志</p>
-          </div>
-        </div>
-        <div class="event-list">
-          <template v-if="events.length">
-            <div v-for="event in events" :key="`${event.time}-${event.title}`" class="event-item">
-              <span class="event-dot"><IconEvent /></span>
+    <div class="overview-layout">
+      <div class="main-column">
+        <section class="status-grid">
+          <article class="panel">
+            <div class="panel-head">
               <div>
-                <div class="event-title">{{ event.title }}</div>
-                <div class="event-meta">{{ event.time }}</div>
+                <h3>Adapter</h3>
+                <p>{{ adapters.length ? `${onlineAdapterCount} / ${adapters.length} 个在线` : '平台连接' }}</p>
               </div>
+              <router-link class="md-button text" to="/adapters">
+                管理<el-icon><ArrowRight /></el-icon>
+              </router-link>
             </div>
-          </template>
-          <div v-else class="empty-state">暂无最近事件</div>
+
+            <PanelEmpty v-if="adaptersError" :icon="Connection" title="Adapter 状态不可用" :detail="adaptersError" retry @retry="loadAdapters" />
+            <ul v-else-if="adapters.length" class="row-list">
+              <li v-for="adapter in adapters" :key="adapter.id" class="adapter-row">
+                <span class="row-avatar" aria-hidden="true">{{ adapter.platform.slice(0, 2).toUpperCase() }}</span>
+                <div class="row-main">
+                  <div class="row-title">
+                    <strong>{{ adapter.name }}</strong>
+                    <span class="mono muted">v{{ adapter.version }}</span>
+                  </div>
+                  <div class="row-meta">
+                    <span class="status-dot" :class="adapterTone(adapter)" aria-hidden="true"></span>
+                    <span>{{ adapterStatusLabel(adapter) }}</span>
+                    <span class="sep">·</span>
+                    <span>{{ adapter.platform }}</span>
+                  </div>
+                  <p v-if="adapter.error" class="row-error">{{ adapter.error }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="md-button text compact"
+                  :disabled="busyAdapterId === adapter.id"
+                  @click="toggleAdapter(adapter)"
+                >
+                  {{ busyAdapterId === adapter.id ? '处理中…' : adapter.loaded ? '停止' : '启动' }}
+                </button>
+              </li>
+            </ul>
+            <PanelEmpty v-else :icon="Connection" title="暂无 Adapter" detail="安装 Adapter 后即可连接聊天平台" />
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>插件</h3>
+                <p>{{ pluginSummary.total ? `共 ${pluginSummary.total} 个` : '已安装插件' }}</p>
+              </div>
+              <router-link class="md-button text" to="/plugins">
+                管理<el-icon><ArrowRight /></el-icon>
+              </router-link>
+            </div>
+
+            <PanelEmpty v-if="pluginsError" :icon="Box" title="插件状态不可用" :detail="pluginsError" retry @retry="loadPlugins" />
+            <template v-else-if="pluginSummary.total">
+              <div class="plugin-meter" role="img" :aria-label="pluginSummary.segments.map(s => `${s.label} ${s.count}`).join('，')">
+                <span
+                  v-for="segment in pluginSummary.segments.filter(s => s.count)"
+                  :key="segment.key"
+                  :class="['meter-segment', segment.tone]"
+                  :style="{ flexGrow: segment.count }"
+                ></span>
+              </div>
+              <ul class="plugin-legend">
+                <li v-for="segment in pluginSummary.segments" :key="segment.key">
+                  <span class="status-dot" :class="segment.tone" aria-hidden="true"></span>
+                  <span>{{ segment.label }}</span>
+                  <strong>{{ segment.count }}</strong>
+                </li>
+              </ul>
+
+              <ul class="row-list attention-list">
+                <li v-for="plugin in pluginSummary.errors" :key="`error-${plugin.id}`" class="attention-row">
+                  <el-icon class="attention-icon error"><WarningFilled /></el-icon>
+                  <div class="row-main">
+                    <strong>{{ plugin.name }}</strong>
+                    <span class="row-sub">{{ plugin.errorMessage || '加载失败' }}</span>
+                  </div>
+                  <router-link class="md-button text compact" :to="`/plugins/${encodeURIComponent(plugin.id)}/config`">处理</router-link>
+                </li>
+                <li v-if="pluginSummary.updates.length" class="attention-row">
+                  <el-icon class="attention-icon primary"><Top /></el-icon>
+                  <div class="row-main">
+                    <strong>{{ pluginSummary.updates.length }} 个插件可更新</strong>
+                    <span class="row-sub">{{ pluginSummary.updates.map(plugin => `${plugin.name} ${plugin.latestVersion}`).join(' · ') }}</span>
+                  </div>
+                  <router-link class="md-button text compact" to="/plugins">查看</router-link>
+                </li>
+                <li v-if="!pluginSummary.errors.length && !pluginSummary.updates.length" class="attention-row calm">
+                  <MdIcon name="check_circle" class="attention-icon success" />
+                  <div class="row-main"><strong>全部插件运行正常</strong></div>
+                </li>
+              </ul>
+            </template>
+            <PanelEmpty v-else :icon="Box" title="暂无插件" detail="可以在插件市场安装，或上传本地插件" />
+          </article>
+        </section>
+
+        <!-- 运行环境: how and where Shirobot is running. Hidden until the backend reports it. -->
+        <section v-if="runtimeFacts.length || memory" class="panel runtime-panel">
+          <div class="panel-head">
+            <div>
+              <h3>运行环境</h3>
+              <p>进程与宿主信息</p>
+            </div>
+          </div>
+          <div class="runtime-body">
+            <dl class="runtime-facts">
+              <div v-for="fact in runtimeFacts" :key="fact.key" class="runtime-fact">
+                <dt><MdIcon :name="fact.icon" />{{ fact.label }}</dt>
+                <dd :class="{ mono: fact.mono }" :title="fact.value">{{ fact.value }}</dd>
+              </div>
+            </dl>
+            <div v-if="memory" class="memory-card">
+              <span class="memory-label"><MdIcon name="memory" />内存占用</span>
+              <strong class="memory-value">{{ memory.total }}</strong>
+              <template v-if="memory.heap">
+                <div class="memory-meter" role="img" :aria-label="`GC 堆 ${memory.heap}，占 ${Math.round(memory.heapRatio * 100)}%`">
+                  <span :style="{ width: `${memory.heapRatio * 100}%` }"></span>
+                </div>
+                <span class="memory-sub">GC 堆 {{ memory.heap }}</span>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel today-panel">
+          <div class="panel-head">
+            <div>
+              <h3>消息频率</h3>
+              <p>近 24 小时 · 共 {{ messageTotal }} 条<template v-if="peakBar"> · 高峰 {{ peakBar.time }}（{{ peakBar.count }} 条）</template></p>
+            </div>
+          </div>
+          <div v-if="bars.length" class="bars" role="img" aria-label="近 24 小时消息频率柱状图">
+            <div v-for="(bar, index) in bars" :key="`${bar.time}-${index}`" class="bar-column" :title="`${bar.time} · ${bar.count} 条`">
+              <div class="bar-track">
+                <div class="bar" :class="{ peak: bar.peak }" :style="{ height: `${bar.height}%` }"></div>
+              </div>
+              <span class="bar-time">{{ index % 2 === 0 ? bar.time : '' }}</span>
+            </div>
+          </div>
+          <PanelEmpty v-else :icon="DataLine" title="暂无消息数据" detail="收到消息后会在这里按小时统计" />
+        </section>
+      </div>
+
+      <aside class="panel log-panel">
+        <div class="panel-head">
+          <div>
+            <h3>运行日志</h3>
+            <p>最近 {{ visibleLogs.length }} 条</p>
+          </div>
+          <router-link class="md-button text" to="/logs">
+            查看全部<el-icon><ArrowRight /></el-icon>
+          </router-link>
         </div>
-      </el-card>
-    </section>
+
+        <div class="filter-chips button-group" role="radiogroup" aria-label="日志级别">
+          <button
+            v-for="filter in logLevelFilters"
+            :key="filter.key"
+            type="button"
+            role="radio"
+            class="filter-chip"
+            :class="{ selected: levelFilter === filter.key }"
+            :aria-checked="levelFilter === filter.key"
+            @click="levelFilter = filter.key"
+          >
+            <el-icon v-if="levelFilter === filter.key"><Check /></el-icon>
+            {{ filter.label }}
+            <span class="chip-count">{{ logCounts[filter.key] }}</span>
+          </button>
+        </div>
+
+        <div v-if="latestError" class="latest-error">
+          <el-icon class="latest-error-icon"><WarningFilled /></el-icon>
+          <div class="latest-error-main">
+            <strong>最近报错 · {{ latestError.source || '未知来源' }}</strong>
+            <span>{{ latestError.message }}</span>
+            <span class="mono">{{ latestError.time }}</span>
+          </div>
+        </div>
+
+        <PanelEmpty v-if="logsError" :icon="Document" title="暂无日志流推送" :detail="logsError" retry @retry="loadLogs" />
+        <ol v-else-if="visibleLogs.length" class="log-list">
+          <li v-for="log in visibleLogs" :key="log.id" class="log-row">
+            <div class="log-line">
+              <span class="status-dot" :class="logTone(log.level)" :title="log.level" aria-hidden="true"></span>
+              <span class="log-source">{{ log.source }}</span>
+              <span class="mono log-time">{{ log.time }}</span>
+            </div>
+            <p class="log-message" :title="log.message">{{ log.message }}</p>
+          </li>
+        </ol>
+        <PanelEmpty v-else :icon="Document" :title="levelFilter === 'ALL' ? '暂无日志' : '没有符合条件的日志'" />
+      </aside>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useOverviewPage } from './Overview'
+import {
+  ArrowRight,
+  Box,
+  Check,
+  Connection,
+  DataLine,
+  Document,
+  Top,
+  WarningFilled
+} from '@element-plus/icons-vue'
+import MdIcon from '../../components/MdIcon.vue'
+import PanelEmpty from './components/PanelEmpty.vue'
+import { adapterStatusLabel, adapterTone, logLevelFilters, logTone, useOverviewPage } from './Overview'
 
 const {
-  IconPackage,
-  IconTimer,
-  IconError,
-  IconEvent,
-  shirobotInfo,
+  greeting,
+  dateLabel,
+  heroFacts,
+  backendLabel,
+  runtimeFacts,
+  memory,
+  messageTotal,
+  loadAdapters,
+  loadPlugins,
+  loadLogs,
+  health,
+  botVersion,
   latestError,
-  stats,
+  adapters,
+  onlineAdapterCount,
+  pluginSummary,
+  pluginsError,
+  visibleLogs,
+  logCounts,
+  levelFilter,
   bars,
-  events,
+  peakBar,
   loadError,
-  loginModeLabel,
-  loginStatusLabel,
-  loginEndpointLabel
+  adaptersError,
+  logsError,
+  busyAdapterId,
+  powerPending,
+  toggleAdapter,
+  confirmPower
 } = useOverviewPage()
 </script>
 
