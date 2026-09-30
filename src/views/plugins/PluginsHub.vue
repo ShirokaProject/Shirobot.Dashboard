@@ -72,7 +72,6 @@
                 :class="{ selected: installed.selectedPlugin.value?.id === plugin.id }"
                 @click="installed.selectPlugin(plugin)"
               >
-                <span class="avatar" aria-hidden="true">{{ plugin.name.slice(0, 1).toUpperCase() }}</span>
                 <span class="row-text">
                   <strong>{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
@@ -193,12 +192,12 @@
                 {{ category === '全部' ? category : market.categoryLabel(category) }}
               </button>
             </div>
-            <label class="sort-select">
+            <div class="sort-select">
               <span>排序</span>
-              <select v-model="market.activeSort.value">
-                <option v-for="option in market.sortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-              </select>
-            </label>
+              <el-select v-model="market.activeSort.value" class="sort-control" aria-label="排序方式">
+                <el-option v-for="option in market.sortOptions" :key="option.value" :label="option.label" :value="option.value" />
+              </el-select>
+            </div>
           </div>
 
           <p v-if="market.loadError.value" class="list-note">{{ market.loadError.value }}</p>
@@ -211,7 +210,6 @@
                 :class="{ selected: market.selectedPlugin.value?.id === plugin.id }"
                 @click="market.selectedPlugin.value = plugin"
               >
-                <span class="avatar" aria-hidden="true">{{ plugin.name.slice(0, 1).toUpperCase() }}</span>
                 <span class="row-text">
                   <strong>{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
@@ -238,13 +236,11 @@
           v-if="tab === 'installed'"
           :plugin="installed.selectedPlugin.value"
           :status-text="installed.statusText"
-          :is-toggle-locked="installed.isPluginToggleLocked"
           :actions="installed.pluginActions.value"
           :actions-loading="installed.pluginActionsLoading.value"
           :actions-error="installed.pluginActionsError.value"
           :running-action-id="installed.runningPluginActionId.value"
           :host-operation="installed.hostOperation.value"
-          @toggle="installed.togglePlugin"
           @open-config="openConfig"
           @action="installed.executePluginAction"
           @update="installed.updatePlugin"

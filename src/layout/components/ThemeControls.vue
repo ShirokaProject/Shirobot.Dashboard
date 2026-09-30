@@ -39,31 +39,6 @@
               </button>
             </div>
           </section>
-
-          <section class="appearance-section">
-            <div class="appearance-section-head">
-              <span>明暗模式</span>
-            </div>
-            <div class="mode-grid">
-              <button
-                v-for="mode in modes"
-                :key="mode.key"
-                type="button"
-                class="mode-choice"
-                :class="[{ active: activeMode === mode.key }, mode.key]"
-                @pointerenter="previewMode(mode.key)"
-                @focus="previewMode(mode.key)"
-                @click="setMode(mode.key)"
-              >
-                <span class="mode-choice-icon" aria-hidden="true">
-                  <svg v-if="mode.key === 'dark'" viewBox="0 0 24 24" focusable="false"><path d="M21 14.2A7.8 7.8 0 0 1 9.8 3a9 9 0 1 0 11.2 11.2Z" /></svg>
-                  <svg v-else-if="mode.key === 'light'" viewBox="0 0 24 24" focusable="false"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2m-2.34-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41" /><circle cx="12" cy="12" r="4" /></svg>
-                  <svg v-else viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8m-4-4v4" /></svg>
-                </span>
-                <span>{{ mode.label }}</span>
-              </button>
-            </div>
-          </section>
         </div>
       </Transition>
     </div>
@@ -73,23 +48,18 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import {
-  DEFAULT_COLOR_MODE,
   DEFAULT_COLOR_THEME,
   THEME_STORAGE_KEYS,
-  applyColorMode,
+  activeColorMode,
   applyColorTheme,
-  colorModes,
   colorThemes,
-  isColorModeKey,
   isColorThemeKey,
-  type ColorModeKey,
   type ColorThemeKey
 } from '../../theme'
 
 const themes = colorThemes
-const modes = colorModes
+const activeMode = activeColorMode
 const activeColor = ref<ColorThemeKey>(DEFAULT_COLOR_THEME)
-const activeMode = ref<ColorModeKey>(DEFAULT_COLOR_MODE)
 const appearancePanelOpen = ref(false)
 const controlsRoot = ref<HTMLElement | null>(null)
 
@@ -97,25 +67,14 @@ function previewColor(color: ColorThemeKey) {
   applyColorTheme(color)
 }
 
-function previewMode(mode: ColorModeKey) {
-  applyColorMode(mode)
-}
-
 function restoreAppearance() {
   applyColorTheme(activeColor.value)
-  applyColorMode(activeMode.value)
 }
 
 function setColor(color: ColorThemeKey) {
   activeColor.value = color
   applyColorTheme(color)
   localStorage.setItem(THEME_STORAGE_KEYS.color, color)
-}
-
-function setMode(mode: ColorModeKey) {
-  activeMode.value = mode
-  applyColorMode(mode)
-  localStorage.setItem(THEME_STORAGE_KEYS.mode, mode)
 }
 
 function closeAppearancePanel() {
@@ -138,10 +97,7 @@ function handleOutsidePointerDown(event: PointerEvent) {
 
 onMounted(() => {
   const savedColor = localStorage.getItem(THEME_STORAGE_KEYS.color)
-  const savedMode = localStorage.getItem(THEME_STORAGE_KEYS.mode)
-
   if (isColorThemeKey(savedColor)) setColor(savedColor)
-  if (isColorModeKey(savedMode)) setMode(savedMode)
 
   document.addEventListener('pointerdown', handleOutsidePointerDown)
 })
@@ -167,8 +123,8 @@ onBeforeUnmount(() => {
   height: 40px;
   display: grid;
   place-items: center;
-  border: 0;
-  border-radius: var(--md-sys-shape-corner-full);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small);
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
@@ -205,8 +161,8 @@ onBeforeUnmount(() => {
   padding: var(--md-space-3);
   border: 0;
   border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-surface-container-high);
-  box-shadow: var(--md-sys-elevation-level2);
+  background: var(--app-card);
+  box-shadow: var(--md-sys-elevation-popover);
   transform-origin: top right;
 }
 
@@ -233,7 +189,7 @@ onBeforeUnmount(() => {
 }
 
 .appearance-panel {
-  width: min(82vw, 520px);
+  width: min(82vw, 380px);
   flex-direction: column;
   gap: var(--md-space-4);
 }
@@ -268,14 +224,7 @@ onBeforeUnmount(() => {
   gap: var(--md-space-2);
 }
 
-.mode-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--md-space-2);
-}
-
-.theme-option,
-.mode-choice {
+.theme-option {
   min-width: 0;
   min-height: 64px;
   display: grid;
@@ -284,7 +233,7 @@ onBeforeUnmount(() => {
   border: 1px solid transparent;
   border-radius: var(--md-sys-shape-corner-large);
   padding: var(--md-space-2) var(--md-space-3);
-  background: var(--md-sys-color-surface-container-lowest);
+  background: var(--app-inset);
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
@@ -296,17 +245,11 @@ onBeforeUnmount(() => {
   grid-template-columns: 30px minmax(0, 1fr);
 }
 
-.mode-choice {
-  grid-template-columns: 24px minmax(0, 1fr);
+.theme-option:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), var(--app-inset));
 }
 
-.theme-option:hover,
-.mode-choice:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), var(--md-sys-color-surface-container-lowest));
-}
-
-.theme-option.active,
-.mode-choice.active {
+.theme-option.active {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
@@ -326,27 +269,12 @@ onBeforeUnmount(() => {
   background: var(--app-swatch-chrome);
 }
 
-.mode-choice-icon,
-.mode-choice-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.mode-choice-icon svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 @media (max-width: 599px) {
   .appearance-panel {
     width: calc(100vw - 32px);
   }
 
-  .theme-grid,
-  .mode-grid {
+  .theme-grid {
     grid-template-columns: 1fr;
   }
 }

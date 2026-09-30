@@ -1,7 +1,6 @@
 <template>
   <article v-if="adapter" class="detail">
     <header class="detail-head">
-      <span class="avatar" aria-hidden="true">{{ adapter.platform.slice(0, 2).toUpperCase() }}</span>
       <div class="detail-title">
         <h2>{{ adapter.name }}</h2>
         <p>{{ adapter.platform }}<span class="sep">·</span>{{ adapter.loaded ? '运行中' : '已停止' }}</p>
@@ -9,7 +8,7 @@
       <el-switch
         :model-value="adapter.loaded"
         :disabled="busy"
-        :aria-label="adapter.loaded ? '停止 Adapter' : '启动 Adapter'"
+        :aria-label="adapter.loaded ? '停止适配器' : '启动适配器'"
         @change="(value: string | number | boolean) => emit('run', value ? 'start' : 'stop')"
       />
     </header>
@@ -85,12 +84,6 @@ function fileName(path: string) {
 
 <style scoped src="../../plugins/components/detail.css"></style>
 <style scoped>
-/* Two-letter platform initials need a smaller size than the plugins' single letter */
-.avatar {
-  font: var(--md-sys-typescale-title-medium);
-  font-weight: 700;
-}
-
 .facts dd.path {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -175,7 +175,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   // The config workspace can switch between a plugin and an adapter in place, so the
   // target is reactive too.
   const hasRoutes = computed(() => toValue(target) === 'plugin')
-  const noun = computed(() => hasRoutes.value ? '插件' : 'Adapter')
+  const noun = computed(() => hasRoutes.value ? '插件' : '适配器')
   const loading = ref(false)
   const saving = ref(false)
   const loadError = ref('')

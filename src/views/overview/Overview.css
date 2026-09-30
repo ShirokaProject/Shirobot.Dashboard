@@ -5,7 +5,7 @@
  * status is carried by small dots, never large fills.
  */
 .overview-page {
-  --group-gap: var(--md-space-2);
+  --group-gap: var(--md-space-3);
 
   display: flex;
   width: min(100%, 1360px);
@@ -79,10 +79,14 @@
   letter-spacing: -0.01em;
 }
 
-/* Sits right after a half-width "!" */
-.hero-emoji {
-  margin-left: 2px;
+/* Kaomoji beside the greeting: smaller and quieter than the headline */
+.hero-face {
+  margin-left: var(--md-space-3);
+  color: var(--md-sys-color-outline);
+  font-size: 0.5em;
   font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .hero-date {
@@ -97,7 +101,7 @@
   align-items: center;
   gap: var(--md-space-2);
   margin: var(--md-space-4) 0 0;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-medium);
 }
 
@@ -137,7 +141,7 @@
 }
 
 .hero-fact dt {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -173,9 +177,20 @@
 }
 
 .panel-head p {
-  margin: var(--md-space-1) 0 0;
+  margin: var(--md-space-2) 0 0;
+  color: var(--md-sys-color-outline);
+  font: var(--md-sys-typescale-body-small);
+}
+
+/* "管理 / 查看全部" are secondary actions: quiet until hovered */
+.panel-head .md-button.text {
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-medium);
+  font: var(--md-sys-typescale-label-large);
+  font-weight: 400;
+}
+
+.panel-head .md-button.text:hover {
+  color: var(--md-sys-color-on-surface);
 }
 
 /* Adapter + plugins read as one card split by a hairline, no seam between them */
@@ -230,6 +245,7 @@
 }
 
 .row-title .mono {
+  color: var(--md-sys-color-outline);
   font-size: 12px;
 }
 
@@ -238,13 +254,13 @@
   align-items: center;
   gap: var(--md-space-2);
   margin-top: 2px;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-small);
 }
 
 .row-sub {
   overflow: hidden;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-small);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -259,22 +275,11 @@
   white-space: nowrap;
 }
 
-.row-avatar {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  font: var(--md-sys-typescale-label-medium);
-}
-
 /* ---------- adapters ---------- */
 
 .adapter-row {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--md-space-4);
   padding: var(--md-space-3) 0;
@@ -308,7 +313,7 @@
   flex-wrap: wrap;
   gap: var(--md-space-5);
   margin-top: var(--md-space-3);
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-medium);
 }
 
@@ -375,7 +380,7 @@
   display: flex;
   align-items: center;
   gap: var(--md-space-2);
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -412,7 +417,7 @@
   display: flex;
   align-items: center;
   gap: var(--md-space-2);
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -441,7 +446,7 @@
 }
 
 .memory-sub {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -492,7 +497,7 @@
 .bar-time {
   height: 16px;
   margin-top: var(--md-space-2);
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-label-small);
   text-align: center;
   white-space: nowrap;
@@ -572,7 +577,7 @@
 }
 
 .latest-error-main span {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -605,7 +610,7 @@
 }
 
 .log-time {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-outline);
   font-size: 11px;
 }
 

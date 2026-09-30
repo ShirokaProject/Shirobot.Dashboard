@@ -17,7 +17,7 @@ import {
 } from '../../api'
 import type { LogLevel, RuntimeLog } from '../../features/logs/types'
 import type { Plugin } from '../../features/plugins/types'
-import { greetingFor } from '../../features/overview/greeting'
+import { faceFor, greetingFor } from '../../features/overview/greeting'
 import { getDashboardSession, getSessionModeLabel } from '../../auth/session'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -171,6 +171,7 @@ export function useOverviewPage() {
   const now = ref(new Date())
   let clockTimer: ReturnType<typeof setInterval> | undefined
   const greeting = computed(() => greetingFor(now.value.getHours()))
+  const greetingFace = computed(() => faceFor(now.value.getHours()))
   const dateLabel = computed(() => {
     const date = now.value
     const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
@@ -186,7 +187,7 @@ export function useOverviewPage() {
       { key: 'uptime', label: '已运行', value: uptime.value || '—' },
       { key: 'messages', label: '今日消息', value: response ? String(response.message_count ?? 0) : '—' },
       { key: 'plugins', label: '插件启用', value: summary.total ? `${enabled} / ${summary.total}` : '—' },
-      { key: 'adapters', label: 'Adapter 在线', value: adapters.value.length ? `${onlineAdapterCount.value} / ${adapters.value.length}` : '—' },
+      { key: 'adapters', label: '适配器在线', value: adapters.value.length ? `${onlineAdapterCount.value} / ${adapters.value.length}` : '—' },
       { key: 'models', label: '平台 Models', value: response ? String(response.models_count ?? 0) : '—' }
     ]
   })
@@ -249,7 +250,7 @@ export function useOverviewPage() {
       adapters.value = await getAdapters()
       adaptersError.value = ''
     } catch (error) {
-      adaptersError.value = describeLoadError(error, ' Adapter ')
+      adaptersError.value = describeLoadError(error, '适配器')
     }
   }
 
@@ -324,6 +325,7 @@ export function useOverviewPage() {
 
   return {
     greeting,
+    greetingFace,
     dateLabel,
     heroFacts,
     backendLabel,

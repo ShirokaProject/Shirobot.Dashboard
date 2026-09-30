@@ -119,6 +119,11 @@
   --md-sys-elevation-soft-hover:
     0 1px 2px 0 color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent),
     0 3px 9px -1px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent);
+  /* Popovers/menus: faint and diffuse, no dark contact line */
+  --md-sys-elevation-popover:
+    0 0 0 1px var(--md-sys-color-outline-variant),
+    0 1px 3px 0 color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent),
+    0 8px 24px -4px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent);
   /* Dialogs: large and faint so the scrim, not the shadow, separates them from the page */
   --md-sys-elevation-dialog:
     0 2px 6px 0 color-mix(in srgb, var(--md-sys-color-shadow) 5%, transparent),
@@ -294,7 +299,11 @@ textarea {
 
 /* Soft pill text fields: tonal fill, no harsh outline */
 .el-input__wrapper,
-.el-select__wrapper {
+.el-select__wrapper,
+.el-input-tag__wrapper,
+.el-textarea__inner {
+  min-height: 44px;
+  padding-inline: var(--md-space-4);
   border-radius: var(--md-sys-shape-corner-full) !important;
   background: var(--md-sys-color-surface-container-low) !important;
   box-shadow: none !important;
@@ -304,33 +313,71 @@ textarea {
 }
 
 .el-input__wrapper:hover,
-.el-select__wrapper:hover {
+.el-select__wrapper:hover,
+.el-input-tag__wrapper:hover,
+.el-textarea__inner:hover {
   background: var(--md-sys-color-surface-container) !important;
 }
 
 .el-input__wrapper.is-focus,
-.el-select__wrapper.is-focused {
+.el-select__wrapper.is-focused,
+.el-input-tag__wrapper.is-focused,
+.el-textarea__inner:focus {
   box-shadow: inset 0 0 0 2px var(--md-sys-color-primary) !important;
+}
+
+/* The wrapper draws the focus ring; the bare inner input must not add the browser's square one */
+.el-input__inner:focus,
+.el-input__inner:focus-visible,
+.el-input-tag__input:focus,
+.el-input-tag__input:focus-visible,
+.el-select__input:focus,
+.el-select__input:focus-visible,
+.el-textarea__inner:focus-visible {
+  outline: 0 !important;
+  box-shadow: none;
+}
+
+/* Multi-line fields can't be a pill */
+.el-textarea__inner,
+.el-input-tag__wrapper {
+  border-radius: var(--md-sys-shape-corner-large) !important;
+  padding: var(--md-space-3) var(--md-space-5) !important;
+}
+
+/* Dialogs are tinted, so fields use the paper color to stand out */
+.el-dialog .el-input__wrapper,
+.el-dialog .el-select__wrapper,
+.el-dialog .el-input-tag__wrapper,
+.el-dialog .el-textarea__inner {
+  background: var(--md-sys-color-surface-container-lowest) !important;
 }
 
 /* Menus: surface-container + level 2, per M3 menu spec */
 .el-select-dropdown {
   border: 0 !important;
   border-radius: var(--md-sys-shape-corner-large) !important;
-  background: var(--md-sys-color-surface-container) !important;
-  box-shadow: var(--md-sys-elevation-level2) !important;
+  background: var(--md-sys-color-surface-container-lowest) !important;
+  box-shadow: var(--md-sys-elevation-popover) !important;
   overflow: hidden;
 }
 
 .el-select__popper.el-popper {
   border: 0 !important;
   border-radius: var(--md-sys-shape-corner-large) !important;
-  background: var(--md-sys-color-surface-container) !important;
-  box-shadow: var(--md-sys-elevation-level2) !important;
+  background: var(--md-sys-color-surface-container-lowest) !important;
+  box-shadow: var(--md-sys-elevation-popover) !important;
+}
+
+.el-select-dropdown__list {
+  padding: var(--md-space-2) 0 !important;
 }
 
 .el-select-dropdown__item {
+  height: 44px;
   margin: 2px var(--md-space-2);
+  padding: 0 var(--md-space-4);
+  line-height: 44px;
   border-radius: var(--md-sys-shape-corner-full);
   color: var(--md-sys-color-on-surface);
 }

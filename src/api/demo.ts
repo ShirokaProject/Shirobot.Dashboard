@@ -60,7 +60,7 @@ let demoAdapter: AdapterStatus = {
   version: '0.1.0',
   platform: 'qq',
   assemblyPath: '/opt/shirobot/adapters/ShiroBot.Adapter.OneBot/ShiroBot.Adapter.OneBot.dll',
-  description: 'OneBot v11 平台连接 Adapter。',
+  description: 'OneBot v11 平台连接适配器。',
   error: null,
   restartRequired: false,
   rollback: null
@@ -68,7 +68,7 @@ let demoAdapter: AdapterStatus = {
 
 const demoAdapters: AdapterStatus[] = [demoAdapter, {
   id: 'shirobot.adapter.telegram', name: 'Telegram Adapter', version: '0.1.0', platform: 'telegram', loaded: false,
-  assemblyPath: '/opt/shirobot/adapters/ShiroBot.Adapter.Telegram.dll', description: 'Telegram Bot API 平台连接 Adapter。', error: null, restartRequired: false, rollback: null
+  assemblyPath: '/opt/shirobot/adapters/ShiroBot.Adapter.Telegram.dll', description: 'Telegram Bot API 平台连接适配器。', error: null, restartRequired: false, rollback: null
 }]
 
 const demoAdapterMarket: AdapterMarketEntry[] = [
@@ -482,7 +482,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   if (method === 'GET' && pathname === '/api/v1/adapter-market/adapters') {
     // Demo: a third-party catalog lists one community adapter so switching is visible.
     if (url.searchParams.get('source')) {
-      return [{ id: 'community.adapter.kook', name: 'KOOK Adapter', version: '0.3.1', platform: 'kook', description: '演示：社区维护的 KOOK 平台连接 Adapter。', repository: 'community/ShiroBot.Adapter.Kook', authors: ['Community'], downloadCount: 320, installedVersion: null, health: 'available', asset: { url: 'https://github.com/community/ShiroBot.Adapter.Kook/releases/download/v0.3.1/Kook.zip', name: 'Kook.zip', digest: `sha256:${'7'.repeat(64)}`, size: 142000 } }] as T
+      return [{ id: 'community.adapter.kook', name: 'KOOK 适配器', version: '0.3.1', platform: 'kook', description: '演示：社区维护的 KOOK 平台连接适配器。', repository: 'community/ShiroBot.Adapter.Kook', authors: ['Community'], downloadCount: 320, installedVersion: null, health: 'available', asset: { url: 'https://github.com/community/ShiroBot.Adapter.Kook/releases/download/v0.3.1/Kook.zip', name: 'Kook.zip', digest: `sha256:${'7'.repeat(64)}`, size: 142000 } }] as T
     }
     return clone(demoAdapterMarket) as T
   }
@@ -497,13 +497,13 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
       name: repo.replace(/^ShiroBot\.Adapter\./i, ''),
       version: qualifies ? '0.2.0' : '—',
       platform: repo.replace(/^ShiroBot\.Adapter\./i, '').toLowerCase(),
-      description: qualifies ? '演示：直接从仓库识别的 Adapter，未收录在任何目录中。' : '演示：该仓库暂未提供符合规则的发布。',
+      description: qualifies ? '演示：直接从仓库识别的适配器，未收录在任何目录中。' : '演示：该仓库暂未提供符合规则的发布。',
       repository,
       authors: [owner],
       downloadCount: qualifies ? 8 : null,
       installedVersion: null,
       health: qualifies ? 'available' : 'no-release',
-      health_message: qualifies ? '最新 Release 符合 Shirobot 发布规则。' : '未找到符合 Shirobot 规则的 Release（需要附带 Adapter 包与 sha256 校验）。',
+      health_message: qualifies ? '最新 Release 符合 Shirobot 发布规则。' : '未找到符合 Shirobot 规则的 Release（需要附带适配器包与 sha256 校验）。',
       asset: qualifies ? { url: `${repository}/releases/download/v0.2.0/${repo}.zip`, name: `${repo}.zip`, digest: `sha256:${'8'.repeat(64)}`, size: 96000 } : undefined
     } as T
   }
@@ -548,11 +548,11 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     const index = demoAdapters.findIndex(item => item.id === id)
     if (index < 0) throw new Error('Demo adapter not found')
     const [adapter] = demoAdapters.splice(index, 1)
-    return { ok: true, message: `${adapter?.name ?? 'Adapter'} 已删除。`, restart_required: false } as T
+    return { ok: true, message: `${adapter?.name ?? '适配器'} 已删除。`, restart_required: false } as T
   }
 
   if (method === 'POST' && pathname === '/api/v1/adapters/upload') {
-    const preview: AdapterStatus = { id: 'shirobot.adapter.local-preview', name: '本地 Adapter', version: '1.0.0', platform: 'custom', loaded: false, assemblyPath: null, description: '本地上传包预览。', error: null, restartRequired: false, rollback: null }
+    const preview: AdapterStatus = { id: 'shirobot.adapter.local-preview', name: '本地适配器', version: '1.0.0', platform: 'custom', loaded: false, assemblyPath: null, description: '本地上传包预览。', error: null, restartRequired: false, rollback: null }
     demoPendingAdapterInstalls.set('demo-adapter-upload', preview)
     return { upload_id: 'demo-adapter-upload', adapter: preview, package: { file_name: 'ShiroBot.Adapter.Local.zip', type: 'zip', size: 123456 }, conflict: { exists: false } } as T
   }

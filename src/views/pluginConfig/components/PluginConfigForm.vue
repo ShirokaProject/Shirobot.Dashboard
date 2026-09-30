@@ -154,7 +154,7 @@ function modeLabel(mode: string) {
   align-items: center;
   justify-content: space-between;
   gap: var(--md-space-3) var(--md-space-6);
-  padding: var(--md-space-4) 0;
+  padding: var(--md-space-3) 0;
 }
 
 .route-row strong,
@@ -173,7 +173,7 @@ function modeLabel(mode: string) {
   display: flex;
   flex-direction: column;
   gap: var(--md-space-2);
-  padding: var(--md-space-4) 0;
+  padding: var(--md-space-3) 0;
 }
 
 .effective {

@@ -175,18 +175,23 @@ function submit() {
 
 .text-field input {
   height: 48px;
-  padding: 0 var(--md-space-4);
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-extra-small);
+  padding: 0 var(--md-space-5);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
   outline: 0;
-  background: transparent;
+  background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-body-large);
+  transition: box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.text-field input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.7;
 }
 
 .text-field input:focus {
-  border-color: var(--md-sys-color-primary);
-  box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
 }
 
 .recognized {

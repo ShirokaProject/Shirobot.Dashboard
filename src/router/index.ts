@@ -12,7 +12,7 @@ import {
 } from './pageLoaders'
 
 const router = createRouter({
-  history: createWebHistory('/dashboard/'),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/login',

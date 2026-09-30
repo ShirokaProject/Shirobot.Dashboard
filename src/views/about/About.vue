@@ -15,14 +15,13 @@
 
     <div class="middle">
       <section class="panel versions">
-        <h3>版本</h3>
+        <h3>环境</h3>
         <dl class="facts">
           <div v-for="fact in versionFacts" :key="fact.label">
-            <dt>{{ fact.label }}<small v-if="fact.note">{{ fact.note }}</small></dt>
+            <dt>{{ fact.label }}</dt>
             <dd>{{ fact.value }}</dd>
           </div>
         </dl>
-        <p class="footnote">Dashboard 与 Shirobot 主程序独立发版，版本号互不关联。</p>
       </section>
 
       <section class="panel links">

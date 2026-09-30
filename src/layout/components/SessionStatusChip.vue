@@ -46,7 +46,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Check, Key, Plus, SwitchButton } from '@element-plus/icons-vue'
 import { describeBaseUrl, listBackends, type BackendProfile } from '../../auth/backends'
-import { clearDashboardSession, getDashboardSession, getSessionModeLabel, getSessionStatusLabel } from '../../auth/session'
+import { confirmLogout } from '../../auth/logout'
+import { getDashboardSession, getSessionModeLabel, getSessionStatusLabel } from '../../auth/session'
 import { reloadIntoDashboard, signInToBackend } from '../../auth/signIn'
 
 const router = useRouter()
@@ -91,8 +92,7 @@ async function switchTo(backend: BackendProfile) {
 
 function logout() {
   menuOpen.value = false
-  clearDashboardSession()
-  router.replace('/login')
+  void confirmLogout(router)
 }
 
 function handleOutsidePointerDown(event: PointerEvent) {
@@ -124,8 +124,8 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: var(--md-space-3);
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-small);
-  padding: 0 var(--md-space-4) 0 var(--md-space-3);
+  border-radius: var(--md-sys-shape-corner-full);
+  padding: 0 var(--md-space-5) 0 var(--md-space-4);
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
@@ -185,9 +185,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   padding: var(--md-space-2) 0;
   border: 0;
-  border-radius: var(--md-sys-shape-corner-extra-small);
-  background: var(--md-sys-color-surface-container);
-  box-shadow: var(--md-sys-elevation-level2);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--app-card);
+  box-shadow: var(--md-sys-elevation-popover);
   transform-origin: top right;
 }
 

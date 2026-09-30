@@ -1,5 +1,5 @@
 import { computed, onMounted, reactive, ref } from 'vue'
-import { cancelAdapterUpload, confirmAdapterUpload, getAdapterMarketAdapters, getApiErrorMessage, prepareGithubAdapterInstall, resolveRepositoryAdapter } from '../../api'
+import { cancelAdapterUpload, confirmAdapterUpload, formatPlatform, getAdapterMarketAdapters, getApiErrorMessage, prepareGithubAdapterInstall, resolveRepositoryAdapter } from '../../api'
 import type { AdapterInstallPreview, AdapterMarketEntry } from '../../api'
 import {
   addCatalogSource,
@@ -30,7 +30,7 @@ function placeholderFor(repo: DirectRepository, health: string, message: string)
     id: `direct:${repo.url}`,
     name: repo.repo,
     version: '—',
-    platform: repo.repo.toLowerCase(),
+    platform: formatPlatform(repo.repo),
     description: message,
     repository: repo.url,
     authors: [repo.owner],
@@ -74,7 +74,7 @@ export function useAdapterMarketPage() {
     try {
       entries.value = await getAdapterMarketAdapters(forceRefresh, activeSource.value.url)
     } catch (cause) {
-      error.value = getApiErrorMessage(cause, 'Adapter 目录加载失败。')
+      error.value = getApiErrorMessage(cause, '适配器目录加载失败。')
     } finally {
       loading.value = false
     }
@@ -169,7 +169,7 @@ export function useAdapterMarketPage() {
     try {
       const response = await confirmAdapterUpload(preview.value.uploadId, replace.value)
       installVisible.value = false
-      message.value = response.restartRequired ? 'Adapter 已安装，需要重启宿主后完全生效。' : (response.message || 'Adapter 已安装并重载。')
+      message.value = response.restartRequired ? '适配器已安装，需要重启宿主后完全生效。' : (response.message || '适配器已安装并重载。')
       messageType.value = response.rollback ? 'warning' : 'success'
       await load()
     } catch (cause) {

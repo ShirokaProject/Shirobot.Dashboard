@@ -5,7 +5,7 @@
   width: 100%;
   min-height: calc(100vh - 144px);
   grid-template-columns: 248px minmax(0, 1fr);
-  gap: var(--md-space-2);
+  gap: var(--md-space-3);
 }
 
 .panel {
@@ -23,7 +23,7 @@
   max-height: calc(100vh - 144px);
   overflow-y: auto;
   box-sizing: border-box;
-  padding: var(--md-space-2) var(--md-space-2) var(--md-space-4);
+  padding: var(--md-space-5) var(--md-space-3) var(--md-space-4);
   border-top-left-radius: var(--corner-outer);
   border-bottom-left-radius: var(--corner-outer);
 }
@@ -75,10 +75,10 @@
 .target-item {
   width: 100%;
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--md-space-3);
-  padding: var(--md-space-2) var(--md-space-3) var(--md-space-2) var(--md-space-2);
+  padding: var(--md-space-2) var(--md-space-3) var(--md-space-2) var(--md-space-4);
   border: 0;
   border-radius: var(--md-sys-shape-corner-full);
   background: transparent;
@@ -103,24 +103,7 @@
   color: var(--app-on-selected);
 }
 
-.target-avatar {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-small);
-  background: var(--app-inset);
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-label-small);
-  font-weight: 700;
-}
-
-.target-item.selected .target-avatar {
-  background: color-mix(in srgb, var(--app-on-selected) var(--md-sys-state-pressed-opacity), transparent);
-  color: inherit;
-}
-
-.target-name {
+.target-item.selected .target-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -151,26 +134,16 @@
   display: flex;
   align-items: center;
   gap: var(--md-space-4);
-  padding: var(--md-space-5) var(--md-space-6);
+  padding: var(--md-space-6) var(--md-space-6) var(--md-space-5);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.avatar {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  font: var(--md-sys-typescale-title-large);
-  font-weight: 700;
 }
 
 .head-title {
   min-width: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-2);
 }
 
 .head-title h2 {

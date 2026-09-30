@@ -12,10 +12,6 @@
         :aria-current="activeSource === source.key ? 'true' : undefined"
         @click="activeSource = source.key"
       >
-        <span class="source-avatar" aria-hidden="true">
-          <MdIcon v-if="source.key === 'ALL'" name="check_circle" />
-          <template v-else>{{ source.short }}</template>
-        </span>
         <span class="source-text">
           <strong>{{ source.label }}</strong>
           <small v-if="source.description">{{ source.description }}</small>

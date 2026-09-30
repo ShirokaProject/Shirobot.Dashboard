@@ -1,10 +1,12 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { describeBaseUrl, listBackends, normalizeBaseUrl, removeBackend, type BackendProfile } from '../../auth/backends'
+import { ElMessageBox } from 'element-plus'
+import { BACKEND_SWITCHING_ENABLED, describeBaseUrl, listBackends, normalizeBaseUrl, removeBackend, saveBackend, type BackendProfile } from '../../auth/backends'
 import { getDashboardSession, hasDashboardSession, saveDashboardSession } from '../../auth/session'
-import { reloadIntoDashboard, signInToBackend } from '../../auth/signIn'
+import { markDashboardEntrance, reloadIntoDashboard, signInToBackend } from '../../auth/signIn'
 
 const DEMO_HASH = '#demo'
+const ENTER_TRANSITION_MS = 320
 
 export function useLoginPage() {
   const router = useRouter()
@@ -20,10 +22,13 @@ export function useLoginPage() {
       ?? backends.value[0]?.id
       ?? ''
   )
-  const adding = ref(route.query.add !== undefined)
+  const switchingEnabled = BACKEND_SWITCHING_ENABLED
+  const adding = ref(switchingEnabled && (route.query.add !== undefined || backends.value.length === 0))
   const draft = reactive({ name: '', baseUrl: '' })
   const form = reactive({ token: '', remember: false })
   const verifying = ref(false)
+  // Set once the key checks out: the card plays its exit animation before the dashboard loads
+  const entering = ref(false)
   const errorMessage = ref('')
   const demoEntryVisible = ref(false)
 
@@ -66,20 +71,50 @@ export function useLoginPage() {
     draft.baseUrl = ''
   }
 
-  function forgetBackend(id: string) {
+  async function forgetBackend(id: string) {
+    const name = backends.value.find(profile => profile.id === id)?.name ?? '这个后端'
+    try {
+      await ElMessageBox.confirm(`将从此设备移除「${name}」，并忘掉已记住的密钥。`, '移除后端？', {
+        confirmButtonText: '移除',
+        cancelButtonText: '取消',
+        confirmButtonClass: 'el-button--danger'
+      })
+    } catch {
+      return
+    }
     removeBackend(id)
     backends.value = listBackends()
     if (!backends.value.some(profile => profile.id === selectedId.value)) {
       selectedId.value = backends.value[0]?.id ?? ''
     }
+    if (!backends.value.length) startAdding()
+  }
+
+  // Adding only saves the address; signing in is the next, separate step.
+  function addBackend() {
+    const baseUrl = normalizeBaseUrl(draft.baseUrl)
+    if (!baseUrl) {
+      errorMessage.value = '请填写后端地址。'
+      return
+    }
+    if (backends.value.some(profile => profile.baseUrl === baseUrl)) {
+      errorMessage.value = '这个后端已经添加过了。'
+      return
+    }
+    const saved = saveBackend({ name: draft.name, baseUrl }, false)
+    backends.value = listBackends()
+    selectedId.value = saved.id
+    adding.value = false
   }
 
   async function submitLogin() {
     if (verifying.value) return
+    if (adding.value) {
+      addBackend()
+      return
+    }
 
-    const target = adding.value
-      ? { name: draft.name, baseUrl: normalizeBaseUrl(draft.baseUrl) }
-      : selected.value
+    const target = selected.value
     if (!target) return
 
     verifying.value = true
@@ -90,6 +125,7 @@ export function useLoginPage() {
         errorMessage.value = result.message
         return
       }
+      await playEnterTransition()
       if (switching) reloadIntoDashboard()
       else await router.replace('/')
     } finally {
@@ -97,8 +133,15 @@ export function useLoginPage() {
     }
   }
 
-  function enterDemoMode() {
+  async function playEnterTransition() {
+    entering.value = true
+    markDashboardEntrance()
+    await new Promise(resolve => window.setTimeout(resolve, ENTER_TRANSITION_MS))
+  }
+
+  async function enterDemoMode() {
     saveDashboardSession({ mode: 'demo', token: '' })
+    await playEnterTransition()
     if (switching) reloadIntoDashboard()
     else void router.replace('/')
   }
@@ -122,6 +165,7 @@ export function useLoginPage() {
   })
 
   return {
+    switchingEnabled,
     backends,
     selectedId,
     selectedName,
@@ -130,6 +174,7 @@ export function useLoginPage() {
     draft,
     form,
     verifying,
+    entering,
     errorMessage,
     demoEntryVisible,
     switching,

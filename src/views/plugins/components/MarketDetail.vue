@@ -1,7 +1,6 @@
 <template>
   <article v-if="plugin" class="detail">
     <header class="detail-head">
-      <span class="avatar" aria-hidden="true">{{ plugin.name.slice(0, 1).toUpperCase() }}</span>
       <div class="detail-title">
         <h2>{{ plugin.name }}</h2>
         <p>{{ authors }}<span class="sep">·</span>{{ category }}</p>

@@ -13,13 +13,11 @@
     <header class="panel hero-card">
       <div class="hero-top">
         <div class="hero-text">
-          <h2>{{ greeting }}!<span class="hero-emoji" aria-hidden="true">😊</span></h2>
+          <h2>{{ greeting }}!<span class="hero-face" aria-hidden="true">{{ greetingFace }}</span></h2>
           <p class="hero-date">{{ dateLabel }}</p>
           <p class="hero-status">
             <MdIcon :name="health.tone === 'error' ? 'error' : 'check_circle'" :class="['hero-status-icon', health.tone]" />
             <span class="hero-status-label">{{ health.label }}</span>
-            <span class="sep">·</span><span>{{ backendLabel }}</span>
-            <template v-if="botVersion"><span class="sep">·</span><span class="mono">Shirobot {{ botVersion }}</span></template>
           </p>
         </div>
         <div class="hero-actions button-group" role="group" aria-label="电源">
@@ -57,7 +55,7 @@
           <article class="panel">
             <div class="panel-head">
               <div>
-                <h3>Adapter</h3>
+                <h3>适配器</h3>
                 <p>{{ adapters.length ? `${onlineAdapterCount} / ${adapters.length} 个在线` : '平台连接' }}</p>
               </div>
               <router-link class="md-button text" to="/adapters">
@@ -65,10 +63,9 @@
               </router-link>
             </div>
 
-            <PanelEmpty v-if="adaptersError" :icon="Connection" title="Adapter 状态不可用" :detail="adaptersError" retry @retry="loadAdapters" />
+            <PanelEmpty v-if="adaptersError" :icon="Connection" title="适配器状态不可用" :detail="adaptersError" retry @retry="loadAdapters" />
             <ul v-else-if="adapters.length" class="row-list">
               <li v-for="adapter in adapters" :key="adapter.id" class="adapter-row">
-                <span class="row-avatar" aria-hidden="true">{{ adapter.platform.slice(0, 2).toUpperCase() }}</span>
                 <div class="row-main">
                   <div class="row-title">
                     <strong>{{ adapter.name }}</strong>
@@ -92,7 +89,7 @@
                 </button>
               </li>
             </ul>
-            <PanelEmpty v-else :icon="Connection" title="暂无 Adapter" detail="安装 Adapter 后即可连接聊天平台" />
+            <PanelEmpty v-else :icon="Connection" title="暂无适配器" detail="安装适配器后即可连接聊天平台" />
           </article>
 
           <article class="panel">
@@ -269,9 +266,9 @@ import { adapterStatusLabel, adapterTone, logLevelFilters, logTone, useOverviewP
 
 const {
   greeting,
+  greetingFace,
   dateLabel,
   heroFacts,
-  backendLabel,
   runtimeFacts,
   memory,
   messageTotal,
@@ -279,7 +276,6 @@ const {
   loadPlugins,
   loadLogs,
   health,
-  botVersion,
   latestError,
   adapters,
   onlineAdapterCount,

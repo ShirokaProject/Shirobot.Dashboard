@@ -3,8 +3,8 @@
   display: grid;
   width: 100%;
   min-height: calc(100vh - 144px);
-  grid-template-columns: 232px minmax(0, 1fr);
-  gap: var(--md-space-2);
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--md-space-3);
 }
 
 .panel {
@@ -280,10 +280,22 @@
 
 /* The raw key, for people matching fields against the config file */
 .row-text code {
-  display: inline-block;
-  margin-top: var(--md-space-1);
   color: var(--md-sys-color-outline);
   font: 400 11px / 16px var(--font-mono);
+  opacity: 0.75;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.row-text code::before {
+  content: '(';
+}
+
+.row-text code::after {
+  content: ')';
+}
+
+.row:hover .row-text code {
+  opacity: 1;
 }
 
 .control-select {

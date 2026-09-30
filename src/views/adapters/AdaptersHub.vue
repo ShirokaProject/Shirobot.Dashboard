@@ -2,7 +2,7 @@
   <div class="hub">
     <!-- Same shape as the 插件 page: tabs, one search box, upload -->
     <header class="hub-header panel">
-      <div class="button-group" role="tablist" aria-label="Adapter 视图">
+      <div class="button-group" role="tablist" aria-label="适配器视图">
         <button
           v-for="item in tabs"
           :key="item.key"
@@ -17,9 +17,9 @@
         </button>
       </div>
 
-      <label class="hub-search" aria-label="搜索 Adapter">
+      <label class="hub-search" aria-label="搜索适配器">
         <MdIcon name="search" />
-        <input v-model="keyword" type="search" :placeholder="tab === 'installed' ? '搜索已安装的 Adapter' : '搜索 Adapter、平台或作者'" />
+        <input v-model="keyword" type="search" :placeholder="tab === 'installed' ? '搜索已安装的适配器' : '搜索适配器、平台或作者'" />
       </label>
 
       <button type="button" class="md-button tonal" @click="installed.installVisible.value = true">
@@ -31,7 +31,7 @@
       <!-- 发现 only: where adapters come from (catalogs, direct repos) -->
       <div v-if="tab === 'discover'" class="rail-pane panel">
         <SourceRail
-          noun="Adapter"
+          noun="适配器"
           :sources="market.sources.value"
           :active-source-id="market.activeSource.value.id"
           :view="discoverView"
@@ -72,7 +72,6 @@
                 :class="{ selected: installed.selectedId.value === adapter.id }"
                 @click="installed.selectedId.value = adapter.id"
               >
-                <span class="avatar" aria-hidden="true">{{ adapter.platform.slice(0, 2).toUpperCase() }}</span>
                 <span class="row-text">
                   <strong>{{ adapter.name }}</strong>
                   <small>{{ adapter.platform }} · v{{ adapter.version }}</small>
@@ -86,8 +85,8 @@
           </ul>
           <div v-else-if="!installed.loading.value" class="list-empty">
             <MdIcon name="extension" />
-            <strong>{{ keyword ? '没有匹配的 Adapter' : '还没有安装 Adapter' }}</strong>
-            <button v-if="!keyword" type="button" class="md-button text" @click="setTab('discover')">去发现 Adapter</button>
+            <strong>{{ keyword ? '没有匹配的适配器' : '还没有安装适配器' }}</strong>
+            <button v-if="!keyword" type="button" class="md-button text" @click="setTab('discover')">去发现适配器</button>
           </div>
         </template>
 
@@ -95,7 +94,7 @@
         <template v-else-if="discoverView === 'direct'">
           <header class="list-head">
             <div class="list-head-text">
-              <strong>单个 Adapter 仓库</strong>
+              <strong>单个适配器仓库</strong>
               <small>不经过目录，按 Shirobot Release 规则直接识别</small>
             </div>
             <button
@@ -184,7 +183,6 @@
                 :class="{ selected: selectedEntryId === entry.id }"
                 @click="selectedEntryId = entry.id"
               >
-                <span class="avatar" aria-hidden="true">{{ entry.platform.slice(0, 2).toUpperCase() }}</span>
                 <span class="row-text">
                   <strong>{{ entry.name }}</strong>
                   <small>{{ entry.description || entry.platform }}</small>
@@ -199,7 +197,7 @@
           </div>
 
           <p v-if="installedInCatalog" class="list-note">
-            另有 {{ installedInCatalog }} 个已安装的 Adapter，
+            另有 {{ installedInCatalog }} 个已安装的适配器，
             <button type="button" class="inline-link" @click="setTab('installed')">在「已安装」中查看</button>
           </p>
         </template>
@@ -225,14 +223,14 @@
         />
         <div v-if="!detailHasContent" class="list-empty">
           <MdIcon name="extension" />
-          <strong>{{ tab === 'discover' && !activeDiscoverCount ? '这里暂时没有可安装的 Adapter' : '选择一个 Adapter 查看详情' }}</strong>
+          <strong>{{ tab === 'discover' && !activeDiscoverCount ? '这里暂时没有可安装的适配器' : '选择一个适配器查看详情' }}</strong>
         </div>
       </div>
     </section>
 
     <AdapterInstallDialog
       :visible="installed.installVisible.value"
-      title="从文件安装 Adapter"
+      title="从文件安装适配器"
       :file="installed.installFile.value"
       :preview="installed.installPreview.value"
       :replace="installed.installReplace.value"
@@ -246,7 +244,7 @@
     />
     <AdapterInstallDialog
       :visible="market.installVisible.value"
-      title="从目录安装 Adapter"
+      title="从目录安装适配器"
       :file="null"
       :preview="market.preview.value"
       :replace="market.replace.value"
@@ -267,7 +265,7 @@
 
     <AddSourceDialog
       v-model:visible="addSourceOpen"
-      noun="Adapter"
+      noun="适配器"
       :initial-type="addSourceType"
       @add-repo="addRepo"
       @add-catalog="addCatalog"
@@ -375,9 +373,9 @@ const discoverList = computed(() => market.filtered.value.filter(entry => !insta
 const installedInCatalog = computed(() => market.entries.value.filter(entry => installedIds.value.has(entry.id) || entry.installedVersion).length)
 
 const discoverEmptyText = computed(() => {
-  if (!market.entries.value.length) return '目录暂无 Adapter'
-  if (market.keyword.value.trim()) return '没有匹配的 Adapter'
-  return '目录里的 Adapter 都已安装'
+  if (!market.entries.value.length) return '目录暂无适配器'
+  if (market.keyword.value.trim()) return '没有匹配的适配器'
+  return '目录里的适配器都已安装'
 })
 
 const configOpen = ref(false)
@@ -473,10 +471,4 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
 <style scoped src="../plugins/PluginsHub.css"></style>
 <style scoped>
 .row-icon.restart { color: var(--md-sys-color-warning); }
-
-/* Two-letter platform initials */
-.avatar {
-  font: var(--md-sys-typescale-label-large);
-  font-weight: 700;
-}
 </style>

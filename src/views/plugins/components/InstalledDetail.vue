@@ -1,17 +1,10 @@
 <template>
   <article v-if="plugin" class="detail">
     <header class="detail-head">
-      <span class="avatar" aria-hidden="true">{{ plugin.name.slice(0, 1).toUpperCase() }}</span>
       <div class="detail-title">
         <h2>{{ plugin.name }}</h2>
         <p>{{ plugin.author }}<span class="sep">·</span>{{ plugin.category }}</p>
       </div>
-      <el-switch
-        :model-value="plugin.status === 'enabled'"
-        :disabled="isToggleLocked(plugin)"
-        :aria-label="plugin.status === 'enabled' ? '停用插件' : '启用插件'"
-        @change="(value: string | number | boolean) => emit('toggle', plugin!, Boolean(value))"
-      />
     </header>
 
     <p class="detail-desc">{{ plugin.description }}</p>
@@ -92,7 +85,6 @@ const HOST_ACTION_IDS = new Set(['update', 'uninstall', 'delete', 'remove'])
 const props = defineProps<{
   plugin: Plugin | null
   statusText: (status: PluginStatus) => string
-  isToggleLocked: (plugin: Plugin) => boolean
   actions: PluginActionDefinition[]
   actionsLoading: boolean
   actionsError: string
@@ -101,7 +93,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  toggle: [plugin: Plugin, enabled: boolean]
   openConfig: [plugin: Plugin]
   action: [plugin: Plugin, action: PluginActionDefinition]
   update: [plugin: Plugin]

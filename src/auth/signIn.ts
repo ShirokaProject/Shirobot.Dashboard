@@ -34,6 +34,24 @@ export async function signInToBackend(
   return { ok: true, profile: saved }
 }
 
+const ENTER_FLAG = 'shirobot.dashboard.enter-animation'
+
+/** Login leaves this behind so the dashboard knows to play its entrance once. */
+export function markDashboardEntrance() {
+  try { sessionStorage.setItem(ENTER_FLAG, '1') } catch { /* no animation, nothing else lost */ }
+}
+
+/** True exactly once after a login. */
+export function consumeDashboardEntrance() {
+  try {
+    const pending = sessionStorage.getItem(ENTER_FLAG) === '1'
+    sessionStorage.removeItem(ENTER_FLAG)
+    return pending
+  } catch {
+    return false
+  }
+}
+
 /** Full reload into the dashboard so no page keeps data from the previous backend. */
 export function reloadIntoDashboard() {
   window.location.assign(import.meta.env.BASE_URL)

@@ -16,6 +16,14 @@ const BACKENDS_STORAGE_KEY = 'shirobot.dashboard.backends'
 
 export const DEFAULT_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? ''
 
+/**
+ * Switching between backends only makes sense when the dashboard is not bound to its own host.
+ * Served same-origin with Shirobot (the default), there is exactly one backend: no switcher,
+ * no "add backend", just the key prompt. Set VITE_ENABLE_BACKEND_SWITCH=true to opt back in.
+ */
+export const BACKEND_SWITCHING_ENABLED: boolean =
+  Boolean(DEFAULT_BASE_URL) || import.meta.env.VITE_ENABLE_BACKEND_SWITCH === 'true'
+
 function readProfiles(): BackendProfile[] {
   try {
     const raw = localStorage.getItem(BACKENDS_STORAGE_KEY)
@@ -23,6 +31,8 @@ function readProfiles(): BackendProfile[] {
     if (!Array.isArray(parsed)) return []
     return parsed.filter((item): item is BackendProfile =>
       Boolean(item) && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.baseUrl === 'string'
+      // A dashboard that is not bound to its host has no "same origin" backend to offer
+      && (!BACKEND_SWITCHING_ENABLED || item.baseUrl !== '' || Boolean(DEFAULT_BASE_URL))
     )
   } catch {
     return []
@@ -37,11 +47,15 @@ function writeProfiles(profiles: BackendProfile[]) {
   }
 }
 
-/** Saved profiles, most recently used first. Always contains at least the local backend. */
+/**
+ * Saved profiles, most recently used first. Same-origin deployments always have the local
+ * backend; a custom-backend dashboard starts empty until the user adds one.
+ */
 export function listBackends(): BackendProfile[] {
   const profiles = readProfiles()
   if (!profiles.length) {
-    return [{ id: 'local', name: '本机', baseUrl: DEFAULT_BASE_URL }]
+    if (BACKEND_SWITCHING_ENABLED && !DEFAULT_BASE_URL) return []
+    return [{ id: 'local', name: DEFAULT_BASE_URL ? '默认后端' : '本机', baseUrl: DEFAULT_BASE_URL }]
   }
   return profiles.sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0))
 }

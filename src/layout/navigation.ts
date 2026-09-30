@@ -18,8 +18,8 @@ export const menuItems = [
   {
     // 已安装 + 发现 (the former Adapter 市场) live on one page as tabs
     path: '/adapters',
-    label: 'Adapter',
-    short: 'Adapter',
+    label: '适配器',
+    short: '适配器',
     icon: Connection
   },
   {

@@ -43,8 +43,8 @@ export function useAboutPage() {
   const versionFacts = computed(() => {
     const runtime = overview.value?.runtime
     return [
-      { label: 'Dashboard', value: `v${DASHBOARD_VERSION}`, note: '前端' },
-      { label: 'Shirobot', value: backendVersion.value, note: '主程序' },
+      { label: '前端面板', value: `v${DASHBOARD_VERSION}` },
+      { label: '主程序', value: backendVersion.value },
       { label: '运行时', value: [runtime?.framework, runtime?.os, runtime?.arch].filter(Boolean).join(' · ') },
       { label: '运行方式', value: runtime?.mode ? modeLabels[runtime.mode] ?? runtime.mode : '' },
       { label: '构建时间', value: formatBuildTime(runtime?.build_time) }

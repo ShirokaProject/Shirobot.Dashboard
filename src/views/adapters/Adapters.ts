@@ -30,38 +30,38 @@ export function useAdaptersPage() {
       }
       adapters.value = list
       selectedId.value = list.some(item => item.id === selectedId.value) ? selectedId.value : (list[0]?.id ?? '')
-    } catch (cause) { error.value = getApiErrorMessage(cause, 'Adapter 列表加载失败。') } finally { loading.value = false }
+    } catch (cause) { error.value = getApiErrorMessage(cause, '适配器列表加载失败。') } finally { loading.value = false }
   }
   async function run(id: string, action: 'start' | 'stop' | 'reload' | 'delete') {
     if (!id || operation.value) return
     if (action === 'delete') {
-      try { await ElMessageBox.confirm('将停止、卸载并删除该 Adapter。此操作无法撤销。', '删除 Adapter', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
+      try { await ElMessageBox.confirm('将停止、卸载并删除该适配器。此操作无法撤销。', '删除适配器', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
     }
     operation.value = `${id}:${action}`
     try {
       const response = action === 'start' ? await startAdapter(id) : action === 'stop' ? await stopAdapterById(id) : action === 'reload' ? await reloadAdapterById(id) : await deleteAdapter(id)
-      notify(response.message || `Adapter ${action} 完成。`, response.ok ? (response.restartRequired ? 'warning' : 'success') : 'error')
+      notify(response.message || `适配器 ${action} 完成。`, response.ok ? (response.restartRequired ? 'warning' : 'success') : 'error')
       if (response.rollback) notify(`${response.message || '操作未完成'} 回滚状态：${response.rollback}`, 'warning')
       await loadAdapters()
     } catch (cause) {
-      notify(getApiErrorMessage(cause, `Adapter ${action} 失败。`), 'error')
+      notify(getApiErrorMessage(cause, `适配器 ${action} 失败。`), 'error')
       await loadAdapters()
     } finally { operation.value = '' }
   }
   async function submitInstall() {
     if (!installFile.value) return
     installBusy.value = true; installError.value = ''
-    try { installPreview.value = await uploadAdapterPackage(installFile.value); installReplace.value = installPreview.value.conflict } catch (cause) { installError.value = getApiErrorMessage(cause, 'Adapter 包解析失败。') } finally { installBusy.value = false }
+    try { installPreview.value = await uploadAdapterPackage(installFile.value); installReplace.value = installPreview.value.conflict } catch (cause) { installError.value = getApiErrorMessage(cause, '适配器包解析失败。') } finally { installBusy.value = false }
   }
   async function confirmInstall() {
     if (!installPreview.value) return
     installBusy.value = true; installError.value = ''
     try {
       const response = await confirmAdapterUpload(installPreview.value.uploadId, installReplace.value)
-      notify(response.restartRequired ? 'Adapter 已安装，需要重启宿主后生效。' : (response.message || 'Adapter 已安装并重载。'), response.rollback ? 'warning' : 'success')
+      notify(response.restartRequired ? '适配器已安装，需要重启宿主后生效。' : (response.message || '适配器已安装并重载。'), response.rollback ? 'warning' : 'success')
       installVisible.value = false; await loadAdapters()
     } catch (cause) {
-      installError.value = getApiErrorMessage(cause, 'Adapter 确认安装失败。')
+      installError.value = getApiErrorMessage(cause, '适配器确认安装失败。')
       await loadAdapters()
     } finally { installBusy.value = false }
   }

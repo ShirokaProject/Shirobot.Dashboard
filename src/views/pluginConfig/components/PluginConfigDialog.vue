@@ -10,10 +10,9 @@
   >
     <template #header>
       <div class="ws-head">
-        <span class="avatar" aria-hidden="true">{{ pluginName.slice(0, 1).toUpperCase() }}</span>
         <div class="ws-title">
           <h2>{{ pluginName }}</h2>
-          <p>{{ target === 'adapter' ? 'Adapter 配置' : '插件配置' }}</p>
+          <p>{{ target === 'adapter' ? '适配器配置' : '插件配置' }}</p>
         </div>
         <button type="button" class="md-button text icon-only compact" aria-label="关闭" @click="requestClose()">
           <MdIcon name="close" />
@@ -53,7 +52,7 @@
             class="md-button filled"
             :disabled="!state.dirty.value || state.saving.value"
             @click="save"
-          >{{ state.saving.value ? '保存中…' : '保存' }}</button>
+          >保存</button>
         </div>
       </div>
     </template>
@@ -130,22 +129,12 @@ async function openFullPage() {
   gap: var(--md-space-4);
 }
 
-.avatar {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-  font: var(--md-sys-typescale-title-large);
-  font-weight: 700;
-}
-
 .ws-title {
   min-width: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-2);
 }
 
 .ws-title h2 {
@@ -255,17 +244,21 @@ async function openFullPage() {
   margin-left: 0;
 }
 
+:global(.config-workspace.el-dialog) {
+  padding: 0;
+}
+
 :global(.config-workspace .el-dialog__header) {
   padding: var(--md-space-5) var(--md-space-6) var(--md-space-3);
   margin: 0;
 }
 
 :global(.config-workspace .el-dialog__body) {
-  padding: 0 var(--md-space-6);
+  padding: 0 var(--md-space-4);
 }
 
 :global(.config-workspace .el-dialog__footer) {
-  padding: var(--md-space-3) var(--md-space-6) var(--md-space-5);
+  padding: var(--md-space-3) var(--md-space-4);
   border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 </style>

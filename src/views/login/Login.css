@@ -28,6 +28,16 @@
   background: var(--app-card);
 }
 
+.login-card.single {
+  width: min(100%, 440px);
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.login-brand.solo {
+  padding: 0;
+}
+
 .mono {
   font-family: var(--font-mono);
 }
@@ -265,55 +275,79 @@
 
 .text-field input {
   height: 48px;
-  padding: 0 var(--md-space-4);
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-extra-small);
+  padding: 0 var(--md-space-5);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
   outline: 0;
-  background: transparent;
+  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-body-large);
+  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
 .text-field input::placeholder {
-  color: var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-medium);
+  opacity: 0.7;
 }
 
 .text-field input:hover {
-  border-color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-highest);
 }
 
 .text-field input:focus {
-  border-color: var(--md-sys-color-primary);
-  box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
 }
 
 .text-field.invalid input {
   border-color: var(--md-sys-color-error);
 }
 
-.checkbox {
+.key-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  column-gap: var(--md-space-3);
-  cursor: pointer;
-  font: var(--md-sys-typescale-body-medium);
+  gap: var(--md-space-4);
 }
 
-.checkbox input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--md-sys-color-primary);
-  cursor: pointer;
+.key-row .text-field {
+  min-width: 0;
+  flex: 1;
 }
 
-.checkbox small {
-  flex-basis: 100%;
-  padding-left: calc(18px + var(--md-space-3));
+.remember-toggle {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-small);
+  cursor: pointer;
+  font-size: 18px;
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.remember-toggle:hover:not(:disabled):not(.on) {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.remember-toggle.on {
+  background: var(--app-selected);
+  color: var(--app-on-selected);
+}
+
+.remember-toggle:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.remember-toggle:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .form-error {
@@ -339,6 +373,47 @@
 .filled-button:hover {
   background: color-mix(in srgb, var(--md-sys-color-on-primary) var(--md-sys-state-hover-opacity), var(--md-sys-color-primary));
   box-shadow: var(--md-sys-elevation-level1);
+}
+
+.filled-button {
+  display: grid;
+  place-items: center;
+}
+
+.filled-button.loading {
+  cursor: progress;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid color-mix(in srgb, var(--md-sys-color-on-primary) 28%, transparent);
+  border-top-color: var(--md-sys-color-on-primary);
+  border-radius: 50%;
+  animation: login-spin 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+@keyframes login-spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-card {
+  transition:
+    opacity 300ms var(--md-sys-motion-easing-standard),
+    transform 300ms var(--md-sys-motion-easing-standard);
+}
+
+/* Exit animation once the key is accepted: the card eases up and away */
+.login-card.leaving {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.985);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2s; }
+  .login-card { transition: none; }
 }
 
 .filled-button:disabled {

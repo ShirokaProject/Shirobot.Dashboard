@@ -4,9 +4,9 @@
       <ThemeControls />
     </div>
 
-    <article class="login-card" aria-label="登录 Shirobot Dashboard">
+    <article class="login-card" :class="{ single: !switchingEnabled, leaving: entering }" aria-label="登录 Shirobot Dashboard">
       <!-- Left: saved backends and their sign-in state -->
-      <aside class="backend-pane">
+      <aside v-if="switchingEnabled" class="backend-pane">
         <header class="login-brand">
           <img class="brand-avatar" :src="avatarUrl" alt="" />
           <div>
@@ -36,7 +36,6 @@
               </span>
             </button>
             <button
-              v-if="backends.length > 1"
               type="button"
               class="icon-button"
               :aria-label="`移除 ${backend.name}`"
@@ -55,9 +54,18 @@
 
       <!-- Right: sign in to the selected backend, or add a new one -->
       <section class="form-pane">
+        <header v-if="!switchingEnabled" class="login-brand solo">
+          <img class="brand-avatar" :src="avatarUrl" alt="" />
+          <div>
+            <strong>Shirobot</strong>
+            <small>Dashboard</small>
+          </div>
+        </header>
+
         <header class="form-header">
-          <h1>{{ adding ? '添加后端' : `登录到 ${selectedName}` }}</h1>
-          <p>{{ adding ? '填写另一台 Shirobot 的地址' : selectedAddress }}</p>
+          <h1>{{ adding ? '添加后端' : switchingEnabled ? `登录到 ${selectedName}` : '登录' }}</h1>
+          <p v-if="switchingEnabled">{{ adding ? (backends.length ? '填写另一台 Shirobot 的地址' : '填写要连接的 Shirobot 地址') : selectedAddress }}</p>
+          <p v-else>输入登录密钥以进入管理面板</p>
         </header>
 
         <form class="login-form" @submit.prevent="submitLogin">
@@ -68,9 +76,10 @@
                 v-model="draft.baseUrl"
                 type="text"
                 inputmode="url"
-                placeholder="http://10.0.0.5:8080，留空为同源"
+                placeholder="例如 http://10.0.0.5:8080"
                 autocomplete="url"
                 :disabled="verifying"
+                @input="errorMessage = ''"
               />
             </label>
             <label class="text-field">
@@ -79,28 +88,38 @@
             </label>
           </template>
 
-          <label class="text-field" :class="{ invalid: Boolean(errorMessage) }">
-            <span>登录密钥</span>
-            <input
-              v-model="form.token"
-              type="password"
-              autocomplete="current-password"
-              placeholder="后端未启用鉴权时可留空"
-              :disabled="verifying"
-              @input="errorMessage = ''"
-            />
-          </label>
+          <div v-if="!adding" class="key-row">
+            <label class="text-field" :class="{ invalid: Boolean(errorMessage) }">
+              <input
+                v-model="form.token"
+                type="password"
+                autocomplete="current-password"
+                aria-label="登录密钥"
+                placeholder="登录密钥（后端未启用鉴权时可留空）"
+                :disabled="verifying"
+                @input="errorMessage = ''"
+              />
+            </label>
 
-          <label class="checkbox">
-            <input v-model="form.remember" type="checkbox" :disabled="verifying" />
-            <span>记住密钥</span>
-            <small>保存在此设备上，切换后端时免输入</small>
-          </label>
+            <button
+              type="button"
+              class="remember-toggle"
+              :class="{ on: form.remember }"
+              :aria-pressed="form.remember"
+              :title="`${form.remember ? '已开启' : '记住密钥'}：${switchingEnabled ? '保存在此设备上，切换后端时免输入' : '保存在此设备上，下次免输入'}`"
+              aria-label="记住密钥"
+              :disabled="verifying"
+              @click="form.remember = !form.remember"
+            >
+              <el-icon><Key /></el-icon>
+            </button>
+          </div>
 
           <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
 
-          <button type="submit" class="filled-button" :disabled="verifying">
-            {{ verifying ? '验证中…' : '进入' }}
+          <button type="submit" class="filled-button" :class="{ loading: verifying || entering }" :aria-busy="verifying || entering">
+            <span v-if="verifying || entering" class="spinner" aria-hidden="true"></span>
+            <template v-else>{{ adding ? '添加' : '进入' }}</template>
           </button>
         </form>
 
@@ -114,12 +133,13 @@
 </template>
 
 <script setup lang="ts">
-import { Close, Plus } from '@element-plus/icons-vue'
+import { Close, Key, Plus } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
 import ThemeControls from '../../layout/components/ThemeControls.vue'
 import { useLoginPage } from './Login'
 
 const {
+  switchingEnabled,
   backends,
   selectedId,
   selectedName,
@@ -128,6 +148,7 @@ const {
   draft,
   form,
   verifying,
+  entering,
   errorMessage,
   demoEntryVisible,
   switching,

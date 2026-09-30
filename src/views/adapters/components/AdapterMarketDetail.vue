@@ -1,7 +1,6 @@
 <template>
   <article v-if="entry" class="detail">
     <header class="detail-head">
-      <span class="avatar" aria-hidden="true">{{ entry.platform.slice(0, 2).toUpperCase() }}</span>
       <div class="detail-title">
         <h2>{{ entry.name }}</h2>
         <p>{{ entry.authors.join('、') || '未知作者' }}<span class="sep">·</span>{{ entry.platform }}</p>
@@ -56,7 +55,7 @@
       </div>
     </dl>
 
-    <p class="footnote">来自「{{ origin }}」· 安装时由 Shirobot 后端从仓库下载并校验，确认后会短暂重载 Adapter。</p>
+    <p class="footnote">来自「{{ origin }}」· 安装时由 Shirobot 后端从仓库下载并校验，确认后会短暂重载适配器。</p>
 
     <footer class="detail-foot">
       <button type="button" class="md-button filled wide" :disabled="!installable || preparing" @click="emit('install')">
@@ -87,7 +86,7 @@ const installable = computed(() => Boolean(props.entry) && isInstallableEntry(pr
 const healthLabel = computed(() => ({
   resolving: '识别中',
   'no-release': '无合规发布',
-  'asset-missing': '缺少 Adapter 包',
+  'asset-missing': '缺少适配器包',
   error: '无法访问仓库',
   unknown: '状态未知'
 } as Record<string, string>)[props.entry?.health ?? ''] ?? `目录状态：${props.entry?.health}`)
@@ -104,9 +103,4 @@ function formatSize(bytes: number) {
 
 <style scoped src="../../plugins/components/detail.css"></style>
 <style scoped>
-/* Two-letter platform initials need a smaller size than the plugins' single letter */
-.avatar {
-  font: var(--md-sys-typescale-title-medium);
-  font-weight: 700;
-}
 </style>

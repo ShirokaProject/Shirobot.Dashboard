@@ -3,8 +3,7 @@
     <!-- Inline types: text on the left, a compact control on the right. Long text types stack. -->
     <div class="field-text">
       <label :for="inputId" class="field-label">{{ field.label }}</label>
-      <p v-if="field.description" class="field-desc">{{ field.description }}</p>
-      <code class="field-key">{{ field.item.key }}</code>
+      <p class="field-desc">{{ field.description }}<code class="field-key">{{ field.item.key }}</code></p>
     </div>
 
     <div class="field-control">
@@ -113,7 +112,7 @@ const stacked = computed(() => (type.value === 'string' || type.value === 'text'
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--md-space-2) var(--md-space-6);
-  padding: var(--md-space-4) 0;
+  padding: var(--md-space-3) 0;
 }
 
 .field.stacked {
@@ -138,10 +137,22 @@ const stacked = computed(() => (type.value === 'string' || type.value === 'text'
 
 /* The raw key, for people matching fields against config files */
 .field-key {
-  display: inline-block;
-  margin-top: var(--md-space-1);
   color: var(--md-sys-color-outline);
   font: 400 11px / 16px var(--font-mono);
+  opacity: 0.75;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.field-key::before {
+  content: '(';
+}
+
+.field-key::after {
+  content: ')';
+}
+
+.field:hover .field-key {
+  opacity: 1;
 }
 
 .field-control {

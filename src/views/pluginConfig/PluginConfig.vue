@@ -23,7 +23,6 @@
               :aria-current="target === section.kind && pluginId === item.id ? 'page' : undefined"
               @click="switchTo(section.kind, item.id)"
             >
-              <span class="target-avatar" aria-hidden="true">{{ item.initials }}</span>
               <span class="target-name">{{ item.name }}</span>
               <span class="status-dot" :class="item.tone" :title="item.status" aria-hidden="true"></span>
             </button>
@@ -36,16 +35,15 @@
     <!-- The chosen one: header, then its categories | fields -->
     <section class="page-editor panel">
       <header class="page-head">
-        <span class="avatar" aria-hidden="true">{{ currentName.slice(0, 1).toUpperCase() }}</span>
         <div class="head-title">
           <h2>{{ currentName }}</h2>
-          <p>{{ target === 'adapter' ? 'Adapter 配置' : '插件配置' }}<span class="sep">·</span><span class="mono">{{ pluginId }}</span></p>
+          <p>{{ target === 'adapter' ? '适配器配置' : '插件配置' }}<span class="sep">·</span><span class="mono">{{ pluginId }}</span></p>
         </div>
         <span v-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
         <span v-else-if="saveMessage" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
         <div class="button-group">
           <button type="button" class="md-button tonal" :disabled="!dirty || saving" @click="discard">放弃修改</button>
-          <button type="button" class="md-button filled" :disabled="!dirty || saving" @click="save">{{ saving ? '保存中…' : '保存' }}</button>
+          <button type="button" class="md-button filled" :disabled="!dirty || saving" @click="save">保存</button>
         </div>
       </header>
 
@@ -117,18 +115,16 @@ const targetSections = computed(() => [
     items: plugins.value.map(plugin => ({
       id: plugin.id,
       name: plugin.name,
-      initials: plugin.name.slice(0, 1).toUpperCase(),
       tone: plugin.status === 'error' ? 'error' : plugin.status === 'enabled' ? 'success' : '',
       status: { enabled: '启用', disabled: '关闭', error: '错误' }[plugin.status]
     }))
   },
   {
     kind: 'adapter' as ConfigTarget,
-    label: 'Adapter',
+    label: '适配器',
     items: adapters.value.map(adapter => ({
       id: adapter.id,
       name: adapter.name,
-      initials: adapter.platform.slice(0, 2).toUpperCase(),
       tone: adapter.error ? 'error' : adapter.loaded ? 'success' : '',
       status: adapter.error ? '异常' : adapter.loaded ? '运行中' : '已停止'
     }))
@@ -140,7 +136,7 @@ const currentName = computed(() => {
   return list.find(item => item.id === pluginId.value)?.name ?? pluginId.value
 })
 
-const backLabel = computed(() => target.value === 'adapter' ? '返回 Adapter' : '返回插件')
+const backLabel = computed(() => target.value === 'adapter' ? '返回适配器' : '返回插件')
 
 // ---------- switching ----------
 

@@ -181,6 +181,7 @@
 }
 
 .md-button.filled:disabled {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-content-opacity), transparent);
   background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-container-opacity), transparent);
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="md3-app-shell">
+  <div class="md3-app-shell" :class="{ entering }">
     <AppDrawer />
 
     <section class="md3-main-area">
@@ -33,13 +33,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
 import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
 import { menuItems } from './navigation'
+import { consumeDashboardEntrance } from '../auth/signIn'
+
+// Right after a login the dashboard assembles itself piece by piece instead of appearing at once
+const entering = ref(false)
+let enteringTimer: number | undefined
+onMounted(() => {
+  if (!consumeDashboardEntrance()) return
+  entering.value = true
+  enteringTimer = window.setTimeout(() => { entering.value = false }, 1100)
+})
+onBeforeUnmount(() => window.clearTimeout(enteringTimer))
+
 const route = useRoute()
 const router = useRouter()
 
@@ -72,6 +84,47 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 </script>
 
 <style scoped>
+/*
+ * Entrance after login, one motion language: everything rises/slides a few pixels while fading
+ * in (decelerate), in reading order: sidebar, top bar, then the page's cards one after another.
+ */
+@keyframes shell-enter-side {
+  from { opacity: 0; transform: translateX(-20px); }
+}
+
+@keyframes shell-enter-top {
+  from { opacity: 0; transform: translateY(-10px); }
+}
+
+@keyframes shell-enter-card {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+.md3-app-shell.entering :deep(.md3-drawer) {
+  animation: shell-enter-side 420ms var(--md-sys-motion-easing-emphasized-decelerate) both;
+}
+
+.md3-app-shell.entering :deep(.md3-top-app-bar) {
+  animation: shell-enter-top 380ms var(--md-sys-motion-easing-emphasized-decelerate) 80ms both;
+}
+
+.md3-app-shell.entering :deep(.page-route-view > *) {
+  animation: shell-enter-card 460ms var(--md-sys-motion-easing-emphasized-decelerate) both;
+}
+
+.md3-app-shell.entering :deep(.page-route-view > :nth-child(1)) { animation-delay: 140ms; }
+.md3-app-shell.entering :deep(.page-route-view > :nth-child(2)) { animation-delay: 200ms; }
+.md3-app-shell.entering :deep(.page-route-view > :nth-child(3)) { animation-delay: 260ms; }
+.md3-app-shell.entering :deep(.page-route-view > :nth-child(n + 4)) { animation-delay: 320ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .md3-app-shell.entering :deep(.md3-drawer),
+  .md3-app-shell.entering :deep(.md3-top-app-bar),
+  .md3-app-shell.entering :deep(.page-route-view > *) {
+    animation: none;
+  }
+}
+
 .md3-app-shell {
   min-height: 100vh;
   display: flex;
@@ -90,14 +143,14 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   flex: 1;
   overflow: auto;
   box-sizing: border-box;
-  padding: var(--md-space-4) var(--md-space-8) var(--md-space-8);
+  padding: var(--md-space-6) var(--md-space-10) var(--md-space-10);
   width: 100%;
 }
 
 .md3-content-frame {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - 96px - var(--md-space-4) - var(--md-space-8));
+  min-height: calc(100vh - 96px - var(--md-space-6) - var(--md-space-10));
   overflow: visible;
 }
 

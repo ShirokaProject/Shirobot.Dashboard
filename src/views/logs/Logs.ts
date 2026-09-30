@@ -84,12 +84,6 @@ function matchesLevel(level: LogLevel, filter: LevelFilter) {
   return true
 }
 
-export function sourceInitials(source: string) {
-  const words = source.split(/[\s._-]+/).filter(Boolean)
-  const initials = words.length > 1 ? words[0][0] + words[1][0] : source.slice(0, 2)
-  return initials.toUpperCase()
-}
-
 export function useLogsPage() {
   const keyword = ref('')
   const activeLevel = ref<LevelFilter>('ALL')
@@ -140,7 +134,6 @@ export function useLogsPage() {
       ...extra.map(source => ({ key: source, label: source, description: '' }))
     ].map(item => ({
       ...item,
-      short: sourceInitials(item.label),
       count: counts[item.key]?.total ?? 0,
       errors: counts[item.key]?.errors ?? 0
     }))
@@ -149,8 +142,7 @@ export function useLogsPage() {
       {
         key: 'ALL',
         label: '全部来源',
-        short: '',
-        description: '主程序、Adapter 与插件',
+        description: '主程序、适配器与插件',
         count: runtimeLogs.value.length,
         errors: runtimeLogs.value.filter(log => log.level === 'ERROR').length
       },
