@@ -8,8 +8,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Maple Mono', 'Segoe UI', 'system-ui', 'sans-serif'],
-        mono: ['Maple Mono', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace']
+        sans: ['SourceHanSansSC', 'Segoe UI', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'Cascadia Mono', 'SFMono-Regular', 'Consolas', 'monospace']
       },
       borderRadius: {
         md3: 'var(--md-sys-shape-corner-large)',

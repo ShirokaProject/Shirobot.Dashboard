@@ -6,6 +6,9 @@ import pkg from './package.json' with { type: 'json' }
 export default defineConfig({
   base: '/dashboard/',
   plugins: [vue()],
+  server: {
+    allowedHosts: ['devdash.oeo.one']
+  },
   define: {
     __DASHBOARD_VERSION__: JSON.stringify(pkg.version)
   },

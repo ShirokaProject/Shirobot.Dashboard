@@ -1,7 +1,7 @@
+// Keep in sync with the themes in scripts/generate-theme.mjs (first one is the default).
 export const colorThemes = [
-  { key: 'rose', label: '玫瑰' },
-  { key: 'lavender', label: '薰衣草' },
-  { key: 'blue', label: '浅蓝' }
+  { key: 'paper', label: '纸墨' },
+  { key: 'chrome', label: 'Chrome' }
 ] as const
 
 export const colorModes = [
@@ -13,7 +13,7 @@ export const colorModes = [
 export type ColorThemeKey = (typeof colorThemes)[number]['key']
 export type ColorModeKey = (typeof colorModes)[number]['key']
 
-export const DEFAULT_COLOR_THEME: ColorThemeKey = 'rose'
+export const DEFAULT_COLOR_THEME: ColorThemeKey = 'paper'
 export const DEFAULT_COLOR_MODE: ColorModeKey = 'system'
 
 export const THEME_STORAGE_KEYS = {

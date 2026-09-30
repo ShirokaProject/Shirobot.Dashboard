@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "theme": "node scripts/generate-theme.mjs",
+    "lint:css": "stylelint \"src/**/*.{css,vue}\""
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -15,11 +17,14 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
+    "@material/material-color-utilities": "^0.3.0",
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.15",
+    "postcss-html": "^2.0.0",
+    "stylelint": "^17.15.0",
     "tailwindcss": "^3.4.17",
     "typescript": "~6.0.2",
     "vite": "^8.0.12",

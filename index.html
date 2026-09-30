@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://cdn.qwq.lu" crossorigin />
     <title>Shirobot Dashboard</title>
+    <script>
+      // Apply the saved theme and light/dark mode before first paint so nothing flashes.
+      // Keys and defaults mirror src/theme/index.ts.
+      try {
+        var color = localStorage.getItem('shirobot-color')
+        if (color === 'chrome') document.documentElement.dataset.color = color
+        var mode = localStorage.getItem('shirobot-mode')
+        if (mode === 'light' || mode === 'dark') document.documentElement.dataset.mode = mode
+      } catch (error) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>
