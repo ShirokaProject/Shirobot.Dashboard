@@ -1,6 +1,8 @@
 import { apiRequest } from '../core/http'
+import type { PluginConfigSchemaItem } from '../plugins/config'
 
 export interface AppConfig {
+  schema?: PluginConfigSchemaItem[]
   protocol: string
   enable_log: boolean
   disable_console_input: boolean
