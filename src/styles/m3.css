@@ -1,0 +1,231 @@
+/*
+ * Shared M3 primitives used across pages (unscoped): text helpers, status dots,
+ * buttons and the connected button group. Color from roles and state-layer tokens only.
+ */
+:root {
+  /* M3 shape scale for connected groups: extra-large outside, medium between cards and seams */
+  --corner-outer: var(--md-sys-shape-corner-extra-large);
+  --corner-inner: var(--md-sys-shape-corner-medium);
+  --corner-seam: var(--md-sys-shape-corner-medium);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.muted {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.sep {
+  color: var(--md-sys-color-outline);
+}
+
+/* ---------- status primitives ---------- */
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-outline);
+}
+
+.status-dot.primary { background: var(--app-accent); }
+.status-dot.success { background: var(--md-sys-color-success); }
+.status-dot.warning { background: var(--md-sys-color-warning); }
+.status-dot.error { background: var(--md-sys-color-error); }
+
+/* ---------- buttons (M3 outlined / text) ---------- */
+
+.md-button {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  padding: 0 var(--md-space-4);
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  font: var(--md-sys-typescale-label-large);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.md-button .el-icon {
+  font-size: 18px;
+}
+
+.md-button:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-button:active {
+  background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-pressed-opacity), transparent);
+}
+
+.md-button:disabled {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-content-opacity), transparent);
+  cursor: default;
+  background: transparent;
+}
+
+.md-button.text {
+  padding: 0 var(--md-space-3);
+}
+
+.md-button.compact {
+  height: 32px;
+}
+
+.md-button.outlined {
+  padding: 0 var(--md-space-5) 0 var(--md-space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--app-card);
+}
+
+.md-button.danger {
+  color: var(--md-sys-color-error);
+}
+
+.md-button.danger:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) var(--md-sys-state-hover-opacity), var(--app-card));
+}
+
+.md-button.danger:active {
+  background: color-mix(in srgb, var(--md-sys-color-error) var(--md-sys-state-pressed-opacity), var(--app-card));
+}
+
+.md-button.outlined:disabled {
+  border-color: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-container-opacity), transparent);
+}
+
+/*
+ * Connected button group (M3 Expressive split/connected buttons): 2px seams,
+ * pill ends on the outside, small corners where segments meet.
+ */
+.button-group {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.button-group > * {
+  border-radius: var(--corner-seam);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    border-radius var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized);
+}
+
+/* Shape morph: the selected segment becomes a full pill */
+.button-group > .selected {
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+.button-group > :first-child {
+  border-top-left-radius: var(--md-sys-shape-corner-full);
+  border-bottom-left-radius: var(--md-sys-shape-corner-full);
+}
+
+.button-group > :last-child {
+  border-top-right-radius: var(--md-sys-shape-corner-full);
+  border-bottom-right-radius: var(--md-sys-shape-corner-full);
+}
+
+/* Tonal segment: quiet fill, state layer on hover */
+.md-button.tonal {
+  height: 44px;
+  padding: 0 var(--md-space-5);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-button.tonal:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) var(--md-sys-state-hover-opacity), var(--md-sys-color-secondary-container));
+}
+
+.md-button.tonal:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-secondary-container) var(--md-sys-state-pressed-opacity), var(--md-sys-color-secondary-container));
+}
+
+/* Destructive segment stays ink at rest; the error hue appears only as a hover warning */
+.md-button.tonal.danger:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error) var(--md-sys-state-hover-opacity), var(--md-sys-color-secondary-container));
+  color: var(--md-sys-color-error);
+}
+
+.md-button .md-icon {
+  font-size: 20px;
+}
+
+.md-button.tonal:disabled {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-container-opacity), transparent);
+}
+
+/* Filled segment / primary action: ink on paper */
+.md-button.filled {
+  height: 44px;
+  padding: 0 var(--md-space-5);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.md-button.filled:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) var(--md-sys-state-hover-opacity), var(--md-sys-color-primary));
+}
+
+.md-button.filled:active {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) var(--md-sys-state-pressed-opacity), var(--md-sys-color-primary));
+}
+
+.md-button.filled:disabled {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-container-opacity), transparent);
+}
+
+.md-button.compact.tonal,
+.md-button.compact.filled {
+  height: 36px;
+  padding: 0 var(--md-space-4);
+}
+
+/* Toggle segment inside a connected group. Colors are per theme (--app-toggle / --app-selected):
+   纸墨 goes grey → solid ink, Chrome goes neutral grey → light blue. Selected morphs to a pill. */
+.md-button.toggle {
+  background: var(--app-toggle);
+  color: var(--app-on-toggle);
+}
+
+.md-button.toggle:hover {
+  background: color-mix(in srgb, var(--app-on-toggle) var(--md-sys-state-hover-opacity), var(--app-toggle));
+}
+
+.md-button.toggle.selected {
+  background: var(--app-selected);
+  color: var(--app-on-selected);
+}
+
+.md-button.toggle.selected:hover {
+  background: color-mix(in srgb, var(--app-on-selected) var(--md-sys-state-hover-opacity), var(--app-selected));
+}
+
+.md-button.icon-only {
+  width: 44px;
+  justify-content: center;
+  padding: 0;
+}
+
+.md-icon.spinning {
+  animation: md-spin 900ms linear infinite;
+}
+
+@keyframes md-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-icon.spinning {
+    animation: none;
+  }
+}
