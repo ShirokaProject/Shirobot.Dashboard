@@ -146,7 +146,7 @@ function triggerAvatarSpin() {
   padding: var(--md-space-4) var(--md-space-3);
   display: flex;
   flex-direction: column;
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--app-bg);
   transition:
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
     flex-basis var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -201,7 +201,7 @@ function triggerAvatarSpin() {
 }
 
 .drawer-menu-button:hover {
-  background: var(--md-sys-color-surface-container);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
 }
 
 .drawer-toggle-icon {
@@ -233,8 +233,8 @@ function triggerAvatarSpin() {
   border-radius: var(--md-sys-shape-corner-large);
   display: grid;
   place-items: center;
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
 .brand-avatar {
@@ -295,7 +295,7 @@ function triggerAvatarSpin() {
   align-items: center;
   padding: 0 var(--md-space-2);
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container);
+  background: var(--app-card);
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-label-medium);
 }
@@ -318,7 +318,7 @@ function triggerAvatarSpin() {
   overflow: hidden;
   padding: 0 var(--md-space-3);
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-lowest);
+  background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-small);
   text-decoration: none;
@@ -367,10 +367,11 @@ function triggerAvatarSpin() {
 }
 
 .brand-link:hover {
-  color: var(--md-sys-color-primary);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+  color: var(--md-sys-color-on-surface);
 }
 
-/* M3 Extended FAB: 56dp height, 16dp corner, primary-container */
+/* M3 surface Extended FAB: card surface + primary icon, so it doesn't compete with the nav indicator */
 .drawer-primary-action {
   height: 56px;
   display: inline-flex;
@@ -384,11 +385,11 @@ function triggerAvatarSpin() {
   padding: 0 var(--md-space-5);
   border: 0;
   border-radius: var(--md-sys-shape-corner-large);
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--app-card);
+  color: var(--md-sys-color-on-surface);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
-  box-shadow: var(--md-sys-elevation-level1);
+  box-shadow: var(--md-sys-elevation-soft);
   transition:
     height var(--drawer-motion-duration) var(--drawer-motion-easing),
     margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -399,10 +400,12 @@ function triggerAvatarSpin() {
 }
 
 .drawer-primary-action:hover {
-  box-shadow: var(--md-sys-elevation-level2);
+  background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-hover-opacity), var(--app-card));
+  box-shadow: var(--md-sys-elevation-soft-hover);
 }
 
 .drawer-primary-action .el-icon {
+  color: var(--md-sys-color-primary);
   font-size: 24px;
 }
 
@@ -527,7 +530,7 @@ function triggerAvatarSpin() {
 }
 
 .drawer-item:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
 }
 
 /* M3 active indicator: secondary-container */
@@ -537,7 +540,7 @@ function triggerAvatarSpin() {
 }
 
 .md3-drawer.collapsed .drawer-item:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
   color: var(--md-sys-color-on-surface-variant);
 }
 
@@ -573,7 +576,7 @@ function triggerAvatarSpin() {
   align-items: center;
   flex-direction: column;
   gap: var(--md-space-3);
-  background: var(--md-sys-color-surface);
+  background: var(--app-bg);
 }
 
 .rail-item {

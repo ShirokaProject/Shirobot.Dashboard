@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 
-type PageTransitionName = 'md3-fade-through' | 'md3-shared-axis-y'
+export type PageTransitionName = 'md3-fade-through' | 'md3-axis-forward' | 'md3-axis-back'
 
 withDefaults(defineProps<{
   component: Component
@@ -26,54 +26,84 @@ withDefaults(defineProps<{
   opacity: 1;
 }
 
-/* Material motion: fast Fade through for top-level destination changes.
-   Pure opacity prevents layout-origin artifacts and hidden overlap. */
-:global(.md3-fade-through-enter-active) {
-  transition: opacity 72ms cubic-bezier(0.2, 0, 0, 1);
-}
+/*
+ * Page changes are quick and one-directional in time: the old page leaves fast (accelerate),
+ * then the new one settles in (decelerate). With out-in the two never overlap, so nothing
+ * fights for the same space. Transforms are only present while animating; at rest the page
+ * has no transform, so text is never left on a resampled layer.
+ */
 
+/* Top-level destinations (sidebar): fade through with a small rise */
 :global(.md3-fade-through-leave-active) {
-  transition: opacity 36ms cubic-bezier(0.4, 0, 1, 1);
+  transition: opacity 70ms var(--md-sys-motion-easing-emphasized-accelerate);
 }
 
-:global(.md3-fade-through-enter-from),
+:global(.md3-fade-through-enter-active) {
+  transition:
+    opacity 160ms var(--md-sys-motion-easing-standard-decelerate),
+    transform 220ms var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
 :global(.md3-fade-through-leave-to) {
   opacity: 0;
 }
 
-:global(.md3-fade-through-enter-to),
-:global(.md3-fade-through-leave-from) {
-  opacity: 1;
-}
-
-/* Optional: Shared axis Y for future flow-like pages only. */
-:global(.md3-shared-axis-y-enter-active),
-:global(.md3-shared-axis-y-leave-active) {
-  transition:
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1),
-    transform 220ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-:global(.md3-shared-axis-y-enter-from) {
+:global(.md3-fade-through-enter-from) {
   opacity: 0;
   transform: translateY(10px);
 }
 
-:global(.md3-shared-axis-y-leave-to) {
+/* Drilling into a detail (config workspace) and back: shared axis X */
+:global(.md3-axis-forward-leave-active),
+:global(.md3-axis-back-leave-active) {
+  transition:
+    opacity 70ms var(--md-sys-motion-easing-emphasized-accelerate),
+    transform 90ms var(--md-sys-motion-easing-emphasized-accelerate);
+}
+
+:global(.md3-axis-forward-enter-active),
+:global(.md3-axis-back-enter-active) {
+  transition:
+    opacity 160ms var(--md-sys-motion-easing-standard-decelerate),
+    transform 240ms var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+:global(.md3-axis-forward-leave-to) {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateX(-16px);
+}
+
+:global(.md3-axis-forward-enter-from) {
+  opacity: 0;
+  transform: translateX(28px);
+}
+
+:global(.md3-axis-back-leave-to) {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+:global(.md3-axis-back-enter-from) {
+  opacity: 0;
+  transform: translateX(-28px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :global(.md3-fade-through-enter-active),
   :global(.md3-fade-through-leave-active),
-  :global(.md3-shared-axis-y-enter-active),
-  :global(.md3-shared-axis-y-leave-active) {
-    transition: none;
+  :global(.md3-fade-through-enter-active),
+  :global(.md3-axis-forward-leave-active),
+  :global(.md3-axis-forward-enter-active),
+  :global(.md3-axis-back-leave-active),
+  :global(.md3-axis-back-enter-active) {
+    transition: opacity 60ms linear;
   }
 
-  :global(.md3-shared-axis-y-enter-from),
-  :global(.md3-shared-axis-y-leave-to) {
+  :global(.md3-fade-through-enter-from),
+  :global(.md3-axis-forward-enter-from),
+  :global(.md3-axis-back-enter-from),
+  :global(.md3-fade-through-leave-to),
+  :global(.md3-axis-forward-leave-to),
+  :global(.md3-axis-back-leave-to) {
     transform: none;
   }
 }

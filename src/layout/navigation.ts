@@ -8,28 +8,18 @@ export const menuItems = [
     icon: Monitor
   },
   {
-    path: '/plugin-market',
-    label: '插件市场',
-    short: '市场',
-    icon: Box
-  },
-  {
+    // 已安装 + 发现 (the former 插件市场) live on one page as tabs
     path: '/plugins',
-    label: '插件管理',
+    label: '插件',
     short: '插件',
     icon: Box,
     count: 4
   },
   {
+    // 已安装 + 发现 (the former Adapter 市场) live on one page as tabs
     path: '/adapters',
-    label: 'Adapter 管理',
+    label: 'Adapter',
     short: 'Adapter',
-    icon: Connection
-  },
-  {
-    path: '/adapter-market',
-    label: 'Adapter 市场',
-    short: '市场',
     icon: Connection
   },
   {

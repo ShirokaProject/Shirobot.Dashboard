@@ -3,50 +3,6 @@
     <div class="expand-control">
       <button
         type="button"
-        class="top-action-icon font-action"
-        :class="activeFont"
-        aria-label="切换字体"
-        @click="toggleFontPanel"
-      >
-        <span class="font-action-label">Aa</span>
-      </button>
-      <Transition name="expand-panel-fade">
-        <div
-          v-if="fontPanelOpen"
-          class="expand-panel font-panel"
-          @mouseleave="restoreActiveFont"
-        >
-          <section v-for="group in fontGroups" :key="group.title" class="font-group">
-            <div class="font-group-header">
-              <span>{{ group.title }}</span>
-              <small>{{ group.subtitle }}</small>
-            </div>
-            <div class="font-choice-row">
-              <button
-                v-for="font in group.options"
-                :key="font.key"
-                type="button"
-                class="font-choice"
-                :class="[{ active: activeFont === font.key, secondary: font.secondary }, font.key]"
-                @pointerenter="previewFont(font.key)"
-                @focus="previewFont(font.key)"
-                @click="setFont(font.key)"
-              >
-                <span class="font-choice-sample">{{ font.sample }}</span>
-                <span class="font-choice-main">
-                  <strong>{{ font.label }}</strong>
-                  <small v-if="font.meta">{{ font.meta }}</small>
-                </span>
-              </button>
-            </div>
-          </section>
-        </div>
-      </Transition>
-    </div>
-
-    <div class="expand-control">
-      <button
-        type="button"
         class="top-action-icon appearance-action"
         :class="[activeColor, activeMode]"
         aria-label="切换外观"
@@ -63,7 +19,7 @@
 
       <Transition name="expand-panel-fade">
         <div v-if="appearancePanelOpen" class="expand-panel appearance-panel" @mouseleave="restoreAppearance">
-          <section class="appearance-section">
+          <section v-if="themes.length > 1" class="appearance-section">
             <div class="appearance-section-head">
               <span>主题色</span>
             </div>
@@ -130,51 +86,11 @@ import {
   type ColorThemeKey
 } from '../../theme'
 
-type FontPreviewKey = 'maple' | 'maple-regular' | 'maple-medium' | 'maple-semibold' | 'maple-bold' | 'lolita' | 'xiaolai' | 'xiaolai-mono' | 'source-han'
-
-const FONT_STORAGE_KEY = 'shirobot.dashboard.font'
-
 const themes = colorThemes
 const modes = colorModes
-const fontGroups: Array<{
-  title: string
-  subtitle: string
-  options: Array<{ key: FontPreviewKey; label: string; sample: string; meta?: string; secondary?: boolean }>
-}> = [
-  {
-    title: 'Maple Mono',
-    subtitle: '',
-    options: [
-      { key: 'maple', label: 'Auto', sample: 'Aa', meta: '默认字重' },
-      { key: 'maple-regular', label: 'Regular', sample: 'Aa', meta: '400', secondary: true },
-      { key: 'maple-medium', label: 'Medium', sample: 'Aa', meta: '500', secondary: true },
-      { key: 'maple-semibold', label: 'SemiBold', sample: 'Aa', meta: '600', secondary: true },
-      { key: 'maple-bold', label: 'Bold', sample: 'Aa', meta: '700', secondary: true }
-    ]
-  },
-  {
-    title: 'Handwriting',
-    subtitle: '',
-    options: [
-      { key: 'lolita', label: 'Lolita', sample: 'Lo', meta: 'Display' },
-      { key: 'xiaolai', label: 'Xiaolai', sample: '小', meta: 'Regular' },
-      { key: 'xiaolai-mono', label: 'Mono', sample: '码', meta: 'Xiaolai', secondary: true }
-    ]
-  },
-  {
-    title: 'Sans SC',
-    subtitle: '',
-    options: [
-      { key: 'source-han', label: 'Source Han', sample: '思', meta: 'Sans SC' }
-    ]
-  }
-]
-
 const activeColor = ref<ColorThemeKey>(DEFAULT_COLOR_THEME)
 const activeMode = ref<ColorModeKey>(DEFAULT_COLOR_MODE)
-const activeFont = ref<FontPreviewKey>('maple')
 const appearancePanelOpen = ref(false)
-const fontPanelOpen = ref(false)
 const controlsRoot = ref<HTMLElement | null>(null)
 
 function previewColor(color: ColorThemeKey) {
@@ -202,46 +118,6 @@ function setMode(mode: ColorModeKey) {
   localStorage.setItem(THEME_STORAGE_KEYS.mode, mode)
 }
 
-function isFontPreviewKey(value: string | null): value is FontPreviewKey {
-  return value === 'maple'
-    || value === 'maple-regular'
-    || value === 'maple-medium'
-    || value === 'maple-semibold'
-    || value === 'maple-bold'
-    || value === 'lolita'
-    || value === 'xiaolai'
-    || value === 'xiaolai-mono'
-    || value === 'source-han'
-}
-
-function applyFont(font: FontPreviewKey) {
-  if (font === 'maple') {
-    delete document.documentElement.dataset.font
-  } else {
-    document.documentElement.dataset.font = font
-  }
-}
-
-function previewFont(font: FontPreviewKey) {
-  applyFont(font)
-}
-
-function restoreActiveFont() {
-  applyFont(activeFont.value)
-}
-
-function setFont(font: FontPreviewKey) {
-  activeFont.value = font
-  applyFont(font)
-  localStorage.setItem(FONT_STORAGE_KEY, font)
-  fontPanelOpen.value = false
-}
-
-function closeFontPanel() {
-  fontPanelOpen.value = false
-  restoreActiveFont()
-}
-
 function closeAppearancePanel() {
   appearancePanelOpen.value = false
   restoreAppearance()
@@ -249,20 +125,7 @@ function closeAppearancePanel() {
 
 function toggleAppearancePanel() {
   appearancePanelOpen.value = !appearancePanelOpen.value
-  if (appearancePanelOpen.value) {
-    closeFontPanel()
-  } else {
-    restoreAppearance()
-  }
-}
-
-function toggleFontPanel() {
-  fontPanelOpen.value = !fontPanelOpen.value
-  if (fontPanelOpen.value) {
-    closeAppearancePanel()
-  } else {
-    restoreActiveFont()
-  }
+  if (!appearancePanelOpen.value) restoreAppearance()
 }
 
 function handleOutsidePointerDown(event: PointerEvent) {
@@ -271,17 +134,14 @@ function handleOutsidePointerDown(event: PointerEvent) {
   if (controlsRoot.value?.contains(target)) return
 
   if (appearancePanelOpen.value) closeAppearancePanel()
-  if (fontPanelOpen.value) closeFontPanel()
 }
 
 onMounted(() => {
   const savedColor = localStorage.getItem(THEME_STORAGE_KEYS.color)
   const savedMode = localStorage.getItem(THEME_STORAGE_KEYS.mode)
-  const savedFont = localStorage.getItem(FONT_STORAGE_KEY)
 
   if (isColorThemeKey(savedColor)) setColor(savedColor)
   if (isColorModeKey(savedMode)) setMode(savedMode)
-  if (isFontPreviewKey(savedFont)) setFont(savedFont)
 
   document.addEventListener('pointerdown', handleOutsidePointerDown)
 })
@@ -303,30 +163,24 @@ onBeforeUnmount(() => {
 }
 
 .top-action-icon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 0;
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-lowest);
+  background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  transition:
-    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.top-action-icon:hover,
-.top-action-icon:focus-visible {
-  border-color: color-mix(in srgb, currentColor 24%, var(--md-sys-color-outline-variant));
-  box-shadow: var(--md-sys-elevation-level1);
+.top-action-icon:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) var(--md-sys-state-hover-opacity), transparent);
 }
 
 .top-action-icon:active {
-  box-shadow: none;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface-variant) var(--md-sys-state-pressed-opacity), transparent);
 }
 
 .top-action-icon svg {
@@ -339,17 +193,6 @@ onBeforeUnmount(() => {
   stroke-linejoin: round;
 }
 
-.font-action,
-.appearance-action {
-  border-color: transparent;
-  color: var(--md-sys-color-on-primary-container);
-  background: var(--md-sys-color-primary-container);
-}
-
-.font-action-label {
-  font: 700 15px / 1 var(--md-ref-typeface-plain);
-  letter-spacing: -0.03em;
-}
 
 .expand-panel {
   position: absolute;
@@ -361,8 +204,8 @@ onBeforeUnmount(() => {
   gap: var(--md-space-3);
   padding: var(--md-space-3);
   border: 0;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container-high);
   box-shadow: var(--md-sys-elevation-level2);
   transform-origin: top right;
 }
@@ -400,7 +243,6 @@ onBeforeUnmount(() => {
   gap: var(--md-space-3);
   padding: var(--md-space-3);
   border-radius: var(--md-sys-shape-corner-large);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 64%, transparent);
 }
 
 .appearance-section-head {
@@ -420,7 +262,12 @@ onBeforeUnmount(() => {
   font: var(--md-sys-typescale-body-small);
 }
 
-.theme-grid,
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--md-space-2);
+}
+
 .mode-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -441,6 +288,7 @@ onBeforeUnmount(() => {
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
   text-align: left;
 }
 
@@ -453,31 +301,29 @@ onBeforeUnmount(() => {
 }
 
 .theme-option:hover,
+.mode-choice:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), var(--md-sys-color-surface-container-lowest));
+}
+
 .theme-option.active,
-.mode-choice:hover,
 .mode-choice.active {
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
 }
 
 .theme-swatch {
   width: 30px;
   height: 30px;
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-primary-container);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 18%, transparent);
+  background: var(--md-sys-color-primary);
 }
 
-.theme-option.rose .theme-swatch {
-  background: #ffd9e5;
+.theme-option.paper .theme-swatch {
+  background: var(--app-swatch-paper);
 }
 
-.theme-option.lavender .theme-swatch {
-  background: #eaddff;
-}
-
-.theme-option.blue .theme-swatch {
-  background: #d3e4ff;
+.theme-option.chrome .theme-swatch {
+  background: var(--app-swatch-chrome);
 }
 
 .mode-choice-icon,
@@ -494,161 +340,8 @@ onBeforeUnmount(() => {
   stroke-linejoin: round;
 }
 
-.font-panel {
-  width: min(82vw, 760px);
-  max-height: min(72vh, 520px);
-  flex-direction: column;
-  gap: var(--md-space-3);
-  overflow-y: auto;
-}
-
-.font-group {
-  display: grid;
-  gap: var(--md-space-2);
-  padding: var(--md-space-2);
-  border-radius: var(--md-sys-shape-corner-large);
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-low) 64%, transparent);
-}
-
-.font-group-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--md-space-3);
-  padding: 0 var(--md-space-1);
-}
-
-.font-group-header span {
-  color: var(--md-sys-color-on-surface);
-  font: var(--md-sys-typescale-title-small);
-}
-
-.font-group-header small {
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-small);
-}
-
-.font-choice-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: var(--md-space-2);
-}
-
-.font-choice {
-  min-width: 0;
-  min-height: 72px;
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  align-items: center;
-  gap: var(--md-space-3);
-  border: 1px solid transparent;
-  border-radius: var(--md-sys-shape-corner-large);
-  padding: var(--md-space-2) var(--md-space-3);
-  background: var(--md-sys-color-surface-container-lowest);
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background var(--md-sys-motion-duration-short4),
-    border-color var(--md-sys-motion-duration-short4),
-    color var(--md-sys-motion-duration-short4),
-    transform var(--md-sys-motion-duration-short4);
-}
-
-.font-choice.secondary {
-  min-height: 64px;
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 72%, transparent);
-}
-
-.font-choice:hover,
-.font-choice:focus-visible,
-.font-choice.active {
-  border-color: transparent;
-  background: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-  transform: translateY(-1px);
-  outline: 0;
-}
-
-.font-choice-sample {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  color: currentColor;
-  font-size: 20px;
-  line-height: 1;
-}
-
-.font-choice-main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.font-choice-main strong,
-.font-choice-main small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.font-choice-main strong {
-  color: currentColor;
-  font: var(--md-sys-typescale-label-large);
-}
-
-.font-choice-main small {
-  opacity: 0.72;
-  font: var(--md-sys-typescale-body-small);
-}
-
-.font-choice.maple .font-choice-sample {
-  font-family: 'MapleMono', monospace;
-}
-
-.font-choice.maple-regular .font-choice-sample {
-  font-family: 'MapleMonoRegular', monospace;
-  font-weight: 400;
-}
-
-.font-choice.maple-medium .font-choice-sample {
-  font-family: 'MapleMonoMedium', monospace;
-  font-weight: 500;
-}
-
-.font-choice.maple-semibold .font-choice-sample {
-  font-family: 'MapleMonoSemiBold', monospace;
-  font-weight: 600;
-}
-
-.font-choice.maple-bold .font-choice-sample {
-  font-family: 'MapleMonoBold', monospace;
-  font-weight: 700;
-}
-
-.font-choice.lolita .font-choice-sample {
-  font-family: 'Lolita', sans-serif;
-}
-
-.font-choice.xiaolai .font-choice-sample {
-  font-family: 'Xiaolai', sans-serif;
-}
-
-.font-choice.xiaolai-mono .font-choice-sample {
-  font-family: 'XiaolaiMono', monospace;
-}
-
-.font-choice.source-han .font-choice-sample {
-  font-family: 'SourceHanSansSC', sans-serif;
-}
-
 @media (max-width: 599px) {
-  .appearance-panel,
-  .font-panel {
+  .appearance-panel {
     width: calc(100vw - 32px);
   }
 

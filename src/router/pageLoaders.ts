@@ -1,11 +1,11 @@
 const routeComponentLoaders = {
   '/': () => import('../views/overview/Overview.vue'),
   '/login': () => import('../views/login/Login.vue'),
-  '/plugins': () => import('../views/plugin/Plugins.vue'),
-  '/plugin-market': () => import('../views/pluginMarket/PluginMarket.vue'),
+  // 插件 hub: installed + catalog as two tabs of one page
+  '/plugins': () => import('../views/plugins/PluginsHub.vue'),
   '/plugins/:pluginId/config': () => import('../views/pluginConfig/PluginConfig.vue'),
-  '/adapters': () => import('../views/adapters/Adapters.vue'),
-  '/adapter-market': () => import('../views/adapterMarket/AdapterMarket.vue'),
+  // Adapter hub: installed + catalog as two tabs of one page
+  '/adapters': () => import('../views/adapters/AdaptersHub.vue'),
   '/logs': () => import('../views/logs/Logs.vue'),
   '/config': () => import('../views/config/Config.vue'),
   '/about': () => import('../views/about/About.vue')
@@ -19,7 +19,7 @@ function resolvePreloadPath(path: string): RouteComponentPath | null {
   const cleanPath = path.split('?')[0]?.replace(/\/$/, '') || '/'
 
   if (cleanPath === '') return '/'
-  if (/^\/plugins\/[^/]+\/config$/.test(cleanPath)) return '/plugins/:pluginId/config'
+  if (/^\/(plugins|adapters)\/[^/]+\/config$/.test(cleanPath)) return '/plugins/:pluginId/config'
 
   return cleanPath in routeComponentLoaders ? cleanPath as RouteComponentPath : null
 }
@@ -48,20 +48,12 @@ export function loadPluginsPage() {
   return preloadByKey('/plugins')
 }
 
-export function loadPluginMarketPage() {
-  return preloadByKey('/plugin-market')
-}
-
 export function loadPluginConfigPage() {
   return preloadByKey('/plugins/:pluginId/config')
 }
 
 export function loadAdaptersPage() {
   return preloadByKey('/adapters')
-}
-
-export function loadAdapterMarketPage() {
-  return preloadByKey('/adapter-market')
 }
 
 export function loadLogsPage() {
@@ -84,10 +76,8 @@ export function preloadRouteComponent(path: string) {
 export function preloadDashboardPages() {
   const preloadOrder: RouteComponentPath[] = [
     '/plugins',
-    '/plugin-market',
     '/logs',
     '/adapters',
-    '/adapter-market',
     '/config',
     '/about',
     '/plugins/:pluginId/config'

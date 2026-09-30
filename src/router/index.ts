@@ -2,14 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { hasDashboardSession } from '../auth/session'
 import {
   loadAboutPage,
-  loadAdapterMarketPage,
   loadAdaptersPage,
   loadConfigPage,
   loadLoginPage,
   loadLogsPage,
   loadOverviewPage,
   loadPluginConfigPage,
-  loadPluginMarketPage,
   loadPluginsPage
 } from './pageLoaders'
 
@@ -37,9 +35,9 @@ const router = createRouter({
           component: loadPluginsPage
         },
         {
+          // The catalog is now the 发现 tab of the 插件 page; keep old links working.
           path: 'plugin-market',
-          name: 'PluginMarket',
-          component: loadPluginMarketPage
+          redirect: { path: '/plugins', query: { tab: 'discover' } }
         },
         {
           path: 'plugins/:pluginId/config',
@@ -52,9 +50,15 @@ const router = createRouter({
           component: loadAdaptersPage
         },
         {
+          // Same config editor as plugins, without routes
+          path: 'adapters/:adapterId/config',
+          name: 'AdapterConfig',
+          component: loadPluginConfigPage
+        },
+        {
+          // The catalog is now the 发现 tab of the Adapter page; keep old links working.
           path: 'adapter-market',
-          name: 'AdapterMarket',
-          component: loadAdapterMarketPage
+          redirect: { path: '/adapters', query: { tab: 'discover' } }
         },
         {
           path: 'logs',
@@ -84,7 +88,8 @@ router.beforeEach(to => {
     return { name: 'Login' }
   }
 
-  if (to.name === 'Login' && hasSession) {
+  // `?switch` lets a signed-in user open the login page to pick or add another backend.
+  if (to.name === 'Login' && hasSession && to.query.switch === undefined) {
     return '/'
   }
 

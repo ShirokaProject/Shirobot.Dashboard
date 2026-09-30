@@ -8,7 +8,7 @@
       <main class="md3-content-area">
         <div class="md3-content-frame">
           <router-view v-slot="{ Component, route: viewRoute }">
-            <PageTransition :component="Component" :transition-key="routeTransitionKey(viewRoute)" />
+            <PageTransition :component="Component" :transition-key="routeTransitionKey(viewRoute)" :name="transitionName" />
           </router-view>
         </div>
       </main>
@@ -33,17 +33,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
-import PageTransition from './components/PageTransition.vue'
+import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
 import { menuItems } from './navigation'
-
 const route = useRoute()
+const router = useRouter()
 
+// Going into the config workspace slides forward, coming out slides back; every other
+// change (sidebar destinations) fades through. Set in a guard so it is ready before the swap.
+const isWorkspace = (name: unknown) => name === 'PluginConfig' || name === 'AdapterConfig'
+const transitionName = ref<PageTransitionName>('md3-fade-through')
+const removeGuard = router.beforeEach((to, from) => {
+  if (isWorkspace(to.name) === isWorkspace(from.name)) transitionName.value = 'md3-fade-through'
+  else transitionName.value = isWorkspace(to.name) ? 'md3-axis-forward' : 'md3-axis-back'
+})
+onBeforeUnmount(removeGuard)
+
+// The overview's own greeting card is its headline, so the app bar stays untitled there.
 const currentPageName = computed(() => {
+  if (route.name === 'Overview') return ''
   return menuItems.find(item => isActiveRoute(item.path))?.label ?? 'Shirobot'
 })
 
@@ -53,7 +65,8 @@ function isActiveRoute(path: string) {
 }
 
 function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
-  if (viewRoute.name === 'PluginConfig') return viewRoute.fullPath
+  // The config workspace switches plugins/adapters in place; keep it mounted across them.
+  if (isWorkspace(viewRoute.name)) return 'config-workspace'
   return String(viewRoute.name ?? viewRoute.path)
 }
 </script>
@@ -62,7 +75,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 .md3-app-shell {
   min-height: 100vh;
   display: flex;
-  background: var(--md-sys-color-surface);
+  background: var(--app-bg);
   color: var(--md-sys-color-on-surface);
 }
 

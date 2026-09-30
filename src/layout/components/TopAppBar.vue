@@ -31,9 +31,7 @@ defineProps<{
   justify-content: space-between;
   gap: var(--md-space-6);
   padding: var(--md-space-6) var(--md-space-8) var(--md-space-4);
-  background: color-mix(in srgb, var(--md-sys-color-surface) 46%, transparent);
-  backdrop-filter: blur(24px) saturate(1.35);
-  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  background: var(--app-bg);
 }
 
 .title-block {
