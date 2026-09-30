@@ -62,7 +62,8 @@ async function readResponseBody(response: Response) {
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   // Dev-only: the demo dataset is dropped from production builds.
-  if (import.meta.env.DEV && isDemoMode()) {
+  // Spelled out (not DEMO_ENABLED) so regular builds drop the demo chunk entirely
+  if ((import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true') && isDemoMode()) {
     const { getDemoApiResponse } = await import('../demo')
     return getDemoApiResponse<T>(path, init)
   }

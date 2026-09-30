@@ -2,7 +2,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { BACKEND_SWITCHING_ENABLED, describeBaseUrl, listBackends, normalizeBaseUrl, removeBackend, saveBackend, type BackendProfile } from '../../auth/backends'
-import { getDashboardSession, hasDashboardSession, saveDashboardSession } from '../../auth/session'
+import { DEMO_ENABLED, getDashboardSession, hasDashboardSession, saveDashboardSession } from '../../auth/session'
 import { markDashboardEntrance, reloadIntoDashboard, signInToBackend } from '../../auth/signIn'
 
 const DEMO_HASH = '#demo'
@@ -151,8 +151,10 @@ export function useLoginPage() {
   }
 
   function syncDemoEntry() {
-    // Dev-only: production builds talk to real backends exclusively.
-    demoEntryVisible.value = import.meta.env.DEV && (window.location.hash.toLowerCase() === DEMO_HASH || session?.mode === 'demo')
+    // A demo build (the public site) always offers it; in dev it hides behind #demo.
+    // Regular release builds have no demo mode at all.
+    const asked = window.location.hash.toLowerCase() === DEMO_HASH || session?.mode === 'demo'
+    demoEntryVisible.value = DEMO_ENABLED && (!import.meta.env.DEV || asked)
   }
 
   onMounted(() => {

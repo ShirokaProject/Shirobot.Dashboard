@@ -199,7 +199,7 @@ export function useLogsPage() {
     if (streamState.value !== 'reconnecting') streamState.value = 'connecting'
 
     // Dev-only demo feed; dynamic so the demo dataset stays out of production builds.
-    if (import.meta.env.DEV && isDemoMode()) {
+    if ((import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true') && isDemoMode()) {
       void import('../../api/demo').then(({ openDemoLogStream }) => {
         if (!disposed && autoRefresh.value && !stopDemoStream) stopDemoStream = openDemoLogStream(handleStreamMessage)
       })

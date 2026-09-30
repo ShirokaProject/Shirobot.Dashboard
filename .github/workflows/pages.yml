@@ -1,7 +1,8 @@
 name: Deploy to GitHub Pages
 
 # A public build of the dashboard: it is not served by a Shirobot host, so it runs in
-# custom-backend mode (the user adds the address of their own Shirobot on the login page).
+# custom-backend mode (the user adds the address of their own Shirobot on the login page),
+# and it offers the demo mode with built-in sample data.
 on:
   push:
     branches: [main]
@@ -42,6 +43,8 @@ jobs:
           # '' with a custom domain (served from the root), '/<repo>' on github.io
           VITE_BASE: ${{ steps.pages.outputs.base_path }}/
           VITE_ENABLE_BACKEND_SWITCH: 'true'
+          # The public site doubles as a demo with built-in sample data
+          VITE_ENABLE_DEMO: 'true'
         run: npm run build
 
       - name: Add SPA fallback

@@ -2,6 +2,12 @@ import { DEFAULT_BASE_URL, describeBaseUrl } from './backends'
 
 export type DashboardSessionMode = 'api' | 'demo'
 
+/**
+ * Demo mode (built-in sample data, no backend) exists in dev and in builds that opt in with
+ * VITE_ENABLE_DEMO=true, such as the public Pages site. Normal releases never include it.
+ */
+export const DEMO_ENABLED: boolean = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true'
+
 export interface DashboardSession {
   mode: DashboardSessionMode
   token: string
@@ -23,7 +29,7 @@ export function getDashboardSession(): DashboardSession | null {
   try {
     const session = JSON.parse(rawSession) as Partial<Record<keyof DashboardSession, unknown>>
     if (session.mode !== 'api' && session.mode !== 'demo') return null
-    if (session.mode === 'demo' && !import.meta.env.DEV) return null
+    if (session.mode === 'demo' && !DEMO_ENABLED) return null
 
     if (session.mode === 'demo') return { mode: 'demo', token: '' }
 
