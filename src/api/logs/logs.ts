@@ -1,7 +1,6 @@
 import type { KindFilter, RuntimeLog } from '../../features/logs/types'
-import { getDashboardSession } from '../../auth/session'
+import { getDashboardSession, getSessionBaseUrl } from '../../auth/session'
 import { apiRequest } from '../core/http'
-import { API_BASE_URL } from '../core/http'
 
 export interface LogSourceInfo {
   source: string
@@ -63,8 +62,9 @@ export function getLogStreamUrl() {
   const session = getDashboardSession()
   const path = '/api/v1/logs/stream'
 
-  const url = API_BASE_URL
-    ? new URL(path, `${API_BASE_URL.replace(/\/$/, '')}/`)
+  const baseUrl = getSessionBaseUrl(session)
+  const url = baseUrl
+    ? new URL(path, `${baseUrl.replace(/\/$/, '')}/`)
     : new URL(path, window.location.origin)
 
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'

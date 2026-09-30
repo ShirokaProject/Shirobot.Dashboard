@@ -1,20 +1,37 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getLogSources, getLogStreamUrl, type BackendLogLevel, type LogEntry, type LogSourceInfo, type LogStreamMessage } from '../../api'
-import type { KindFilter, LogLevel, RuntimeLog } from '../../features/logs/types'
-import { kindOptions } from '../../features/logs/utils'
+import { isDemoMode } from '../../auth/session'
+import type { LogLevel, RuntimeLog } from '../../features/logs/types'
 
 const maxLogLines = 1000
+
+/** Minimum severity shown: everything, warnings and up, or errors only */
+export type LevelFilter = 'ALL' | 'WARN' | 'ERROR'
+
+export const levelOptions: Array<{ value: LevelFilter; label: string }> = [
+  { value: 'ALL', label: '全部' },
+  { value: 'WARN', label: '警告及以上' },
+  { value: 'ERROR', label: '仅错误' }
+]
+
+export type StreamState = 'connecting' | 'live' | 'reconnecting' | 'paused'
+
+export const streamStateLabels: Record<StreamState, string> = {
+  connecting: '正在连接',
+  live: '实时',
+  reconnecting: '连接中断，正在重连',
+  paused: '已暂停'
+}
 
 function parseLogLine(raw: string, id: number): RuntimeLog {
   const match = raw.match(/^\[(?<time>[^\]]+)]\s+\[(?<source>[^\]]+)]\s*(?<message>.*)$/)
   const source = match?.groups?.source || 'system'
   const message = match?.groups?.message || raw
-  const level = parseLevel(raw)
 
   return {
     id,
     kind: source.toLowerCase() === 'system' ? 'system' : 'plugin',
-    level,
+    level: parseLevel(raw),
     time: match?.groups?.time || '',
     source,
     message,
@@ -33,7 +50,7 @@ function createLogFromEntry(entry: LogEntry, id: number): RuntimeLog {
     time,
     source: entry.source,
     message: entry.message,
-    raw: `[${time}] ${entry.message}`,
+    raw: `[${time}] [${entry.source}] ${entry.message}`,
     traceId: '-'
   }
 }
@@ -52,7 +69,7 @@ function mapLogLevel(level: BackendLogLevel): LogLevel {
     success: 'SUCCESS'
   }
 
-  return levelMap[level]
+  return levelMap[level] ?? 'INFO'
 }
 
 function parseLevel(raw: string): LogLevel {
@@ -61,66 +78,87 @@ function parseLevel(raw: string): LogLevel {
   return 'INFO'
 }
 
-function shortSource(source: string) {
-  if (source === 'ALL') return '*'
-  return source.slice(0, 2).toUpperCase()
+function matchesLevel(level: LogLevel, filter: LevelFilter) {
+  if (filter === 'ERROR') return level === 'ERROR'
+  if (filter === 'WARN') return level === 'ERROR' || level === 'WARN'
+  return true
+}
+
+export function sourceInitials(source: string) {
+  const words = source.split(/[\s._-]+/).filter(Boolean)
+  const initials = words.length > 1 ? words[0][0] + words[1][0] : source.slice(0, 2)
+  return initials.toUpperCase()
 }
 
 export function useLogsPage() {
   const keyword = ref('')
-  const activeKind = ref<KindFilter>('ALL')
+  const activeLevel = ref<LevelFilter>('ALL')
   const activeSource = ref('ALL')
   const autoRefresh = ref(true)
+  const streamState = ref<StreamState>('connecting')
   const loadError = ref('')
 
   const runtimeLogs = ref<RuntimeLog[]>([])
   const logSources = ref<LogSourceInfo[]>([])
   const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
-  const activeLogFileName = computed(() => `${activeSource.value === 'ALL' ? 'all' : activeSource.value}.log`)
   let socket: WebSocket | null = null
+  let stopDemoStream: (() => void) | null = null
   let sourceTimer: ReturnType<typeof window.setInterval> | undefined
   let reconnectTimer: ReturnType<typeof window.setTimeout> | undefined
   let nextLogId = 1
+  let disposed = false
 
-  const filteredLogs = computed(() => {
-    return runtimeLogs.value.filter(log => {
-      const matchKind = activeKind.value === 'ALL' || log.kind === activeKind.value
-      const matchSource = activeSource.value === 'ALL' || log.source === activeSource.value
-      const matchKeyword = !normalizedKeyword.value || [log.raw, log.message, log.source, log.traceId, log.groupName ?? '', log.groupId ?? '', log.userId ?? '']
-        .some(value => value.toLowerCase().includes(normalizedKeyword.value))
-      return matchKind && matchSource && matchKeyword
-    })
-  })
+  // Everything except the level filter, so the level counts describe what's on screen.
+  const scopedLogs = computed(() => runtimeLogs.value.filter(log => {
+    const matchSource = activeSource.value === 'ALL' || log.source === activeSource.value
+    const matchKeyword = !normalizedKeyword.value || [log.message, log.source]
+      .some(value => value.toLowerCase().includes(normalizedKeyword.value))
+    return matchSource && matchKeyword
+  }))
+
+  const filteredLogs = computed(() => scopedLogs.value.filter(log => matchesLevel(log.level, activeLevel.value)))
+
+  const levelCounts = computed(() => ({
+    ALL: scopedLogs.value.length,
+    WARN: scopedLogs.value.filter(log => matchesLevel(log.level, 'WARN')).length,
+    ERROR: scopedLogs.value.filter(log => log.level === 'ERROR').length
+  }))
 
   const sourceFilters = computed(() => {
-    const counts = runtimeLogs.value.reduce<Record<string, number>>((result, log) => {
-      result[log.source] = (result[log.source] ?? 0) + 1
-      return result
-    }, {})
+    const counts: Record<string, { total: number; errors: number }> = {}
+    for (const log of runtimeLogs.value) {
+      const entry = counts[log.source] ??= { total: 0, errors: 0 }
+      entry.total += 1
+      if (log.level === 'ERROR') entry.errors += 1
+    }
 
-    const sourceItems = logSources.value.map(source => ({
-      key: source.source,
-      label: source.plugin_name || source.source,
-      short: shortSource(source.source),
-      description: source.description,
-      count: counts[source.source] ?? 0
+    // Sources the backend lists, plus any that only show up in the stream
+    const known = new Set(logSources.value.map(source => source.source))
+    const extra = Object.keys(counts).filter(source => !known.has(source))
+    const sourceItems = [
+      ...logSources.value.map(source => ({ key: source.source, label: source.plugin_name || source.source, description: source.description })),
+      ...extra.map(source => ({ key: source, label: source, description: '' }))
+    ].map(item => ({
+      ...item,
+      short: sourceInitials(item.label),
+      count: counts[item.key]?.total ?? 0,
+      errors: counts[item.key]?.errors ?? 0
     }))
 
     return [
       {
         key: 'ALL',
         label: '全部来源',
-        short: '*',
-        description: '消息、插件、系统输出',
-        count: runtimeLogs.value.length
+        short: '',
+        description: '主程序、Adapter 与插件',
+        count: runtimeLogs.value.length,
+        errors: runtimeLogs.value.filter(log => log.level === 'ERROR').length
       },
       ...sourceItems
     ]
   })
 
-  function setKind(kind: KindFilter) {
-    activeKind.value = kind
-  }
+  const activeSourceLabel = computed(() => sourceFilters.value.find(source => source.key === activeSource.value)?.label ?? activeSource.value)
 
   function appendLogs(entries: Array<LogEntry | string>) {
     const logs = entries.map(entry => typeof entry === 'string'
@@ -132,6 +170,7 @@ export function useLogsPage() {
   function handleStreamMessage(message: LogStreamMessage) {
     if (message.type === 'connected') {
       loadError.value = ''
+      streamState.value = 'live'
       return
     }
 
@@ -148,6 +187,8 @@ export function useLogsPage() {
   function closeSocket() {
     window.clearTimeout(reconnectTimer)
     reconnectTimer = undefined
+    stopDemoStream?.()
+    stopDemoStream = null
     if (socket) {
       socket.onclose = null
       socket.close()
@@ -158,42 +199,54 @@ export function useLogsPage() {
   function connectStream() {
     closeSocket()
 
-    if (!autoRefresh.value) return
+    if (!autoRefresh.value) {
+      streamState.value = 'paused'
+      return
+    }
+
+    if (streamState.value !== 'reconnecting') streamState.value = 'connecting'
+
+    // Dev-only demo feed; dynamic so the demo dataset stays out of production builds.
+    if (import.meta.env.DEV && isDemoMode()) {
+      void import('../../api/demo').then(({ openDemoLogStream }) => {
+        if (!disposed && autoRefresh.value && !stopDemoStream) stopDemoStream = openDemoLogStream(handleStreamMessage)
+      })
+      return
+    }
 
     socket = new WebSocket(getLogStreamUrl())
 
     socket.onmessage = event => {
       try {
         handleStreamMessage(JSON.parse(event.data) as LogStreamMessage)
-      } catch (error) {
-        loadError.value = '日志流返回了无法解析的数据。'
-        void error
+      } catch {
+        loadError.value = '日志流返回了无法解析的数据'
       }
     }
 
     socket.onopen = () => {
       loadError.value = ''
+      streamState.value = 'live'
     }
 
     socket.onclose = () => {
       socket = null
       if (autoRefresh.value) {
+        streamState.value = 'reconnecting'
         reconnectTimer = window.setTimeout(connectStream, 2000)
       }
     }
 
     socket.onerror = () => {
-      loadError.value = '日志 WebSocket 暂不可用，请接入 /api/v1/logs/stream 后刷新。'
+      loadError.value = '无法连接日志流 /api/v1/logs/stream'
     }
   }
 
   async function refreshSources() {
-    loadError.value = ''
     try {
       logSources.value = await getLogSources()
-    } catch (error) {
-      loadError.value = '后端日志来源接口暂不可用，请接入 /api/v1/logs/sources 后刷新。'
-      void error
+    } catch {
+      // The stream still works without the source list; sources then come from the lines.
     }
   }
 
@@ -202,11 +255,28 @@ export function useLogsPage() {
     connectStream()
   }
 
+  /** Local only: the backend keeps its own copy */
+  function clearLogs() {
+    runtimeLogs.value = []
+  }
+
+  function exportLogs() {
+    const text = filteredLogs.value.map(log => `[${log.time}] [${log.level}] [${log.source}] ${log.message}`).join('\n')
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
+    const link = document.createElement('a')
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
+    link.href = url
+    link.download = `shirobot-${activeSource.value === 'ALL' ? 'all' : activeSource.value}-${stamp}.log`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   watch(autoRefresh, enabled => {
     if (enabled) {
       connectStream()
     } else {
       closeSocket()
+      streamState.value = 'paused'
     }
   })
 
@@ -217,21 +287,26 @@ export function useLogsPage() {
   })
 
   onBeforeUnmount(() => {
+    disposed = true
     window.clearInterval(sourceTimer)
     closeSocket()
   })
 
   return {
     keyword,
-    activeKind,
+    normalizedKeyword,
+    activeLevel,
     activeSource,
-    activeLogFileName,
+    activeSourceLabel,
     autoRefresh,
+    streamState,
     loadError,
+    runtimeLogs,
     filteredLogs,
+    levelCounts,
     sourceFilters,
-    kindOptions,
-    setKind,
-    refreshLogs
+    refreshLogs,
+    clearLogs,
+    exportLogs
   }
 }
