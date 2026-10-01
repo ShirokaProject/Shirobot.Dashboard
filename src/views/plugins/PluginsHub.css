@@ -450,3 +450,18 @@
     order: 3;
   }
 }
+.plugin-file-drop-hint {
+  position: fixed;
+  z-index: 2100;
+  inset: var(--md-space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--md-space-3);
+  border: 2px dashed var(--md-sys-color-primary);
+  border-radius: var(--corner-outer);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  pointer-events: none;
+}

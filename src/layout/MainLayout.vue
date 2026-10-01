@@ -207,7 +207,8 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   }
 
   .md3-main-area {
-    min-height: calc(100vh - 80px);
+    min-height: 100dvh;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
   .md3-content-area {
@@ -215,12 +216,20 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   }
 
   .md3-content-frame {
-    min-height: calc(100vh - 80px - var(--md-space-3) - var(--md-space-6));
+    min-height: calc(100dvh - 136px - env(safe-area-inset-bottom, 0px) - var(--md-space-3) - var(--md-space-6));
   }
 
   .md3-bottom-bar {
+    position: fixed;
+    z-index: 50;
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: flex;
     width: 100%;
+    height: calc(72px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
     box-sizing: border-box;
     overflow: hidden;
     order: 2;
@@ -231,6 +240,8 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   }
 
   .bottom-item {
+    min-height: 56px;
+    justify-content: center;
     font-size: 11px;
   }
 }

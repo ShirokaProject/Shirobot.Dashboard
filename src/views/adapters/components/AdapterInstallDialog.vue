@@ -1,8 +1,8 @@
 <template>
-  <el-dialog :model-value="visible" :title="title" width="560px" append-to-body align-center :close-on-click-modal="!busy" :show-close="!busy" @update:model-value="emit('update:visible', $event)">
+  <el-dialog :model-value="visible" :title="title" width="560px" append-to-body align-center :close-on-click-modal="!busy" :close-on-press-escape="!busy" :show-close="!busy" @update:model-value="emit('update:visible', $event)">
     <div class="adapter-install-dialog">
       <template v-if="!preview">
-        <el-upload drag :auto-upload="false" :limit="1" :show-file-list="false" accept=".dll,.zip" :on-change="selectFile">
+        <el-upload ref="upload" drag :auto-upload="false" :limit="1" :show-file-list="false" :disabled="busy" accept=".dll,.zip" :on-change="selectFile" :on-exceed="replaceFile">
           <strong>拖拽适配器包到这里</strong>
           <span>或点击选择本地 .dll / .zip 文件</span>
         </el-upload>
@@ -21,7 +21,7 @@
         <el-alert v-if="preview.conflict" :title="`检测到已安装版本 ${preview.installedVersion || '未知'}，确认后将替换。`" type="warning" :closable="false" show-icon />
         <el-checkbox v-if="preview.conflict" :model-value="replace" @update:model-value="emit('update:replace', $event)">替换已安装适配器</el-checkbox>
       </template>
-      <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon />
+      <el-alert v-if="error || fileError" :title="fileError || error" type="error" :closable="false" show-icon />
     </div>
     <template #footer>
       <el-button :disabled="busy" @click="emit('update:visible', false)">取消</el-button>
@@ -32,12 +32,39 @@
 </template>
 
 <script setup lang="ts">
-import type { UploadFile } from 'element-plus'
+import { nextTick, ref, watch } from 'vue'
+import { genFileId, type UploadFile, type UploadInstance, type UploadRawFile } from 'element-plus'
 import type { AdapterInstallPreview } from '../../../api'
+import { packageFileError } from '../../../features/packages/fileDrop'
 
-defineProps<{ visible: boolean; title: string; file: File | null; preview: AdapterInstallPreview | null; replace: boolean; busy: boolean; error: string }>()
+const props = defineProps<{ visible: boolean; title: string; file: File | null; preview: AdapterInstallPreview | null; replace: boolean; busy: boolean; error: string }>()
 const emit = defineEmits<{ 'update:visible': [boolean]; 'update:file': [File | null]; 'update:replace': [boolean]; submit: []; confirm: [] }>()
-function selectFile(file: UploadFile) { emit('update:file', file.raw ?? null) }
+const upload = ref<UploadInstance>()
+const fileError = ref('')
+watch(() => props.file, file => {
+  if (file) fileError.value = ''
+  else upload.value?.clearFiles()
+})
+watch(() => props.visible, visible => {
+  if (!visible) { fileError.value = ''; upload.value?.clearFiles() }
+})
+async function selectFile(file: UploadFile) {
+  if (props.busy || !file.raw) return
+  fileError.value = packageFileError([file.raw], '适配器') || ''
+  if (fileError.value) { upload.value?.clearFiles(); return }
+  emit('update:file', file.raw)
+  await nextTick()
+  emit('submit')
+}
+function replaceFile(files: File[]) {
+  if (props.busy) return
+  fileError.value = packageFileError(files, '适配器') || ''
+  if (fileError.value) return
+  upload.value?.clearFiles()
+  const file = files[0] as UploadRawFile
+  file.uid = genFileId()
+  upload.value?.handleStart(file)
+}
 </script>
 
 <style scoped>

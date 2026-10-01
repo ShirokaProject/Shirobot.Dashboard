@@ -1,5 +1,10 @@
 <template>
   <div class="hub">
+    <div v-if="installed.draggingPluginFile.value" class="plugin-file-drop-hint" role="status">
+      <MdIcon name="upload" />
+      <strong>松开即可上传插件</strong>
+      <span>支持 .dll / .zip，解析后确认安装</span>
+    </div>
     <!-- Header: tab switch, one search box, context action -->
     <header class="hub-header panel">
       <div class="button-group" role="tablist" aria-label="插件视图">

@@ -1,11 +1,12 @@
 {
   "name": "shirobot.dashboard",
   "private": true,
-  "version": "0.9.5",
+  "version": "0.9.6",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "test": "node --test scripts/*.test.mjs",
     "preview": "vite preview",
     "theme": "node scripts/generate-theme.mjs",
     "lint:css": "stylelint \"src/**/*.{css,vue}\""

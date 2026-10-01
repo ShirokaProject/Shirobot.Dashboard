@@ -1,5 +1,10 @@
 <template>
   <div class="hub">
+    <div v-if="installed.draggingAdapterFile.value" class="plugin-file-drop-hint" role="status">
+      <MdIcon name="upload" />
+      <strong>松开即可上传适配器</strong>
+      <span>支持 .dll / .zip，解析后确认安装</span>
+    </div>
     <!-- Same shape as the 插件 page: tabs, one search box, upload -->
     <header class="hub-header panel">
       <div class="button-group" role="tablist" aria-label="适配器视图">

@@ -1,5 +1,6 @@
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { packageFileError, usePackageFileDrop } from '../../features/packages/fileDrop'
 import { ElMessageBox } from 'element-plus'
 import { ApiError, cancelAdapterUpload, confirmAdapterUpload, deleteAdapter, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
 import type { AdapterInstallPreview, AdapterStatus } from '../../api'
@@ -18,6 +19,27 @@ export function useAdaptersPage() {
   const installReplace = ref(false)
   const installError = ref('')
   const installBusy = ref(false)
+  let selectingDroppedFile = false
+  const draggingAdapterFile = usePackageFileDrop({
+    busy: () => selectingDroppedFile || installBusy.value || Boolean(operation.value),
+    drop: files => {
+      installVisible.value = true
+      const problem = packageFileError(files, '适配器')
+      if (problem) { installError.value = problem; return }
+      void selectDroppedAdapter(files[0]!)
+    }
+  })
+
+  async function selectDroppedAdapter(file: File) {
+    selectingDroppedFile = true
+    try {
+      const uploadId = installPreview.value?.uploadId
+      if (uploadId) try { await cancelAdapterUpload(uploadId) } catch { /* Best-effort preview cleanup. */ }
+      installFile.value = file
+      await nextTick()
+      await submitInstall()
+    } finally { selectingDroppedFile = false }
+  }
   const selected = computed(() => adapters.value.find(adapter => adapter.id === selectedId.value) ?? null)
 
   function notify(text: string, type: 'success' | 'error' | 'warning' = 'success') { message.value = text; messageType.value = type }
@@ -60,7 +82,7 @@ export function useAdaptersPage() {
     } finally { operation.value = '' }
   }
   async function submitInstall() {
-    if (!installFile.value) return
+    if (!installFile.value || installBusy.value) return
     installBusy.value = true; installError.value = ''
     try { installPreview.value = await uploadAdapterPackage(installFile.value); installReplace.value = installPreview.value.conflict } catch (cause) { installError.value = getApiErrorMessage(cause, '适配器包解析失败。') } finally { installBusy.value = false }
   }
@@ -87,5 +109,5 @@ export function useAdaptersPage() {
   }
   watch(installFile, () => { installPreview.value = null; installError.value = '' })
   onMounted(() => { void loadAdapters() })
-  return { adapters, selectedId, selected, loading, operation, error, message, messageType, installVisible, installFile, installPreview, installReplace, installError, installBusy, loadAdapters, run, submitInstall, confirmInstall, closeInstall }
+  return { adapters, selectedId, selected, loading, operation, error, message, messageType, installVisible, installFile, installPreview, installReplace, installError, installBusy, draggingAdapterFile, loadAdapters, run, submitInstall, confirmInstall, closeInstall }
 }

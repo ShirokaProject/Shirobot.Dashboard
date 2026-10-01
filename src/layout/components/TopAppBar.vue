@@ -65,10 +65,24 @@ function logout() {
 
 @media (max-width: 599px) {
   .md3-top-app-bar {
-    min-height: auto;
-    align-items: flex-start;
-    flex-direction: column;
-    padding: var(--md-space-5) var(--md-space-4) var(--md-space-4);
+    min-height: 64px;
+    align-items: center;
+    flex-direction: row;
+    gap: var(--md-space-2);
+    padding: calc(var(--md-space-3) + env(safe-area-inset-top, 0px)) var(--md-space-4) var(--md-space-3);
+  }
+
+  .title-block {
+    flex: 1;
+  }
+
+  .md3-page-title {
+    font-size: 22px;
+  }
+
+  .top-actions-row {
+    flex-shrink: 0;
+    gap: var(--md-space-2);
   }
 }
 

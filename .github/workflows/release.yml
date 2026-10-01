@@ -25,6 +25,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate release version
+        run: node -e "if (require('./package.json').version !== process.env.GITHUB_REF_NAME.replace(/^v/, '')) throw new Error('Tag and package version must match')"
+
+      - name: Test uploads
+        run: npm test
+
       - name: Build
         run: npm run build
 

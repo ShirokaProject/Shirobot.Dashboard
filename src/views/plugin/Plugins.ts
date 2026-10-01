@@ -1,5 +1,6 @@
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { packageFileError, usePackageFileDrop } from '../../features/packages/fileDrop'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { cancelPluginUpload, confirmPluginUpload, deleteInstalledPlugin, getApiErrorMessage, getInstalledPlugins, getPluginActions, runPluginAction, setPluginEnabled, updateInstalledPlugin, uploadPluginPackage } from '../../api'
@@ -19,6 +20,7 @@ export function usePluginsPage() {
   const keyword = ref('')
   const activeStatus = ref<PluginStatus | 'all'>('all')
   const uploadDialogVisible = ref(false)
+  let selectingDroppedFile = false
   const selectedPluginFile = ref<File | null>(null)
   const pluginUploadResult = ref<PluginUploadParsedResponse | null>(null)
   const pluginUploadError = ref('')
@@ -269,7 +271,7 @@ export function usePluginsPage() {
   }
 
   async function submitPluginUpload() {
-    if (!selectedPluginFile.value) return
+    if (!selectedPluginFile.value || pluginUploadParsing.value || pluginUploadInstalling.value) return
 
     pluginUploadParsing.value = true
     pluginUploadError.value = ''
@@ -285,8 +287,7 @@ export function usePluginsPage() {
       pluginUploadResult.value = response
       pluginUploadReplace.value = response.conflict?.exists ? response.conflict.action === 'replace' : false
     } catch (error) {
-      pluginUploadError.value = '插件上传解析失败'
-      console.error('Plugin upload failed', error)
+      pluginUploadError.value = getApiErrorMessage(error, '插件上传解析失败')
     } finally {
       pluginUploadParsing.value = false
     }
@@ -316,6 +317,26 @@ export function usePluginsPage() {
     } finally {
       pluginUploadInstalling.value = false
     }
+  }
+
+  const draggingPluginFile = usePackageFileDrop({
+    busy: () => selectingDroppedFile || pluginUploadParsing.value || pluginUploadInstalling.value,
+    drop: files => {
+      uploadDialogVisible.value = true
+      const error = packageFileError(files)
+      if (error) { pluginUploadError.value = error; return }
+      void selectDroppedPlugin(files[0]!)
+    }
+  })
+
+  async function selectDroppedPlugin(file: File) {
+    selectingDroppedFile = true
+    try {
+      await cleanupPluginUpload()
+      selectedPluginFile.value = file
+      await nextTick()
+      await submitPluginUpload()
+    } finally { selectingDroppedFile = false }
   }
 
   onMounted(() => {
@@ -361,6 +382,7 @@ export function usePluginsPage() {
     keyword,
     activeStatus,
     uploadDialogVisible,
+    draggingPluginFile,
     selectedPluginFile,
     pluginUploadResult,
     pluginUploadError,

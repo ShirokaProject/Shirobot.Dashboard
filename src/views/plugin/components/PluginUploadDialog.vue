@@ -32,13 +32,16 @@
 
       <template v-if="!uploadResult">
         <el-upload
+          ref="upload"
           drag
           :auto-upload="false"
           :limit="1"
           :show-file-list="false"
+          :disabled="parsing || installing"
           accept=".dll,.zip"
           :on-change="handlePluginFileChange"
           :on-remove="handlePluginFileRemove"
+          :on-exceed="replacePluginFile"
         >
           <div class="upload-dropzone-text">
             <strong>{{ selectedFile ? '重新选择插件文件' : '拖拽插件文件到这里' }}</strong>
@@ -104,7 +107,7 @@
         </label>
       </div>
 
-      <div v-if="uploadError" class="upload-error-panel">{{ uploadError }}</div>
+      <div v-if="uploadError || fileError" class="upload-error-panel">{{ fileError || uploadError }}</div>
     </div>
 
     <template #footer>
@@ -124,8 +127,10 @@
 </template>
 
 <script setup lang="ts">
-import type { UploadFile } from 'element-plus'
+import { nextTick, ref, watch } from 'vue'
+import { genFileId, type UploadFile, type UploadInstance, type UploadRawFile } from 'element-plus'
 import type { PluginUploadParsedResponse } from '../../../api'
+import { packageFileError } from '../../../features/packages/fileDrop'
 
 const props = withDefaults(defineProps<{
   visible: boolean
@@ -152,6 +157,15 @@ const emit = defineEmits<{
   submit: []
   confirm: []
 }>()
+const upload = ref<UploadInstance>()
+const fileError = ref('')
+watch(() => props.selectedFile, file => {
+  if (file) fileError.value = ''
+  else upload.value?.clearFiles()
+})
+watch(() => props.visible, visible => {
+  if (!visible) { fileError.value = ''; upload.value?.clearFiles() }
+})
 
 function formatSize(size: number) {
   if (size < 1024) return `${size} B`
@@ -164,8 +178,23 @@ function handleVisibleChange(value: boolean) {
   emit('update:visible', value)
 }
 
-function handlePluginFileChange(file: UploadFile) {
-  emit('update:selectedFile', file.raw ?? null)
+async function handlePluginFileChange(file: UploadFile) {
+  if (props.parsing || props.installing || !file.raw) return
+  fileError.value = packageFileError([file.raw]) || ''
+  if (fileError.value) { upload.value?.clearFiles(); return }
+  emit('update:selectedFile', file.raw)
+  await nextTick()
+  emit('submit')
+}
+
+function replacePluginFile(files: File[]) {
+  if (props.parsing || props.installing) return
+  fileError.value = packageFileError(files) || ''
+  if (fileError.value) return
+  upload.value?.clearFiles()
+  const file = files[0] as UploadRawFile
+  file.uid = genFileId()
+  upload.value?.handleStart(file)
 }
 
 function handlePluginFileRemove() {

@@ -6,6 +6,8 @@
         class="top-action-icon appearance-action"
         :class="[activeColor, activeMode]"
         aria-label="切换外观"
+        :aria-expanded="appearancePanelOpen"
+        aria-controls="dashboard-appearance-panel"
         @click="toggleAppearancePanel"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -18,7 +20,10 @@
       </button>
 
       <Transition name="expand-panel-fade">
-        <div v-if="appearancePanelOpen" class="expand-panel appearance-panel" @mouseleave="restoreAppearance">
+        <div v-if="appearancePanelOpen" id="dashboard-appearance-panel" class="expand-panel appearance-panel" @mouseleave="restoreAppearance">
+          <section class="appearance-mode-mobile">
+            <ThemeModeSwitch :collapsed="false" />
+          </section>
           <section v-if="themes.length > 1" class="appearance-section">
             <div class="appearance-section-head">
               <span>主题色</span>
@@ -47,6 +52,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import ThemeModeSwitch from './ThemeModeSwitch.vue'
 import {
   DEFAULT_COLOR_THEME,
   THEME_STORAGE_KEYS,
@@ -112,6 +118,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: var(--md-space-3);
+}
+
+.appearance-mode-mobile {
+  display: none;
 }
 
 .expand-control {
@@ -271,7 +281,17 @@ onBeforeUnmount(() => {
 
 @media (max-width: 599px) {
   .appearance-panel {
-    width: calc(100vw - 32px);
+    position: fixed;
+    top: calc(64px + env(safe-area-inset-top, 0px));
+    right: var(--md-space-4);
+    left: var(--md-space-4);
+    width: auto;
+    max-height: calc(100dvh - 152px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+  }
+
+  .appearance-mode-mobile {
+    display: block;
   }
 
   .theme-grid {
