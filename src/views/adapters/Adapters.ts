@@ -1,6 +1,7 @@
+import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { cancelAdapterUpload, confirmAdapterUpload, deleteAdapter, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
+import { ApiError, cancelAdapterUpload, confirmAdapterUpload, deleteAdapter, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
 import type { AdapterInstallPreview, AdapterStatus } from '../../api'
 
 export function useAdaptersPage() {
@@ -40,12 +41,22 @@ export function useAdaptersPage() {
     operation.value = `${id}:${action}`
     try {
       const response = action === 'start' ? await startAdapter(id) : action === 'stop' ? await stopAdapterById(id) : action === 'reload' ? await reloadAdapterById(id) : await deleteAdapter(id)
-      notify(response.message || `适配器 ${action} 完成。`, response.ok ? (response.restartRequired ? 'warning' : 'success') : 'error')
-      if (response.rollback) notify(`${response.message || '操作未完成'} 回滚状态：${response.rollback}`, 'warning')
+      const text = response.message || `适配器 ${action} 完成。`
+      if (!response.restartRequired) {
+        notify(text, response.ok ? 'success' : 'error')
+        if (response.rollback) notify(`${response.message || '操作未完成'} 回滚状态：${response.rollback}`, 'warning')
+      }
       await loadAdapters()
+      if (response.restartRequired) await offerRestartForStagedUpdate(text, '需要重启宿主')
     } catch (cause) {
-      notify(getApiErrorMessage(cause, `适配器 ${action} 失败。`), 'error')
+      const text = getApiErrorMessage(cause, `适配器 ${action} 失败。`)
+      const body = cause instanceof ApiError && cause.body && typeof cause.body === 'object'
+        ? cause.body as { restartRequired?: boolean; restart_required?: boolean; pending_restart?: boolean }
+        : undefined
+      const needsRestart = body?.restartRequired === true || body?.restart_required === true || body?.pending_restart === true
+      if (!needsRestart) notify(text, 'error')
       await loadAdapters()
+      if (needsRestart) await offerRestartForStagedUpdate(text, '需要重启宿主')
     } finally { operation.value = '' }
   }
   async function submitInstall() {
@@ -58,8 +69,10 @@ export function useAdaptersPage() {
     installBusy.value = true; installError.value = ''
     try {
       const response = await confirmAdapterUpload(installPreview.value.uploadId, installReplace.value)
-      notify(response.restartRequired ? '适配器已安装，需要重启宿主后生效。' : (response.message || '适配器已安装并重载。'), response.rollback ? 'warning' : 'success')
+      const text = response.message || (response.restartRequired ? '适配器已安装，需要重启宿主后生效。' : '适配器已安装并重载。')
+      notify(text, response.restartRequired || response.rollback ? 'warning' : 'success')
       installVisible.value = false; await loadAdapters()
+      if (response.restartRequired) void offerRestartForStagedUpdate(text)
     } catch (cause) {
       installError.value = getApiErrorMessage(cause, '适配器确认安装失败。')
       await loadAdapters()

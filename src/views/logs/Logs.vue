@@ -3,24 +3,27 @@
     <!-- Where the lines come from -->
     <nav class="source-rail panel" aria-label="日志来源">
       <h3>来源</h3>
-      <button
-        v-for="source in sourceFilters"
-        :key="source.key"
-        type="button"
-        class="source-item"
-        :class="{ selected: activeSource === source.key }"
-        :aria-current="activeSource === source.key ? 'true' : undefined"
-        @click="activeSource = source.key"
-      >
-        <span class="source-text">
-          <strong>{{ source.label }}</strong>
-          <small v-if="source.description">{{ source.description }}</small>
-        </span>
-        <span class="source-count">
-          <span v-if="source.errors" class="status-dot error" :title="`${source.errors} 条错误`" aria-hidden="true"></span>
-          <span class="count">{{ source.count }}</span>
-        </span>
-      </button>
+      <template v-for="group in [{ kind: 'all', label: '', items: [allSources] }, ...sourceGroups]" :key="group.kind">
+        <h4 v-if="group.label" class="source-group">{{ group.label }}</h4>
+        <button
+          v-for="source in group.items"
+          :key="source.key"
+          type="button"
+          class="source-item"
+          :class="{ selected: activeSource === source.key }"
+          :aria-current="activeSource === source.key ? 'true' : undefined"
+          @click="activeSource = source.key"
+        >
+          <span class="source-text">
+            <strong>{{ source.label }}</strong>
+            <small v-if="source.description">{{ source.description }}</small>
+          </span>
+          <span class="source-count">
+            <span v-if="source.errors" class="status-dot error" :title="`${source.errors} 条未查看的错误`" aria-hidden="true"></span>
+            <span class="count">{{ source.count }}</span>
+          </span>
+        </button>
+      </template>
     </nav>
 
     <section class="stream panel">
@@ -90,7 +93,7 @@
               class="source"
               :title="`只看 ${log.source}`"
               @click="activeSource = log.source"
-            >{{ log.source }}</button>
+            >{{ log.source === 'system' ? 'System' : log.source }}</button>
             <span class="message"><template v-for="(part, index) in highlight(log.message)" :key="index"><mark v-if="part.hit">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
           </div>
 
@@ -121,13 +124,14 @@ const {
   activeLevel,
   activeSource,
   activeSourceLabel,
+  sourceGroups,
+  allSources,
   autoRefresh,
   streamState,
   loadError,
   runtimeLogs,
   filteredLogs,
   levelCounts,
-  sourceFilters,
   refreshLogs,
   clearLogs,
   exportLogs

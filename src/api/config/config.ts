@@ -3,7 +3,10 @@ import type { PluginConfigSchemaItem } from '../plugins/config'
 
 export interface AppConfig {
   schema?: PluginConfigSchemaItem[]
-  protocol: string
+  /** Legacy single adapter; superseded by `protocols`. */
+  protocol?: string
+  /** Adapters loaded at startup in addition to the enabled installed ones: ids, DLL names or paths. */
+  protocols?: string[]
   enable_log: boolean
   disable_console_input: boolean
   github_proxy: string

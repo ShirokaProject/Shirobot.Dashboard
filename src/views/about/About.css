@@ -234,3 +234,26 @@ a.md-button {
     width: 100%;
   }
 }
+
+.host-update {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-3);
+  margin-top: var(--md-space-4);
+}
+
+.host-update p {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+  overflow-wrap: anywhere;
+}
+
+.host-update a {
+  color: var(--md-sys-color-primary);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.host-update .update-error {
+  color: var(--md-sys-color-error);
+}

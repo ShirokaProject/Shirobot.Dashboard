@@ -22,6 +22,24 @@
             <dd>{{ fact.value }}</dd>
           </div>
         </dl>
+        <div class="host-update" aria-live="polite">
+          <div class="button-group">
+            <button type="button" class="md-button tonal" :disabled="checkingUpdate || applyingUpdate || restarting" @click="checkUpdate">
+              <MdIcon name="refresh" />{{ checkingUpdate ? '检查中…' : '检查宿主更新' }}
+            </button>
+            <button v-if="updateCheck?.update_available && updateCheck.can_apply" type="button" class="md-button filled" :disabled="applyingUpdate || restarting" @click="updateAndRestart">
+              <MdIcon name="download" />{{ restarting ? '正在重启…' : applyingUpdate ? '更新中…' : '更新并重启' }}
+            </button>
+          </div>
+          <p v-if="restarting">新版本已安装，宿主正在重启。稍后刷新页面即可重新连接。</p>
+          <template v-else-if="updateCheck">
+            <p v-if="updateCheck.update_available">发现新版本：{{ updateCheck.current_version }} → {{ updateCheck.latest_version }}</p>
+            <p v-else-if="!updateCheck.reason">主程序已是最新版本（{{ updateCheck.current_version }}）。</p>
+            <p v-if="updateCheck.reason">{{ updateCheck.reason }}</p>
+            <a v-if="updateCheck.release_url" :href="updateCheck.release_url" target="_blank" rel="noreferrer">查看版本发布说明</a>
+          </template>
+          <p v-if="updateError" class="update-error" role="alert">{{ updateError }}</p>
+        </div>
       </section>
 
       <section class="panel links">
@@ -60,7 +78,7 @@ import MdIcon from '../../components/MdIcon.vue'
 import { DOCS_URL } from '../../features/docs'
 import { links, ORG_URL, useAboutPage } from './About'
 
-const { dashboardVersion, versionFacts, copyDiagnostics } = useAboutPage()
+const { dashboardVersion, versionFacts, copyDiagnostics, updateCheck, checkingUpdate, applyingUpdate, restarting, updateError, checkUpdate, updateAndRestart } = useAboutPage()
 </script>
 
 <style scoped src="./About.css"></style>

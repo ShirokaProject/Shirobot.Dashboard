@@ -1,3 +1,4 @@
+import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { cancelAdapterUpload, confirmAdapterUpload, formatPlatform, getAdapterMarketAdapters, getApiErrorMessage, prepareGithubAdapterInstall, resolveRepositoryAdapter } from '../../api'
 import type { AdapterInstallPreview, AdapterMarketEntry } from '../../api'
@@ -169,9 +170,10 @@ export function useAdapterMarketPage() {
     try {
       const response = await confirmAdapterUpload(preview.value.uploadId, replace.value)
       installVisible.value = false
-      message.value = response.restartRequired ? '适配器已安装，需要重启宿主后完全生效。' : (response.message || '适配器已安装并重载。')
-      messageType.value = response.rollback ? 'warning' : 'success'
+      message.value = response.message || (response.restartRequired ? '适配器已安装，需要重启宿主后完全生效。' : '适配器已安装并重载。')
+      messageType.value = response.restartRequired || response.rollback ? 'warning' : 'success'
       await load()
+      if (response.restartRequired) void offerRestartForStagedUpdate(message.value)
     } catch (cause) {
       installError.value = getApiErrorMessage(cause, '确认安装失败。')
     } finally {

@@ -1,4 +1,4 @@
-import { computed, reactive, ref, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
+import { computed, reactive, ref, shallowRef, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
 import {
   ApiError,
   getAdapterConfig,
@@ -10,6 +10,7 @@ import {
   type PluginConfigResponse,
   type PluginConfigSchemaItem,
   type PluginConfigUpdateResponse,
+  type PluginConfigValue,
   type PluginRoutesConfig
 } from '../../api'
 
@@ -33,6 +34,15 @@ export interface ConfigGroup {
   label: string
   order: number
   fields: ConfigField[]
+  /** Set when the group is a top-level `section`: its fields live in `config[parentKey]`. */
+  parentKey?: string
+  description?: string
+}
+
+const SCALAR_TYPES = new Set(['string', 'text', 'password', 'number', 'integer', 'boolean', 'select'])
+
+export function isConfigObject(value: unknown): value is Record<string, PluginConfigValue> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 const DEFAULT_GROUP = '常规'
@@ -59,17 +69,51 @@ function parseGroupList(value: string) {
     .filter(Number.isFinite)
 }
 
+function inferValueType(value: PluginConfigValue | undefined): string {
+  if (typeof value === 'boolean') return 'boolean'
+  if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'number'
+  if (Array.isArray(value)) return 'array'
+  if (isConfigObject(value)) return 'object'
+  return 'string'
+}
+
+/** Without a schema (older components) the editor still has to match each value's shape. */
 function createFallbackSchema(config: PluginConfigMap): PluginConfigSchemaItem[] {
-  return Object.entries(config).map(([key, value]) => ({
-    key,
-    label: key,
-    type: typeof value === 'boolean' ? 'boolean' : typeof value === 'number' ? 'number' : 'string',
-    description: null,
-    placeholder: null,
-    options: [],
-    min: null,
-    max: null
-  }))
+  return Object.entries(config).map(([key, value]) => {
+    const type = inferValueType(value)
+    const itemTypes = Array.isArray(value) ? [...new Set(value.map(inferValueType))] : []
+    return {
+      key,
+      label: key,
+      type,
+      item_type: type === 'array' ? (itemTypes.length === 1 ? itemTypes[0] : itemTypes.length ? 'object' : 'string') : null,
+      description: null,
+      placeholder: null,
+      options: [],
+      min: null,
+      max: null
+    }
+  })
+}
+
+function cloneConfigValue<T>(value: T): T {
+  return value === undefined ? value : JSON.parse(JSON.stringify(value)) as T
+}
+
+/** A new value for a field: its declared default, else an empty value of its type. */
+export function createDefaultValue(item: PluginConfigSchemaItem): PluginConfigValue {
+  if (item.default_value !== undefined && item.default_value !== null) return cloneConfigValue(item.default_value as PluginConfigValue)
+  if (item.type === 'section' && item.fields?.length)
+    return Object.fromEntries(item.fields.map(field => [field.key, createDefaultValue(field)]))
+  switch (item.type) {
+    case 'boolean': return false
+    case 'number':
+    case 'integer': return 0
+    case 'array': return []
+    case 'section':
+    case 'object': return {}
+    default: return ''
+  }
 }
 
 function withSchemaDefaults(config: PluginConfigMap, schema: PluginConfigSchemaItem[]): PluginConfigMap {
@@ -77,8 +121,9 @@ function withSchemaDefaults(config: PluginConfigMap, schema: PluginConfigSchemaI
   for (const item of schema) {
     const value = item.default_value
     if (!Object.prototype.hasOwnProperty.call(item, 'default_value') || value === undefined) continue
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) continue
-    merged[item.key] = value
+    // Free-form tables have no meaningful default to show; sections get theirs so nested fields can bind.
+    if (isConfigObject(value) && item.type !== 'section') continue
+    merged[item.key] = cloneConfigValue(value as PluginConfigValue)
   }
   return Object.assign(merged, config)
 }
@@ -141,6 +186,21 @@ function splitEnum(description: string) {
   return { options, rest }
 }
 
+/** Whether a field needs the full row width (long text, lists, nested objects). */
+export function isWideField(item: PluginConfigSchemaItem, value: unknown) {
+  return !SCALAR_TYPES.has(item.type) || Array.isArray(value) || isConfigObject(value)
+}
+
+/** A display field for one schema item, evaluated against its sibling values. */
+export function createConfigField(item: PluginConfigSchemaItem, values: PluginConfigMap): ConfigField {
+  const { group: _group, groupLabel: _label, groupOrder: _order, ...field } = toField(item, values)
+  return field
+}
+
+export function isFieldVisible(item: PluginConfigSchemaItem, values: PluginConfigMap) {
+  return conditionsPass(item, 'visible', values)
+}
+
 function toField(item: PluginConfigSchemaItem, values: PluginConfigMap): ConfigField & { group: string; groupLabel: string; groupOrder: number } {
   const { group, groupLabel, label } = splitGroup(item)
   const description = item.description ?? ''
@@ -181,17 +241,40 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   const loadError = ref('')
   const saveMessage = ref('')
   const saveMessageType = ref<'success' | 'error'>('success')
-  const schema = ref<PluginConfigSchemaItem[]>([])
-  const config = reactive<PluginConfigMap>({})
+  // Replaced wholesale on every load; a shallow ref also keeps the recursive schema type tractable.
+  const schema = shallowRef<PluginConfigSchemaItem[]>([])
+  // Typed as the plain map: Vue's deep reactive type does not terminate on the recursive config value type.
+  const config: PluginConfigMap = reactive({})
   const routes = reactive<PluginRoutesConfig>({ ...emptyRoutes })
   const routeGroupsInput = ref('')
   const snapshot = ref('')
 
   const groups = computed<ConfigGroup[]>(() => {
+    const byOrder = (left: ConfigField, right: ConfigField) =>
+      (left.item.order ?? Number.MAX_SAFE_INTEGER) - (right.item.order ?? Number.MAX_SAFE_INTEGER)
     const byGroup = new Map<string, { label: string; order: number; fields: ConfigField[] }>()
+    // A top-level section with known fields gets its own category instead of one giant row.
+    const sections: Array<ConfigGroup & { section: true }> = []
     for (const item of schema.value) {
-      const field = toField(item, config)
       if (!conditionsPass(item, 'visible', config)) continue
+      if (item.type === 'section' && item.fields?.length) {
+        const values = isConfigObject(config[item.key]) ? config[item.key] as PluginConfigMap : {}
+        const { label } = splitGroup(item)
+        sections.push({
+          key: `section:${item.key}`,
+          label,
+          description: item.description ?? '',
+          order: item.group_order ?? Number.MAX_SAFE_INTEGER,
+          parentKey: item.key,
+          section: true,
+          fields: item.fields
+            .filter(child => conditionsPass(child, 'visible', values))
+            .map(child => createConfigField(child, values))
+            .sort(byOrder)
+        })
+        continue
+      }
+      const field = toField(item, config)
       const group = byGroup.get(field.group) ?? {
         label: field.groupLabel,
         order: field.groupOrder,
@@ -200,14 +283,10 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       group.fields.push(field)
       byGroup.set(field.group, group)
     }
-    return [...byGroup.entries()]
-      .map(([key, group]) => ({
-        key,
-        label: group.label,
-        order: group.order,
-        fields: group.fields.sort((left, right) =>
-          (left.item.order ?? Number.MAX_SAFE_INTEGER) - (right.item.order ?? Number.MAX_SAFE_INTEGER))
-      }))
+    const plain: ConfigGroup[] = [...byGroup.entries()]
+      .map(([key, group]) => ({ key, label: group.label, order: group.order, fields: group.fields.sort(byOrder) }))
+    // Stable sort: explicit category order first, then plain groups before section categories.
+    return [...plain, ...sections.map(({ section: _section, ...group }) => group)]
       .sort((left, right) => left.order - right.order)
   })
 

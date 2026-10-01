@@ -46,6 +46,9 @@ export interface PluginUploadConfirmRequest {
 export interface PluginUploadConfirmResponse {
   success: boolean
   plugin: Pick<BackendPlugin, 'id'> & { enable: boolean }
+  /** The running version could not be hot-swapped; the new one is staged for the next start. */
+  pending_restart?: boolean
+  message?: string
 }
 
 export interface PluginUploadCancelResponse {
@@ -55,6 +58,9 @@ export interface PluginUploadCancelResponse {
 export interface PluginStateChangeResponse {
   ok: boolean
   message: string
+  /** A staged update or deletion will apply at the next start. */
+  pending_restart?: boolean
+  pending_delete?: boolean
 }
 
 export interface PluginActionDefinition {

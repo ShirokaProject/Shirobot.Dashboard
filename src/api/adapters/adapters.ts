@@ -128,7 +128,8 @@ function normalizeOperation(value: unknown): AdapterOperationResponse {
     ok: booleanValue(response.ok ?? response.success, true),
     message: stringValue(response.message || response.msg),
     adapter: adapterValue ? normalizeAdapter(adapterValue) : undefined,
-    restartRequired: booleanValue(response.restartRequired ?? response.restart_required),
+    // pending_restart: the new version is staged and replaces the running one at the next start.
+    restartRequired: booleanValue(response.restartRequired ?? response.restart_required ?? response.pending_restart),
     rollback: stringValue(response.rollback || response.rollback_status) || null
   }
 }

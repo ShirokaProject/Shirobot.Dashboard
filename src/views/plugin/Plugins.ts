@@ -1,3 +1,4 @@
+import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
@@ -27,7 +28,7 @@ export function usePluginsPage() {
   const pluginUploadEnable = ref(true)
   const loadError = ref('')
   const actionMessage = ref('')
-  const actionMessageType = ref<'success' | 'error'>('success')
+  const actionMessageType = ref<'success' | 'warning' | 'error'>('success')
   const pluginActions = ref<PluginActionDefinition[]>([])
   const pluginActionsLoading = ref(false)
   const pluginActionsError = ref('')
@@ -153,7 +154,8 @@ export function usePluginsPage() {
     try {
       const response = await updateInstalledPlugin(plugin.id)
       actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      actionMessageType.value = !response.ok ? 'error' : response.pending_restart ? 'warning' : 'success'
+      if (response.pending_restart) void offerRestartForStagedUpdate(response.message)
     } catch (error) {
       actionMessageType.value = 'error'
       actionMessage.value = getApiErrorMessage(error, '插件更新失败')
@@ -181,7 +183,8 @@ export function usePluginsPage() {
     try {
       const response = await deleteInstalledPlugin(plugin.id)
       actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      actionMessageType.value = !response.ok ? 'error' : response.pending_restart ? 'warning' : 'success'
+      if (response.pending_restart) void offerRestartForStagedUpdate(response.message, '插件将在重启后删除')
     } catch (error) {
       actionMessageType.value = 'error'
       actionMessage.value = getApiErrorMessage(error, '插件卸载失败')
@@ -300,8 +303,9 @@ export function usePluginsPage() {
         replace: pluginUploadReplace.value,
         enable: pluginUploadEnable.value
       })
-      actionMessage.value = response.success ? '插件安装成功' : '插件安装失败'
-      actionMessageType.value = response.success ? 'success' : 'error'
+      actionMessage.value = !response.success ? '插件安装失败' : response.message || '插件安装成功'
+      actionMessageType.value = !response.success ? 'error' : response.pending_restart ? 'warning' : 'success'
+      if (response.pending_restart && response.message) void offerRestartForStagedUpdate(response.message)
       resetPluginUploadState()
       uploadDialogVisible.value = false
       clearUploadQuery()

@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getOverview, type OverviewResponse } from '../../api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { applyHostUpdate, checkHostUpdate, getApiErrorMessage, getOverview, type HostUpdateCheck, type OverviewResponse } from '../../api'
 import { DOCS_URL } from '../../features/docs'
 import { DASHBOARD_VERSION } from '../../version'
 
@@ -22,6 +22,11 @@ function formatBuildTime(value?: string) {
 
 export function useAboutPage() {
   const overview = ref<OverviewResponse | null>(null)
+  const updateCheck = ref<HostUpdateCheck | null>(null)
+  const checkingUpdate = ref(false)
+  const applyingUpdate = ref(false)
+  const restarting = ref(false)
+  const updateError = ref('')
   const loadState = ref<'loading' | 'ready' | 'error'>('loading')
 
   onMounted(async () => {
@@ -43,13 +48,56 @@ export function useAboutPage() {
   const versionFacts = computed(() => {
     const runtime = overview.value?.runtime
     return [
-      { label: '前端面板', value: `v${DASHBOARD_VERSION}` },
+      { label: '前端面板', value: DASHBOARD_VERSION },
       { label: '主程序', value: backendVersion.value },
       { label: '运行时', value: [runtime?.framework, runtime?.os, runtime?.arch].filter(Boolean).join(' · ') },
       { label: '运行方式', value: runtime?.mode ? modeLabels[runtime.mode] ?? runtime.mode : '' },
       { label: '构建时间', value: formatBuildTime(runtime?.build_time) }
     ].filter(fact => fact.value)
   })
+
+  async function checkUpdate() {
+    if (checkingUpdate.value || applyingUpdate.value || restarting.value) return
+    checkingUpdate.value = true
+    updateError.value = ''
+    updateCheck.value = null
+    try {
+      updateCheck.value = await checkHostUpdate()
+    } catch (error) {
+      updateError.value = getApiErrorMessage(error, '检查宿主更新失败')
+    } finally {
+      checkingUpdate.value = false
+    }
+  }
+
+  async function updateAndRestart() {
+    if (!updateCheck.value?.can_apply || applyingUpdate.value || restarting.value) return
+    applyingUpdate.value = true
+    try {
+      try {
+        await ElMessageBox.confirm(
+          `将更新主程序到 ${updateCheck.value.latest_version} 并重启，连接会暂时中断。`,
+          '更新宿主',
+          { confirmButtonText: '更新并重启', cancelButtonText: '取消', type: 'warning' }
+        )
+      } catch {
+        return
+      }
+      const result = await applyHostUpdate()
+      if (!result.ok) throw new Error(result.message || '宿主更新失败')
+      restarting.value = result.restarting
+      ElMessage.success(result.message)
+      if (!result.restarting) {
+        applyingUpdate.value = false
+        await checkUpdate()
+      }
+    } catch (error) {
+      updateError.value = getApiErrorMessage(error, '宿主更新失败')
+      ElMessage.error(updateError.value)
+    } finally {
+      applyingUpdate.value = false
+    }
+  }
 
   /** Plain-text summary for bug reports */
   async function copyDiagnostics() {
@@ -68,6 +116,7 @@ export function useAboutPage() {
   return {
     dashboardVersion: DASHBOARD_VERSION,
     versionFacts,
-    copyDiagnostics
+    copyDiagnostics,
+    updateCheck, checkingUpdate, applyingUpdate, restarting, updateError, checkUpdate, updateAndRestart
   }
 }

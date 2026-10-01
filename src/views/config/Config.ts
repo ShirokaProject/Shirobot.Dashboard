@@ -1,5 +1,5 @@
 import { computed, onMounted, reactive, ref } from 'vue'
-import { getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfig } from '../../api'
+import { getAdapters, getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfig } from '../../api'
 
 // The host config has a fixed shape, so its categories are defined here (unlike plugin schemas).
 export const sections = [
@@ -11,17 +11,24 @@ export const sections = [
 
 export type SectionKey = (typeof sections)[number]['key']
 
-export const protocolOptions = ['MilkyAdapter', 'OneBotAdapter', 'TelegramAdapter']
-
+// Auto switches by the clock on the host (dark from 18:00 to 06:00); it does not follow the OS.
 export const themeOptions = [
   { value: 'Light', label: '浅色' },
   { value: 'Dark', label: '深色' },
-  { value: 'System', label: '跟随系统' }
+  { value: 'Auto', label: '自动（按时间）' }
 ]
+
+/** Older dashboards saved "System" for the clock-based mode. */
+function normalizeTheme(theme: string) {
+  const value = theme.trim().toLowerCase()
+  if (value === 'dark') return 'Dark'
+  if (value === 'auto' || value === 'system') return 'Auto'
+  return 'Light'
+}
 
 /** Editable copy of AppConfig: lists stay lists (tag inputs), null base URL becomes '' */
 export interface ConfigForm {
-  protocol: string
+  protocols: string[]
   enable_log: boolean
   disable_console_input: boolean
   github_proxy: string
@@ -38,7 +45,7 @@ export interface ConfigForm {
 }
 
 const emptyForm: ConfigForm = {
-  protocol: 'MilkyAdapter',
+  protocols: [],
   enable_log: true,
   disable_console_input: false,
   github_proxy: '',
@@ -56,12 +63,12 @@ const emptyForm: ConfigForm = {
 
 function configToForm(config: AppConfig): ConfigForm {
   return {
-    protocol: config.protocol,
+    protocols: config.protocols ?? (config.protocol ? [config.protocol] : []),
     enable_log: config.enable_log,
     disable_console_input: config.disable_console_input,
     github_proxy: config.github_proxy,
     host_update_repository: config.host_update_repository,
-    avalonia_theme: config.avalonia_theme,
+    avalonia_theme: normalizeTheme(config.avalonia_theme),
     owner_list: config.owner_list.map(String),
     admin_list: config.admin_list.map(String),
     api_enable: config.api.enable,
@@ -79,7 +86,7 @@ function toIds(values: string[]) {
 
 function formToConfig(form: ConfigForm): AppConfig {
   return {
-    protocol: form.protocol,
+    protocols: form.protocols.map(value => value.trim()).filter(Boolean),
     enable_log: form.enable_log,
     disable_console_input: form.disable_console_input,
     github_proxy: form.github_proxy.trim(),
@@ -124,16 +131,34 @@ export function useConfigPage() {
   const loaded = ref<ConfigForm>(cloneForm(emptyForm))
   const dirty = computed(() => JSON.stringify(form) !== JSON.stringify(loaded.value))
 
-  // Keep the backend's value selectable even when it isn't one of the known adapters.
-  const protocols = computed(() => protocolOptions.includes(form.protocol) || !form.protocol
-    ? protocolOptions
-    : [form.protocol, ...protocolOptions])
+  // Installed adapters by id; configured values that are not installed (a DLL name or path) stay listed.
+  const installedAdapters = ref<Array<{ value: string; label: string }>>([])
+  const protocols = computed(() => {
+    const known = new Set(installedAdapters.value.map(option => option.value.toLowerCase()))
+    return [
+      ...installedAdapters.value,
+      ...form.protocols.filter(value => !known.has(value.toLowerCase())).map(value => ({ value, label: value }))
+    ]
+  })
+
+  async function loadInstalledAdapters() {
+    try {
+      installedAdapters.value = (await getAdapters()).map(adapter => ({
+        value: adapter.id,
+        label: adapter.name && adapter.name !== adapter.id ? `${adapter.name}（${adapter.id}）` : adapter.id
+      }))
+    } catch {
+      // The list only suggests values; typing an id or DLL name still works without it.
+      installedAdapters.value = []
+    }
+  }
 
   async function loadConfig() {
     loading.value = true
     loadError.value = ''
     try {
-      loaded.value = configToForm(await getAppConfig())
+      const [config] = await Promise.all([getAppConfig(), loadInstalledAdapters()])
+      loaded.value = configToForm(config)
     } catch (error) {
       loaded.value = cloneForm(emptyForm)
       loadError.value = getApiErrorMessage(error, '读取配置失败')

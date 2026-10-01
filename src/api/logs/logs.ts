@@ -2,10 +2,14 @@ import type { KindFilter, RuntimeLog } from '../../features/logs/types'
 import { getDashboardSession, getSessionBaseUrl } from '../../auth/session'
 import { apiRequest } from '../core/http'
 
+export type LogSourceKind = 'system' | 'adapter' | 'plugin'
+
 export interface LogSourceInfo {
   source: string
   description: string
   plugin_name?: string
+  /** What produced the source; older hosts omit it. */
+  kind?: LogSourceKind
 }
 
 export type BackendLogLevel = 'log' | 'info' | 'warning' | 'error' | 'success'

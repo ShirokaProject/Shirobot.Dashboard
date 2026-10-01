@@ -53,10 +53,21 @@
             <div class="row">
               <div class="row-text">
                 <label for="cfg-protocol">协议适配器</label>
-                <p>主程序启动时使用的适配器。<code>protocol</code></p>
+                <p>启动时额外加载的适配器，可多选。在适配器页启用的适配器会自动加载，无需在此添加；未通过适配器页安装的可直接输入 DLL 名称或路径。<code>protocols</code></p>
               </div>
-              <el-select id="cfg-protocol" v-model="form.protocol" class="control-select">
-                <el-option v-for="protocol in protocols" :key="protocol" :label="protocol" :value="protocol" />
+              <el-select
+                id="cfg-protocol"
+                v-model="form.protocols"
+                class="control-select"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                collapse-tags
+                collapse-tags-tooltip
+                placeholder="不额外加载"
+              >
+                <el-option v-for="protocol in protocols" :key="protocol.value" :label="protocol.label" :value="protocol.value" />
               </el-select>
             </div>
             <div class="row">
@@ -76,7 +87,7 @@
             <div class="row">
               <div class="row-text">
                 <span class="row-label">桌面端主题</span>
-                <p>Avalonia 桌面界面的配色，不影响 Dashboard。<code>avalonia_theme</code></p>
+                <p>Avalonia 桌面界面的配色，不影响 Dashboard。自动：18:00–6:00 使用深色，其余时间浅色。<code>avalonia_theme</code></p>
               </div>
               <div class="button-group" role="radiogroup" aria-label="桌面端主题">
                 <button

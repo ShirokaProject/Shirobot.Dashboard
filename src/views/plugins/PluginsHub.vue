@@ -462,9 +462,10 @@ watch(activeDiscoverPlugins, list => {
 const detailHasContent = computed(() => tab.value === 'installed' ? Boolean(installed.selectedPlugin.value) : Boolean(market.selectedPlugin.value))
 
 // Results of actions show as snackbars, then clear so the same text can appear again later.
-function toast(text: string, type: 'success' | 'error', clear: () => void) {
+function toast(text: string, type: 'success' | 'warning' | 'error', clear: () => void) {
   if (!text) return
-  ElMessage({ message: text, type, duration: type === 'error' ? 6000 : 3000, showClose: type === 'error', grouping: true })
+  const sticky = type !== 'success'
+  ElMessage({ message: text, type, duration: sticky ? 6000 : 3000, showClose: sticky, grouping: true })
   clear()
 }
 

@@ -7,10 +7,52 @@
     </div>
 
     <div class="field-control">
+      <!-- Nested section: its own fields, bound into this value -->
+      <div v-if="editor === 'section'" class="nested-section">
+        <ConfigFieldRow
+          v-for="child in childFields"
+          :key="child.item.key"
+          :field="child"
+          :id-prefix="inputId"
+          :disabled="isDisabled"
+          :model-value="objectValue[child.item.key]"
+          @update:model-value="emit('update:modelValue', { ...objectValue, [child.item.key]: $event })"
+        />
+      </div>
+
+      <SectionListEditor
+        v-else-if="editor === 'sectionList'"
+        :model-value="modelValue"
+        :item-fields="field.item.item_fields || []"
+        :item-label="field.label"
+        :id-prefix="inputId"
+        :disabled="isDisabled"
+        @update:model-value="emit('update:modelValue', $event)"
+      />
+
+      <ScalarListEditor
+        v-else-if="editor === 'scalarList'"
+        :input-id="inputId"
+        :model-value="modelValue"
+        :item-type="field.item.item_type || 'string'"
+        :placeholder="field.item.placeholder"
+        :disabled="isDisabled"
+        @update:model-value="emit('update:modelValue', $event)"
+      />
+
+      <JsonValueEditor
+        v-else-if="editor === 'json'"
+        :input-id="inputId"
+        :model-value="modelValue"
+        :expect="jsonShape"
+        :disabled="isDisabled"
+        @update:model-value="emit('update:modelValue', $event)"
+      />
+
       <el-switch
-        v-if="type === 'boolean'"
+        v-else-if="type === 'boolean'"
         :id="inputId"
-        :disabled="!field.enabled"
+        :disabled="isDisabled"
         :model-value="Boolean(modelValue)"
         @update:model-value="emit('update:modelValue', Boolean($event))"
       />
@@ -23,7 +65,7 @@
           role="radio"
           class="md-button compact toggle"
           :class="{ selected: Number(modelValue) === option.value }"
-          :disabled="!field.enabled"
+          :disabled="isDisabled"
           :aria-checked="Number(modelValue) === option.value"
           :title="`${option.value}`"
           @click="emit('update:modelValue', option.value)"
@@ -34,7 +76,7 @@
         v-else-if="type === 'number' || type === 'integer'"
         :id="inputId"
         class="number-input"
-        :disabled="!field.enabled"
+        :disabled="isDisabled"
         :model-value="typeof modelValue === 'number' ? modelValue : undefined"
         :min="field.item.min ?? undefined"
         :max="field.item.max ?? undefined"
@@ -46,7 +88,7 @@
         v-else-if="type === 'select'"
         :id="inputId"
         class="select-input"
-        :disabled="!field.enabled"
+        :disabled="isDisabled"
         :model-value="modelValue as string | number"
         :placeholder="field.item.placeholder || '请选择'"
         @update:model-value="emit('update:modelValue', $event)"
@@ -58,7 +100,7 @@
         v-else-if="type === 'text'"
         :id="inputId"
         type="textarea"
-        :disabled="!field.enabled"
+        :disabled="isDisabled"
         :rows="4"
         :model-value="String(modelValue ?? '')"
         :placeholder="field.item.placeholder || ''"
@@ -70,7 +112,7 @@
         :id="inputId"
         type="password"
         show-password
-        :disabled="!field.enabled"
+        :disabled="isDisabled"
         :model-value="String(modelValue ?? '')"
         :placeholder="field.item.placeholder || ''"
         @update:model-value="emit('update:modelValue', $event)"
@@ -79,7 +121,7 @@
       <el-input
         v-else
         :id="inputId"
-        :disabled="!field.enabled"
+        :disabled="isDisabled"
         :model-value="String(modelValue ?? '')"
         :placeholder="field.item.placeholder || ''"
         @update:model-value="emit('update:modelValue', $event)"
@@ -90,20 +132,59 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PluginConfigValue } from '../../../api'
-import type { ConfigField } from '../usePluginConfig'
+import type { PluginConfigMap, PluginConfigValue } from '../../../api'
+import { createConfigField, isConfigObject, isFieldVisible, type ConfigField } from '../usePluginConfig'
+import JsonValueEditor from './JsonValueEditor.vue'
+import ScalarListEditor from './ScalarListEditor.vue'
+import SectionListEditor from './SectionListEditor.vue'
 
 const props = defineProps<{
   field: ConfigField
   modelValue: PluginConfigValue | undefined
+  /** Distinguishes ids of fields nested in sections and list items. */
+  idPrefix?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: PluginConfigValue] }>()
 
+const SCALAR_ITEM_TYPES = new Set(['string', 'integer', 'number', 'boolean'])
+
 const type = computed(() => props.field.item.type)
-const inputId = computed(() => `cfg-${props.field.item.key}`)
-// Free text needs width; everything else fits beside its label.
-const stacked = computed(() => (type.value === 'string' || type.value === 'text' || type.value === 'password') && !props.field.enumOptions)
+const inputId = computed(() => `${props.idPrefix ?? 'cfg'}-${props.field.item.key}`)
+const isDisabled = computed(() => props.disabled || !props.field.enabled)
+
+/**
+ * Which editor the value needs. Lists and objects never fall through to a text box: a value whose
+ * schema says "string" but is structured (older hosts reported nested config that way) is edited as JSON.
+ */
+const editor = computed(() => {
+  const item = props.field.item
+  const value = props.modelValue
+  if (item.type === 'section' && item.fields?.length && (value === undefined || value === null || isConfigObject(value)))
+    return 'section'
+  if (item.type === 'array' && item.item_type === 'section' && item.item_fields?.length) return 'sectionList'
+  if (item.type === 'array' && SCALAR_ITEM_TYPES.has(item.item_type ?? 'string') &&
+      (!Array.isArray(value) || value.every(element => !isConfigObject(element) && !Array.isArray(element))))
+    return 'scalarList'
+  if (item.type === 'array' || item.type === 'object' || item.type === 'section' || Array.isArray(value) || isConfigObject(value))
+    return 'json'
+  return 'scalar'
+})
+
+const jsonShape = computed(() =>
+  props.field.item.type === 'array' || Array.isArray(props.modelValue) ? 'array' : 'object')
+
+const objectValue = computed<PluginConfigMap>(() => isConfigObject(props.modelValue) ? props.modelValue : {})
+
+const childFields = computed(() => (props.field.item.fields ?? [])
+  .filter(item => isFieldVisible(item, objectValue.value))
+  .map(item => createConfigField(item, objectValue.value))
+  .sort((left, right) => (left.item.order ?? Number.MAX_SAFE_INTEGER) - (right.item.order ?? Number.MAX_SAFE_INTEGER)))
+
+// Free text, lists and nested values need width; everything else fits beside its label.
+const stacked = computed(() => editor.value !== 'scalar' ||
+  (type.value === 'string' || type.value === 'text' || type.value === 'password') && !props.field.enumOptions)
 </script>
 
 <style scoped>
@@ -167,6 +248,12 @@ const stacked = computed(() => (type.value === 'string' || type.value === 'text'
 
 .field.stacked .field-control > * {
   width: 100%;
+}
+
+.nested-section {
+  padding: 0 var(--md-space-4);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
 }
 
 .number-input {

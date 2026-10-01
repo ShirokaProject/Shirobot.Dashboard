@@ -1,6 +1,12 @@
 import { apiRequest } from '../core/http'
 
-export type PluginConfigValue = string | number | boolean | null | Array<string | number>
+export type PluginConfigValue =
+  | string
+  | number
+  | boolean
+  | null
+  | PluginConfigValue[]
+  | { [key: string]: PluginConfigValue }
 export type PluginConfigMap = Record<string, PluginConfigValue>
 
 export type ConfigConditionEffect = 'visible' | 'enabled'
@@ -19,7 +25,11 @@ export interface PluginConfigCondition {
 export interface PluginConfigSchemaItem {
   key: string
   label: string
-  type: 'string' | 'text' | 'number' | 'boolean' | 'select' | string
+  /**
+   * Editor type. Besides scalars: `section` is a nested config object described by `fields`,
+   * `object` a free-form table, `array` a list whose elements are described by `item_type`.
+   */
+  type: 'string' | 'text' | 'number' | 'integer' | 'boolean' | 'select' | 'section' | 'object' | 'array' | string
   description?: string | null
   placeholder?: string | null
   options?: Array<string | number>
@@ -34,6 +44,12 @@ export interface PluginConfigSchemaItem {
   group_order?: number | null
   conditions?: PluginConfigCondition[] | null
   default_value?: PluginConfigValue | Record<string, unknown>
+  /** Fields of a `section`; their keys are relative to this item. */
+  fields?: PluginConfigSchemaItem[] | null
+  /** Element type of an `array`: boolean, integer, number, string, section or object. */
+  item_type?: string | null
+  /** Fields of each element when `item_type` is `section`. */
+  item_fields?: PluginConfigSchemaItem[] | null
 }
 
 export interface PluginRoutesConfig {

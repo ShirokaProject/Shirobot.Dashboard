@@ -190,7 +190,7 @@ const demoPlugins: BackendPlugin[] = [
 ]
 
 const demoConfig: AppConfig = {
-  protocol: 'MilkyAdapter',
+  protocols: [],
   enable_log: true,
   disable_console_input: false,
   github_proxy: 'https://gh-proxy.com/',
@@ -827,6 +827,16 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
       return { ...response, plugins: response.plugins.filter(plugin => plugin.id === 'rss'), source: { repository: source } } as T
     }
     return { ...response, source: { name: '官方源', repository: 'ShirokaProject/awesome-shirobot' } } as T
+  }
+
+  if (pathname === '/api/v1/system/update' && method === 'GET') {
+    return {
+      current_version: '0.9.3', latest_version: '0.9.5', update_available: true,
+      asset_name: 'shirobot-host-linux-x64-self-contained.zip',
+      release_url: 'https://github.com/ShirokaProject/ShiroBot/releases', release_notes: null,
+      can_apply: false,
+      reason: 'Docker 中运行的主程序请通过更新镜像升级：docker compose pull && docker compose up -d。'
+    } as T
   }
 
   const powerMatch = pathname.match(/^\/api\/v1\/system\/(restart|shutdown)$/)

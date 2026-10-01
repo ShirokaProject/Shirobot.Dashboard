@@ -319,7 +319,8 @@ function triggerAvatarSpin() {
 
 /* M3 navigation drawer item: 56dp height, full pill indicator */
 .drawer-item {
-  width: calc(100% - 8px);
+  /* Leave room on both sides for the focus outline inside the scroll container. */
+  width: calc(100% - 2 * var(--md-space-2));
   height: 56px;
   margin-left: var(--md-space-2);
   border-radius: var(--md-sys-shape-corner-full);

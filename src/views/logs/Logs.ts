@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { getLogSources, getLogStreamUrl, type BackendLogLevel, type LogEntry, type LogSourceInfo, type LogStreamMessage } from '../../api'
+import { getLogSources, getLogStreamUrl, type BackendLogLevel, type LogEntry, type LogSourceInfo, type LogSourceKind, type LogStreamMessage } from '../../api'
 import { isDemoMode } from '../../auth/session'
 import type { LogLevel, RuntimeLog } from '../../features/logs/types'
 
@@ -118,20 +118,44 @@ export function useLogsPage() {
     ERROR: scopedLogs.value.filter(log => log.level === 'ERROR').length
   }))
 
+  // The rail's red dot marks errors not looked at yet, so it clears once a source is opened.
+  // Per source: the id of the last error already seen. Viewing a source (or all of them) marks its
+  // current errors seen, including new ones that arrive while it is on screen.
+  const seenErrorIds = ref<Record<string, number>>({})
+
+  watch([activeSource, runtimeLogs], () => {
+    const next = { ...seenErrorIds.value }
+    let changed = false
+    for (const log of runtimeLogs.value) {
+      if (log.level !== 'ERROR' || (activeSource.value !== 'ALL' && log.source !== activeSource.value)) continue
+      if ((next[log.source] ?? 0) < log.id) {
+        next[log.source] = log.id
+        changed = true
+      }
+    }
+    if (changed) seenErrorIds.value = next
+  }, { immediate: true })
+
   const sourceFilters = computed(() => {
     const counts: Record<string, { total: number; errors: number }> = {}
     for (const log of runtimeLogs.value) {
       const entry = counts[log.source] ??= { total: 0, errors: 0 }
       entry.total += 1
-      if (log.level === 'ERROR') entry.errors += 1
+      if (log.level === 'ERROR' && log.id > (seenErrorIds.value[log.source] ?? 0)) entry.errors += 1
     }
 
     // Sources the backend lists, plus any that only show up in the stream
     const known = new Set(logSources.value.map(source => source.source))
     const extra = Object.keys(counts).filter(source => !known.has(source))
     const sourceItems = [
-      ...logSources.value.map(source => ({ key: source.source, label: source.plugin_name || source.source, description: source.description })),
-      ...extra.map(source => ({ key: source, label: source, description: '' }))
+      ...logSources.value.map(source => ({
+        key: source.source,
+        // Older hosts register the host source as lower-case "system".
+        label: source.source === 'system' ? 'System' : source.plugin_name || source.source,
+        description: source.description,
+        kind: source.kind ?? 'system' as LogSourceKind
+      })),
+      ...extra.map(source => ({ key: source, label: source, description: '', kind: 'system' as LogSourceKind }))
     ].map(item => ({
       ...item,
       count: counts[item.key]?.total ?? 0,
@@ -144,11 +168,25 @@ export function useLogsPage() {
         label: '全部来源',
         description: '主程序、适配器与插件',
         count: runtimeLogs.value.length,
-        errors: runtimeLogs.value.filter(log => log.level === 'ERROR').length
+        errors: Object.values(counts).reduce((sum, entry) => sum + entry.errors, 0)
       },
       ...sourceItems
     ]
   })
+
+  /** The rail lists the host first, then adapters and plugins separately; empty groups are left out. */
+  const sourceGroups = computed(() => {
+    const items = sourceFilters.value.filter(item => item.key !== 'ALL')
+    return ([
+      { kind: 'system', label: '主程序' },
+      { kind: 'adapter', label: '适配器' },
+      { kind: 'plugin', label: '插件' }
+    ] as const)
+      .map(group => ({ ...group, items: items.filter(item => 'kind' in item && item.kind === group.kind) }))
+      .filter(group => group.items.length > 0)
+  })
+
+  const allSources = computed(() => sourceFilters.value.find(item => item.key === 'ALL')!)
 
   const activeSourceLabel = computed(() => sourceFilters.value.find(source => source.key === activeSource.value)?.label ?? activeSource.value)
 
@@ -290,6 +328,8 @@ export function useLogsPage() {
     activeLevel,
     activeSource,
     activeSourceLabel,
+    sourceGroups,
+    allSources,
     autoRefresh,
     streamState,
     loadError,

@@ -7,7 +7,25 @@ export interface HostPowerResponse {
   message: string
 }
 
-// Backend contract is not final yet; the dashboard only needs ok + message.
 export function requestHostPower(action: HostPowerAction) {
   return apiRequest<HostPowerResponse>(`/api/v1/system/${action}`, { method: 'POST' })
+}
+
+export interface HostUpdateCheck {
+  current_version: string
+  latest_version: string | null
+  update_available: boolean
+  asset_name: string
+  release_url: string | null
+  release_notes: string | null
+  can_apply: boolean
+  reason: string | null
+}
+
+export function checkHostUpdate() {
+  return apiRequest<HostUpdateCheck>('/api/v1/system/update')
+}
+
+export function applyHostUpdate() {
+  return apiRequest<HostPowerResponse & { restarting: boolean }>('/api/v1/system/update', { method: 'POST' })
 }

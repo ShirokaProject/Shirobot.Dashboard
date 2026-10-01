@@ -9,13 +9,15 @@
       <!-- One category at a time; the navigator on the left picks which -->
       <section v-for="group in visibleGroups" :key="group.key" class="group">
         <h3 class="group-title">{{ group.label }}<span>{{ group.fields.length }} 项</span></h3>
+        <p v-if="group.description" class="group-desc">{{ group.description }}</p>
         <div class="group-card">
           <ConfigFieldRow
             v-for="field in group.fields"
             :key="field.item.key"
             :field="field"
-            :model-value="config[field.item.key]"
-            @update:model-value="config[field.item.key] = $event"
+            :id-prefix="group.parentKey ? `cfg-${group.parentKey}` : undefined"
+            :model-value="valuesOf(group)[field.item.key]"
+            @update:model-value="setValue(group, field.item.key, $event)"
           />
         </div>
       </section>
@@ -69,8 +71,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
-import type { PluginConfigMap, PluginRoutesConfig } from '../../../api'
-import { ROUTES_VIEW, type ConfigGroup } from '../usePluginConfig'
+import type { PluginConfigMap, PluginConfigValue, PluginRoutesConfig } from '../../../api'
+import { ROUTES_VIEW, isConfigObject, type ConfigGroup } from '../usePluginConfig'
 import ConfigFieldRow from './ConfigFieldRow.vue'
 
 const props = defineProps<{
@@ -88,6 +90,23 @@ const visibleGroups = computed(() => {
 })
 
 const emit = defineEmits<{ 'update:routeGroupsInput': [value: string] }>()
+
+/** A section category edits the nested object `config[parentKey]`; other categories edit the root. */
+function valuesOf(group: ConfigGroup): PluginConfigMap {
+  if (!group.parentKey) return props.config
+  const section = props.config[group.parentKey]
+  return isConfigObject(section) ? section : {}
+}
+
+function setValue(group: ConfigGroup, key: string, value: PluginConfigValue) {
+  const target = props.config
+  if (!group.parentKey) {
+    target[key] = value
+    return
+  }
+  if (!isConfigObject(target[group.parentKey])) target[group.parentKey] = {}
+  ;(target[group.parentKey] as PluginConfigMap)[key] = value
+}
 
 const routeModes = [
   { value: 'default', label: '跟随全局' },
@@ -115,6 +134,12 @@ function modeLabel(mode: string) {
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-title-medium);
   font-weight: 700;
+}
+
+.group-desc {
+  margin: calc(var(--md-space-2) * -1) 0 var(--md-space-3) var(--md-space-1);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
 }
 
 .group-title span {

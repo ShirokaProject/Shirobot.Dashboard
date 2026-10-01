@@ -259,6 +259,23 @@
   margin-top: var(--md-space-1);
 }
 
+/* Equal columns that fill the pane: a label growing to "重载中…" can neither widen a button nor push
+   the row past the card. */
+.detail-foot.button-group {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  width: 100%;
+}
+
+.detail-foot.button-group > .md-button {
+  min-width: 0;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .md-button.wide {
   width: 100%;
   justify-content: center;

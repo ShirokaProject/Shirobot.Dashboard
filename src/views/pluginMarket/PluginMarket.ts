@@ -1,3 +1,4 @@
+import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import {
@@ -93,7 +94,7 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
   const refreshing = ref(false)
   const loadError = ref('')
   const feedbackMessage = ref('')
-  const feedbackType = ref<'success' | 'error'>('success')
+  const feedbackType = ref<'success' | 'warning' | 'error'>('success')
   const market = ref<PluginMarketResponse | null>(null)
   const selectedPlugin = ref<MarketplacePlugin | null>(null)
   const detailVisible = ref(false)
@@ -299,8 +300,9 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
 
       installPreview.value = null
       installDialogVisible.value = false
-      feedbackType.value = 'success'
-      feedbackMessage.value = '插件安装成功'
+      feedbackType.value = response.pending_restart ? 'warning' : 'success'
+      feedbackMessage.value = response.message || '插件安装成功'
+      if (response.pending_restart && response.message) void offerRestartForStagedUpdate(response.message)
       options.onInstalled?.()
       await loadMarketplacePlugins()
     } catch (error) {
