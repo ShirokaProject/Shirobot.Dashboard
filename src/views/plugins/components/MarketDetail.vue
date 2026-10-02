@@ -24,7 +24,7 @@
       <div v-if="plugin.release.downloadCount !== null"><dt><MdIcon name="download" />下载</dt><dd>{{ plugin.release.downloadCount.toLocaleString() }} 次</dd></div>
       <div v-if="plugin.release.publishedAt"><dt><MdIcon name="calendar_today" />发布</dt><dd>{{ publishedAt }}</dd></div>
       <div v-if="plugin.license"><dt><MdIcon name="balance" />许可证</dt><dd>{{ plugin.license }}</dd></div>
-      <div v-if="compatibility !== '—'"><dt><MdIcon name="extension" />兼容</dt><dd class="mono">{{ compatibility }}</dd></div>
+      <div v-if="compatibility !== '—'"><dt><MdIcon name="extension" />声明兼容</dt><dd class="mono" title="插件目录声明的兼容范围；实际加载检查 DLL 的最低 API 要求和共享程序集 ABI，不按此范围禁止 1.0 以上宿主。">{{ compatibility }}</dd></div>
       <div>
         <dt>
           <GitHubIcon v-if="githubRepo" />

@@ -2,7 +2,7 @@ import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRes
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { packageFileError, usePackageFileDrop } from '../../features/packages/fileDrop'
 import { ElMessageBox } from 'element-plus'
-import { ApiError, cancelAdapterUpload, confirmAdapterUpload, deleteAdapter, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
+import { ApiError, cancelAdapterUpload, confirmAdapterUpload, createAdapterInstance, deleteAdapter, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
 import type { AdapterInstallPreview, AdapterStatus } from '../../api'
 
 export function useAdaptersPage() {
@@ -13,6 +13,11 @@ export function useAdaptersPage() {
   const error = ref('')
   const message = ref('')
   const messageType = ref<'success' | 'error' | 'warning'>('success')
+  const instanceVisible = ref(false)
+  const instanceId = ref('')
+  const instanceName = ref('')
+  const instanceError = ref('')
+  const instancePackageId = ref('')
   const installVisible = ref(false)
   const installFile = ref<File | null>(null)
   const installPreview = ref<AdapterInstallPreview | null>(null)
@@ -58,7 +63,7 @@ export function useAdaptersPage() {
   async function run(id: string, action: 'start' | 'stop' | 'reload' | 'delete') {
     if (!id || operation.value) return
     if (action === 'delete') {
-      try { await ElMessageBox.confirm('将停止、卸载并删除该适配器。此操作无法撤销。', '删除适配器', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
+      try { await ElMessageBox.confirm('将停止并删除此实例及其配置。其他实例继续保留；删除最后一个实例时，也会删除适配器包。此操作无法撤销。', '删除适配器', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
     }
     operation.value = `${id}:${action}`
     try {
@@ -80,6 +85,26 @@ export function useAdaptersPage() {
       await loadAdapters()
       if (needsRestart) await offerRestartForStagedUpdate(text, '需要重启宿主')
     } finally { operation.value = '' }
+  }
+  function openInstance() {
+    const adapter = selected.value
+    if (!adapter || operation.value) return
+    instancePackageId.value = adapter.packageId || adapter.id
+    instanceId.value = ''; instanceName.value = ''; instanceError.value = ''
+    instanceVisible.value = true
+  }
+  async function createInstance() {
+    if (!instanceId.value.trim() || operation.value) return
+    operation.value = `${instancePackageId.value}:create`
+    instanceError.value = ''
+    try {
+      const response = await createAdapterInstance(instancePackageId.value, instanceId.value.trim(), instanceName.value.trim())
+      selectedId.value = response.adapter?.id || instanceId.value.trim()
+      instanceVisible.value = false
+      await loadAdapters()
+      notify('实例已创建，请打开配置填写连接信息，再启动。')
+    } catch (cause) { instanceError.value = getApiErrorMessage(cause, '实例创建失败。') }
+    finally { operation.value = '' }
   }
   async function submitInstall() {
     if (!installFile.value || installBusy.value) return
@@ -109,5 +134,5 @@ export function useAdaptersPage() {
   }
   watch(installFile, () => { installPreview.value = null; installError.value = '' })
   onMounted(() => { void loadAdapters() })
-  return { adapters, selectedId, selected, loading, operation, error, message, messageType, installVisible, installFile, installPreview, installReplace, installError, installBusy, draggingAdapterFile, loadAdapters, run, submitInstall, confirmInstall, closeInstall }
+  return { instanceVisible, instanceId, instanceName, instanceError, openInstance, createInstance, adapters, selectedId, selected, loading, operation, error, message, messageType, installVisible, installFile, installPreview, installReplace, installError, installBusy, draggingAdapterFile, loadAdapters, run, submitInstall, confirmInstall, closeInstall }
 }

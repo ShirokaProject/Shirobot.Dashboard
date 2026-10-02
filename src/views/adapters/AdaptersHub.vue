@@ -60,7 +60,7 @@
                 <button type="button" class="row" @click="installed.selectedId.value = item.adapter.id">
                   <MdIcon :name="item.kind === 'error' ? 'error' : item.kind === 'update' ? 'arrow_upward' : 'restart_alt'" :class="['row-icon', item.kind]" />
                   <span class="row-text">
-                    <strong>{{ item.adapter.name }}</strong>
+                    <strong>{{ item.kind === 'update' ? `程序集 · ${item.adapter.packageId || item.adapter.id}` : item.adapter.name }}</strong>
                     <small>{{ item.reason }}</small>
                   </span>
                 </button>
@@ -218,6 +218,7 @@
           @run="action => installed.run(installed.selectedId.value, action)"
           @update="installUpdate"
           @config="configOpen = true"
+          @instance="installed.openInstance"
         />
         <AdapterMarketDetail
           v-else
@@ -259,6 +260,19 @@
       @update:replace="market.replace.value = $event"
       @confirm="confirmMarketInstall"
     />
+
+    <el-dialog v-model="installed.instanceVisible.value" title="添加适配器实例" width="min(480px, 92vw)" :close-on-click-modal="false">
+      <p>复用已安装的适配器文件，每个实例独立配置、启动和停止。新实例先保持停用。</p>
+      <el-form label-position="top" @submit.prevent="installed.createInstance">
+        <el-form-item label="实例 ID"><el-input v-model="installed.instanceId.value" placeholder="例如：qq-work" maxlength="64" /></el-form-item>
+        <el-form-item label="显示名称"><el-input v-model="installed.instanceName.value" placeholder="例如：工作群机器人（可选）" maxlength="100" /></el-form-item>
+      </el-form>
+      <el-alert v-if="installed.instanceError.value" :title="installed.instanceError.value" type="error" :closable="false" show-icon />
+      <template #footer>
+        <el-button :disabled="Boolean(installed.operation.value)" @click="installed.instanceVisible.value = false">取消</el-button>
+        <el-button type="primary" :loading="Boolean(installed.operation.value)" :disabled="!installed.instanceId.value.trim()" @click="installed.createInstance">创建实例</el-button>
+      </template>
+    </el-dialog>
 
     <!-- Config workspace: same editor as plugins, without routes -->
     <PluginConfigDialog
@@ -336,7 +350,7 @@ function compareVersions(left: string, right: string) {
 
 /** Catalog entry offering a newer version of an installed adapter */
 function updateFor(adapter: AdapterStatus): AdapterMarketEntry | null {
-  const entry = market.entries.value.find(item => item.id === adapter.id)
+  const entry = market.entries.value.find(item => item.id === (adapter.packageId || adapter.id))
   return entry && compareVersions(entry.version, adapter.version) > 0 ? entry : null
 }
 
@@ -352,14 +366,21 @@ function adapterLabel(adapter: AdapterStatus) {
   return adapter.loaded ? '运行中' : '已停止'
 }
 
-const attention = computed(() => installed.adapters.value.flatMap(adapter => {
+const attention = computed(() => {
   const items: Array<{ adapter: AdapterStatus; kind: 'error' | 'update' | 'restart'; reason: string }> = []
-  if (adapter.error) items.push({ adapter, kind: 'error', reason: adapter.error })
-  const update = updateFor(adapter)
-  if (update) items.push({ adapter, kind: 'update', reason: `可更新到 v${update.version}` })
-  if (adapter.restartRequired) items.push({ adapter, kind: 'restart', reason: '需要重启宿主后生效' })
+  const packages = new Set<string>()
+  for (const adapter of installed.adapters.value) {
+    if (adapter.error) items.push({ adapter, kind: 'error', reason: adapter.error })
+    const update = updateFor(adapter)
+    const packageId = adapter.packageId || adapter.id
+    if (update && !packages.has(packageId)) {
+      packages.add(packageId)
+      items.push({ adapter, kind: 'update', reason: `更新程序集至 v${update.version} · 所有同包实例生效` })
+    }
+    if (adapter.restartRequired) items.push({ adapter, kind: 'restart', reason: '需要重启宿主后生效' })
+  }
   return items
-}))
+})
 
 const currentOperation = computed(() => {
   const [id, action] = installed.operation.value.split(':')
@@ -373,7 +394,7 @@ function installUpdate() {
 }
 
 // 发现 lists only what isn't installed; updates live in 已安装.
-const installedIds = computed(() => new Set(installed.adapters.value.map(adapter => adapter.id)))
+const installedIds = computed(() => new Set(installed.adapters.value.map(adapter => adapter.packageId || adapter.id)))
 const discoverList = computed(() => market.filtered.value.filter(entry => !installedIds.value.has(entry.id) && !entry.installedVersion))
 const installedInCatalog = computed(() => market.entries.value.filter(entry => installedIds.value.has(entry.id) || entry.installedVersion).length)
 

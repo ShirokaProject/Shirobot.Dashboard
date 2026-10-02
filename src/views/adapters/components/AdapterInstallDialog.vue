@@ -9,7 +9,7 @@
         <p v-if="file" class="selected-file">待解析：{{ file.name }}</p>
       </template>
       <template v-else>
-        <el-alert title="确认后宿主会短暂重载适配器，期间对应平台连接可能中断。" type="warning" :closable="false" show-icon />
+        <el-alert title="确认后将安装或替换适配器包的程序集，并重载此包的所有运行实例，连接会短暂中断，各实例配置保留。" type="warning" :closable="false" show-icon />
         <dl class="preview-list">
           <div><dt>名称</dt><dd>{{ preview.adapter.name }}</dd></div>
           <div><dt>ID</dt><dd>{{ preview.adapter.id }}</dd></div>
@@ -18,8 +18,8 @@
           <div><dt>包</dt><dd>{{ preview.packageName || '—' }} · {{ preview.packageType }}</dd></div>
           <div v-if="preview.source"><dt>来源</dt><dd>{{ preview.source }}</dd></div>
         </dl>
-        <el-alert v-if="preview.conflict" :title="`检测到已安装版本 ${preview.installedVersion || '未知'}，确认后将替换。`" type="warning" :closable="false" show-icon />
-        <el-checkbox v-if="preview.conflict" :model-value="replace" @update:model-value="emit('update:replace', $event)">替换已安装适配器</el-checkbox>
+        <el-alert v-if="preview.conflict" :title="`检测到已安装版本 ${preview.installedVersion || '未知'}，确认后将替换此包的程序集并更新所有实例。`" type="warning" :closable="false" show-icon />
+        <el-checkbox v-if="preview.conflict" :model-value="replace" @update:model-value="emit('update:replace', $event)">替换共享程序集（所有实例生效）</el-checkbox>
       </template>
       <el-alert v-if="error || fileError" :title="fileError || error" type="error" :closable="false" show-icon />
     </div>

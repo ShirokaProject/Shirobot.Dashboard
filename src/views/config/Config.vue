@@ -53,7 +53,7 @@
             <div class="row">
               <div class="row-text">
                 <label for="cfg-protocol">协议适配器</label>
-                <p>启动时额外加载的适配器，可多选。在适配器页启用的适配器会自动加载，无需在此添加；未通过适配器页安装的可直接输入 DLL 名称或路径。<code>protocols</code></p>
+                <p>启动时额外加载的适配器，可多选。安装的实例按根 config.toml 中 adapter_instances 清单自动加载，请在适配器页或 CLI 管理，无需在此重复添加；未安装的独立 DLL 可直接输入名称或路径。<code>protocols</code></p>
               </div>
               <el-select
                 id="cfg-protocol"

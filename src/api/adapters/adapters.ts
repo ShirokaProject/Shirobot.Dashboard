@@ -26,6 +26,8 @@ export function formatPlatform(value: string): string {
 
 export interface AdapterStatus {
   id: string
+  packageId?: string
+  configPath?: string | null
   name: string
   version: string
   platform: string
@@ -108,6 +110,8 @@ export function normalizeAdapter(value: unknown): AdapterStatus {
   const item = record(value)
   return {
     id: stringValue(item.id || item.adapter_id),
+    packageId: stringValue(item.package_id || item.packageId || item.id || item.adapter_id),
+    configPath: stringValue(item.config_path || item.configPath) || null,
     name: stringValue(item.name || item.display_name || item.id || item.adapter_id, '未命名适配器'),
     version: stringValue(item.version, '—'),
     platform: formatPlatform(stringValue(item.platform || item.platform_id, '未声明')),
@@ -170,6 +174,12 @@ export async function stopAdapterById(id: string) {
 
 export async function reloadAdapterById(id: string) {
   return normalizeOperation(await apiRequest<unknown>(`/api/v1/adapters/${encodeURIComponent(id)}/reload`, { method: 'POST' }))
+}
+
+export async function createAdapterInstance(packageId: string, id: string, name: string) {
+  return normalizeOperation(await apiRequest<unknown>(`/api/v1/adapters/${encodeURIComponent(packageId)}/instances`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name })
+  }))
 }
 
 export async function deleteAdapter(id: string) {
