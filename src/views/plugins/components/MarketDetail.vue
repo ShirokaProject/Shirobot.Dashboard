@@ -48,7 +48,7 @@
               referrerpolicy="no-referrer"
               @error="avatarFailed = true"
             />
-            <span class="repo-text">{{ githubRepo }}</span>
+            <span class="repo-text"><span class="repo-owner"><template v-for="piece in repoPathParts(githubRepo).owner" :key="piece">{{ piece }}<wbr /></template></span><template v-for="piece in repoPathParts(githubRepo).name" :key="piece">{{ piece }}<wbr /></template></span>
             <MdIcon name="open_in_new" class="external" />
           </a>
           <a
@@ -57,7 +57,7 @@
             :href="otherRepo.href"
             target="_blank"
             rel="noopener noreferrer"
-          ><SiteIcon :domain="otherRepo.domain" class="repo-avatar" /><span class="repo-text">{{ otherRepo.label }}</span><MdIcon name="open_in_new" class="external" /></a>
+          ><SiteIcon :domain="otherRepo.domain" class="repo-avatar" /><span class="repo-text" :title="otherRepo.label"><span class="repo-owner"><template v-for="piece in repoPathParts(otherRepo.label).owner" :key="piece">{{ piece }}<wbr /></template></span><template v-for="piece in repoPathParts(otherRepo.label).name" :key="piece">{{ piece }}<wbr /></template></span><MdIcon name="open_in_new" class="external" /></a>
           <span v-else class="mono">{{ plugin.repository || '—' }}</span>
         </dd>
       </div>
@@ -85,7 +85,7 @@ import MdIcon from '../../../components/MdIcon.vue'
 import SiteIcon from '../../../components/SiteIcon.vue'
 import { DOCS_URL } from '../../../features/docs'
 import type { MarketplacePlugin } from '../../../api'
-import { githubRepoOf, otherRepoOf } from '../../../features/plugins/catalogSources'
+import { githubRepoOf, otherRepoOf, repoPathParts } from '../../../features/plugins/catalogSources'
 
 const props = defineProps<{
   plugin: MarketplacePlugin | null

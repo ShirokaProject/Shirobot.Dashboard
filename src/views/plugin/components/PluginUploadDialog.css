@@ -21,6 +21,8 @@
 :global(.plugin-upload-dialog),
 :deep(.plugin-upload-dialog) {
   width: min(560px, calc(100vw - 32px)) !important;
+  /* Header, body and footer pad themselves (24px); Element's own 16px dialog padding would stack on top */
+  padding: 0;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-extra-large);
   background: var(--md-sys-color-surface-container-high);

@@ -100,6 +100,16 @@ export function removeCatalogSource(id: string, scope: SourceScope = 'plugins') 
  * `owner/repo` for a bare slug or any github.com repository URL (with or without .git,
  * trailing paths like /tree/main), else null. Links are always rebuilt on github.com.
  */
+/**
+ * Splits "owner/name" (or "host/path/name") for display: the part up to the last "/" and the name,
+ * each cut after "/" and "." so a narrow column can wrap there instead of mid-word.
+ */
+export function repoPathParts(path: string) {
+  const cut = path.lastIndexOf('/') + 1
+  const pieces = (text: string) => text.split(/(?<=[./])/).filter(Boolean)
+  return { owner: pieces(path.slice(0, cut)), name: pieces(path.slice(cut)) }
+}
+
 export function githubRepoOf(value: string) {
   const trimmed = value.trim()
   if (/^[\w.-]+\/[\w.-]+$/.test(trimmed)) return trimmed

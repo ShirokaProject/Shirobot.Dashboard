@@ -177,15 +177,21 @@
   gap: var(--md-space-2);
   max-width: 100%;
   color: var(--app-accent);
-  font: 400 13px / 20px var(--font-mono);
+  /* Proportional, not mono: repository paths are long and this column is narrow */
+  font: 400 13px / 20px var(--md-ref-typeface-plain);
   text-decoration: none;
 }
 
+/* The full owner/name wraps instead of being cut off: an ellipsis would hide the repository name,
+   the part that tells repositories apart. It breaks after "/" and "." (<wbr>), mid-word only as a
+   last resort. The owner is dimmed since the avatar also shows it. */
 .repo-text {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
+}
+
+.repo-owner {
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .repo-link:hover {

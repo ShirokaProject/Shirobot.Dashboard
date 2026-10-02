@@ -47,7 +47,7 @@
               referrerpolicy="no-referrer"
               @error="avatarFailed = true"
             />
-            <span class="repo-text">{{ githubRepo }}</span>
+            <span class="repo-text"><span class="repo-owner"><template v-for="piece in repoPathParts(githubRepo).owner" :key="piece">{{ piece }}<wbr /></template></span><template v-for="piece in repoPathParts(githubRepo).name" :key="piece">{{ piece }}<wbr /></template></span>
             <MdIcon name="open_in_new" class="external" />
           </a>
           <span v-else class="mono">{{ entry.repository || '—' }}</span>
@@ -71,7 +71,7 @@ import GitHubIcon from '../../../components/GitHubIcon.vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { AdapterMarketEntry } from '../../../api'
 import { DOCS_URL } from '../../../features/docs'
-import { githubRepoOf } from '../../../features/plugins/catalogSources'
+import { githubRepoOf, repoPathParts } from '../../../features/plugins/catalogSources'
 import { isInstallableEntry } from '../../adapterMarket/AdapterMarket'
 
 const props = defineProps<{

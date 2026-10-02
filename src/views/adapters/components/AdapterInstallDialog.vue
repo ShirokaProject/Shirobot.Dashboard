@@ -1,32 +1,93 @@
 <template>
-  <el-dialog :model-value="visible" :title="title" width="560px" append-to-body align-center :close-on-click-modal="!busy" :close-on-press-escape="!busy" :show-close="!busy" @update:model-value="emit('update:visible', $event)">
-    <div class="adapter-install-dialog">
+  <!-- Same look as the plugin upload dialog: shared classes from PluginUploadDialog.css -->
+  <el-dialog
+    :model-value="visible"
+    :title="title"
+    width="560px"
+    class="plugin-upload-dialog"
+    modal-class="plugin-upload-overlay"
+    append-to-body
+    align-center
+    :close-on-click-modal="!busy"
+    :close-on-press-escape="!busy"
+    :show-close="!busy"
+    @update:model-value="handleVisibleChange"
+  >
+    <div class="upload-dialog-content">
+      <div class="upload-hero explorer-hero" aria-hidden="true">
+        <div class="explorer-window">
+          <div class="explorer-titlebar"><span></span><span></span><span></span></div>
+          <div class="explorer-body">
+            <div class="explorer-sidebar"><span></span><span></span><span></span></div>
+            <div class="explorer-files">
+              <span class="file-row"></span>
+              <span class="file-row short"></span>
+              <div class="dll-file-card"><span class="file-corner"></span><strong>DLL</strong></div>
+            </div>
+          </div>
+        </div>
+        <span class="explorer-upload-arrow"></span>
+        <span class="explorer-spark spark-one"></span>
+        <span class="explorer-spark spark-two"></span>
+      </div>
+
       <template v-if="!preview">
         <el-upload ref="upload" drag :auto-upload="false" :limit="1" :show-file-list="false" :disabled="busy" accept=".dll,.zip" :on-change="selectFile" :on-exceed="replaceFile">
-          <strong>拖拽适配器包到这里</strong>
-          <span>或点击选择本地 .dll / .zip 文件</span>
+          <div class="upload-dropzone-text">
+            <strong>{{ file ? '重新选择适配器包' : '拖拽适配器包到这里' }}</strong>
+            <span>{{ file ? '当前已选择 1 个待解析适配器包' : '或点击选择本地 .dll / .zip 文件' }}</span>
+          </div>
         </el-upload>
-        <p v-if="file" class="selected-file">待解析：{{ file.name }}</p>
+
+        <div v-if="file" class="selected-file-panel">
+          <div class="selected-file-icon" aria-hidden="true">{{ file.name.toLowerCase().endsWith('.zip') ? 'ZIP' : 'DLL' }}</div>
+          <div class="selected-file-main">
+            <span>待解析文件</span>
+            <strong>{{ file.name }}</strong>
+          </div>
+          <button type="button" class="clear-file-button" :disabled="busy" @click="emit('update:file', null)">移除</button>
+        </div>
       </template>
-      <template v-else>
-        <el-alert title="确认后将安装或替换适配器包的程序集，并重载此包的所有运行实例，连接会短暂中断，各实例配置保留。" type="warning" :closable="false" show-icon />
-        <dl class="preview-list">
-          <div><dt>名称</dt><dd>{{ preview.adapter.name }}</dd></div>
-          <div><dt>ID</dt><dd>{{ preview.adapter.id }}</dd></div>
-          <div><dt>版本</dt><dd>{{ preview.adapter.version }}</dd></div>
+
+      <div v-else class="upload-result-panel">
+        <div class="upload-result-head">
+          <span class="upload-result-badge">已解析</span>
+          <strong>{{ preview.adapter.name }}</strong>
+          <small>{{ preview.adapter.id }} · v{{ preview.adapter.version }}</small>
+        </div>
+
+        <dl class="upload-result-list">
           <div><dt>平台</dt><dd>{{ preview.adapter.platform }}</dd></div>
-          <div><dt>包</dt><dd>{{ preview.packageName || '—' }} · {{ preview.packageType }}</dd></div>
+          <div><dt>文件</dt><dd>{{ preview.packageName || '—' }} · {{ preview.packageType }}<template v-if="preview.packageSize !== null"> · {{ formatSize(preview.packageSize) }}</template></dd></div>
           <div v-if="preview.source"><dt>来源</dt><dd>{{ preview.source }}</dd></div>
         </dl>
-        <el-alert v-if="preview.conflict" :title="`检测到已安装版本 ${preview.installedVersion || '未知'}，确认后将替换此包的程序集并更新所有实例。`" type="warning" :closable="false" show-icon />
-        <el-checkbox v-if="preview.conflict" :model-value="replace" @update:model-value="emit('update:replace', $event)">替换共享程序集（所有实例生效）</el-checkbox>
-      </template>
-      <el-alert v-if="error || fileError" :title="fileError || error" type="error" :closable="false" show-icon />
+
+        <p class="upload-plugin-description">{{ preview.adapter.description || '暂无适配器描述。' }}</p>
+
+        <div v-if="preview.conflict" class="upload-conflict-panel">
+          <strong>检测到已安装同 ID 适配器包</strong>
+          <span>将替换 v{{ preview.installedVersion || '未知' }} 为 v{{ preview.adapter.version }}；此包的所有运行实例会重载，连接短暂中断，各实例配置保留。</span>
+        </div>
+
+        <label v-if="preview.conflict" class="upload-option-row">
+          <span>替换共享程序集（所有实例生效）</span>
+          <input type="checkbox" :checked="replace" @change="emit('update:replace', ($event.target as HTMLInputElement).checked)" />
+        </label>
+      </div>
+
+      <div v-if="error || fileError" class="upload-error-panel">{{ fileError || error }}</div>
     </div>
+
     <template #footer>
-      <el-button :disabled="busy" @click="emit('update:visible', false)">取消</el-button>
-      <el-button v-if="!preview" type="primary" :disabled="!file" :loading="busy" @click="emit('submit')">{{ busy ? '解析中...' : '预览安装' }}</el-button>
-      <el-button v-else type="primary" :disabled="preview.conflict && !replace" :loading="busy" @click="emit('confirm')">{{ busy ? '安装中...' : '确认安装并重载' }}</el-button>
+      <div class="upload-dialog-footer">
+        <button type="button" class="md3-dialog-action text" :disabled="busy" @click="emit('update:visible', false)">取消</button>
+        <button v-if="!preview" type="button" class="md3-dialog-action tonal" :disabled="!file || busy" @click="emit('submit')">
+          {{ busy ? '解析中...' : '预览安装' }}
+        </button>
+        <button v-else type="button" class="md3-dialog-action tonal" :disabled="busy || (preview.conflict && !replace)" @click="emit('confirm')">
+          {{ busy ? '安装中...' : preview.conflict ? '确认替换并重载' : '确认安装' }}
+        </button>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -56,6 +117,16 @@ async function selectFile(file: UploadFile) {
   await nextTick()
   emit('submit')
 }
+// Parsing or installing must finish before the dialog can close.
+function handleVisibleChange(value: boolean) {
+  if (!value && props.busy) return
+  emit('update:visible', value)
+}
+function formatSize(size: number) {
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
 function replaceFile(files: File[]) {
   if (props.busy) return
   fileError.value = packageFileError(files, '适配器') || ''
@@ -67,13 +138,4 @@ function replaceFile(files: File[]) {
 }
 </script>
 
-<style scoped>
-.adapter-install-dialog { display: flex; flex-direction: column; gap: 16px; }
-.adapter-install-dialog :deep(.el-upload), .adapter-install-dialog :deep(.el-upload-dragger) { width: 100%; }
-.adapter-install-dialog :deep(.el-upload-dragger) { display: flex; flex-direction: column; justify-content: center; gap: 8px; min-height: 150px; }
-.selected-file { margin: 0; color: var(--md-sys-color-on-surface-variant); }
-.preview-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
-.preview-list dt { color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-label-medium); }
-.preview-list dd { margin: 3px 0 0; overflow-wrap: anywhere; }
-@media (max-width: 599px) { .preview-list { grid-template-columns: 1fr; } }
-</style>
+<style scoped src="../../plugin/components/PluginUploadDialog.css"></style>
