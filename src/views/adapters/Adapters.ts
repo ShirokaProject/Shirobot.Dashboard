@@ -2,11 +2,14 @@ import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRes
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { packageFileError, usePackageFileDrop } from '../../features/packages/fileDrop'
 import { ElMessageBox } from 'element-plus'
-import { ApiError, cancelAdapterUpload, confirmAdapterUpload, createAdapterInstance, deleteAdapter, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
+import { ApiError, cancelAdapterUpload, confirmAdapterUpload, createAdapterInstance, deleteAdapter, deleteAdapterPackage, getAdapterPackages, runAdapterPackage, getAdapterStatus, getAdapters, getApiErrorMessage, reloadAdapterById, startAdapter, stopAdapterById, uploadAdapterPackage } from '../../api'
 import type { AdapterInstallPreview, AdapterStatus } from '../../api'
 
 export function useAdaptersPage() {
   const adapters = ref<AdapterStatus[]>([])
+  const packages = ref<AdapterStatus[]>([])
+  /** Older hosts have no package endpoints: no master switch or package reload there. */
+  const packageControls = ref(true)
   const selectedId = ref('')
   const loading = ref(false)
   const operation = ref('')
@@ -52,22 +55,35 @@ export function useAdaptersPage() {
     loading.value = true; error.value = ''
     try {
       let list = await getAdapters()
-      if (!list.length) {
+      try { packages.value = await getAdapterPackages(); packageControls.value = true } catch (cause) {
+        if (!(cause instanceof ApiError) || cause.status !== 404) throw cause
+        packageControls.value = false
+        packages.value = [...new Map(list.map(item => [item.packageId || item.id, { ...item, id: item.packageId || item.id }])).values()]
+      }
+      if (!list.length && !packages.value.length) {
         const legacy = await getAdapterStatus()
         if (legacy.id || legacy.loaded) list = [legacy]
       }
       adapters.value = list
-      selectedId.value = list.some(item => item.id === selectedId.value) ? selectedId.value : (list[0]?.id ?? '')
+      // An empty selection means a package is selected in the hub; keep it rather than jumping to an instance.
+      if (selectedId.value && !list.some(item => item.id === selectedId.value)) selectedId.value = ''
     } catch (cause) { error.value = getApiErrorMessage(cause, '适配器列表加载失败。') } finally { loading.value = false }
   }
   async function run(id: string, action: 'start' | 'stop' | 'reload' | 'delete') {
     if (!id || operation.value) return
     if (action === 'delete') {
-      try { await ElMessageBox.confirm('将停止并删除此实例及其配置。其他实例继续保留；删除最后一个实例时，也会删除适配器包。此操作无法撤销。', '删除适配器', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
+      try { await ElMessageBox.confirm('将停止并删除此实例及其配置。其他实例和适配器包继续保留。此操作无法撤销。', '删除适配器', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
     }
-    operation.value = `${id}:${action}`
+    await execute(`${id}:${action}`, action, () => action === 'start' ? startAdapter(id) : action === 'stop' ? stopAdapterById(id) : action === 'reload' ? reloadAdapterById(id) : deleteAdapter(id))
+  }
+  async function runPackage(id: string, action: 'start' | 'stop' | 'reload') {
+    if (!id || operation.value) return
+    await execute(`${id}:package-${action}`, action, () => runAdapterPackage(id, action))
+  }
+  async function execute(key: string, action: string, request: () => ReturnType<typeof startAdapter>) {
+    operation.value = key
     try {
-      const response = action === 'start' ? await startAdapter(id) : action === 'stop' ? await stopAdapterById(id) : action === 'reload' ? await reloadAdapterById(id) : await deleteAdapter(id)
+      const response = await request()
       const text = response.message || `适配器 ${action} 完成。`
       if (!response.restartRequired) {
         notify(text, response.ok ? 'success' : 'error')
@@ -86,12 +102,24 @@ export function useAdaptersPage() {
       if (needsRestart) await offerRestartForStagedUpdate(text, '需要重启宿主')
     } finally { operation.value = '' }
   }
-  function openInstance() {
+  function openInstance(packageId?: string) {
     const adapter = selected.value
-    if (!adapter || operation.value) return
-    instancePackageId.value = adapter.packageId || adapter.id
+    if ((!adapter && !packageId) || operation.value) return
+    instancePackageId.value = packageId || adapter!.packageId || adapter!.id
     instanceId.value = ''; instanceName.value = ''; instanceError.value = ''
     instanceVisible.value = true
+  }
+  async function removePackage(id: string) {
+    if (operation.value) return
+    try { await ElMessageBox.confirm("将删除适配器程序集及其全部实例和连接配置。此操作无法撤销。", "删除适配器包", { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" }) } catch { return }
+    operation.value = `${id}:delete-package`
+    try {
+      const result = await deleteAdapterPackage(id)
+      await loadAdapters()
+      if (result.restartRequired) await offerRestartForStagedUpdate(result.message, "需要重启宿主")
+      else notify(result.message || "适配器包已删除。")
+    } catch (cause) { notify(getApiErrorMessage(cause, "删除适配器包失败。"), "error") }
+    finally { operation.value = "" }
   }
   async function createInstance() {
     if (!instanceId.value.trim() || operation.value) return
@@ -134,5 +162,5 @@ export function useAdaptersPage() {
   }
   watch(installFile, () => { installPreview.value = null; installError.value = '' })
   onMounted(() => { void loadAdapters() })
-  return { instanceVisible, instanceId, instanceName, instanceError, openInstance, createInstance, adapters, selectedId, selected, loading, operation, error, message, messageType, installVisible, installFile, installPreview, installReplace, installError, installBusy, draggingAdapterFile, loadAdapters, run, submitInstall, confirmInstall, closeInstall }
+  return { packages, packageControls, runPackage, removePackage, instanceVisible, instanceId, instanceName, instanceError, openInstance, createInstance, adapters, selectedId, selected, loading, operation, error, message, messageType, installVisible, installFile, installPreview, installReplace, installError, installBusy, draggingAdapterFile, loadAdapters, run, submitInstall, confirmInstall, closeInstall }
 }

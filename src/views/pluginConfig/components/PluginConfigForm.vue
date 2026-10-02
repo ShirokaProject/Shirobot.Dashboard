@@ -1,6 +1,22 @@
 <template>
   <div class="config-form">
-    <template v-if="view !== ROUTES_VIEW">
+    <!-- Adapter instance: name and ID, laid out like any other category -->
+    <section v-if="view === INSTANCE_VIEW && instance" class="group">
+      <h3 class="group-title">实例<span>{{ instanceFields.length }} 项</span></h3>
+      <div class="group-card">
+        <ConfigFieldRow
+          v-for="field in instanceFields"
+          :key="field.item.key"
+          :field="field"
+          id-prefix="instance"
+          :model-value="instance[field.item.key as 'id' | 'name']"
+          @update:model-value="emit('update:instance', { ...instance, [field.item.key]: String($event ?? '') })"
+        />
+      </div>
+      <p v-if="instanceError" class="instance-error">{{ instanceError }}</p>
+    </section>
+
+    <template v-else-if="view !== ROUTES_VIEW">
       <div v-if="!groups.length" class="form-empty">
         <MdIcon name="settings" />
         <strong>这个插件没有可配置项</strong>
@@ -72,7 +88,7 @@
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { PluginConfigMap, PluginConfigValue, PluginRoutesConfig } from '../../../api'
-import { ROUTES_VIEW, isConfigObject, type ConfigGroup } from '../usePluginConfig'
+import { INSTANCE_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
 import ConfigFieldRow from './ConfigFieldRow.vue'
 
 const props = defineProps<{
@@ -82,14 +98,25 @@ const props = defineProps<{
   config: PluginConfigMap
   routes: PluginRoutesConfig
   routeGroupsInput: string
+  /** Adapter instance name / ID drafts, shown under INSTANCE_VIEW */
+  instance?: { id: string; name: string } | null
+  instanceError?: string
 }>()
+
+const instanceFields = computed<ConfigField[]>(() => [
+  { item: { key: 'name', label: '名称', type: 'string', placeholder: props.instance?.id }, label: '名称', description: '在列表和日志中显示，留空则使用实例 ID。', enabled: true, enumOptions: null },
+  { item: { key: 'id', label: '实例 ID', type: 'string' }, label: '实例 ID', description: '全局唯一。修改后运行中的实例会重新启动。', enabled: true, enumOptions: null }
+])
 
 const visibleGroups = computed(() => {
   const match = props.groups.find(group => group.key === props.view)
   return match ? [match] : props.groups.slice(0, 1)
 })
 
-const emit = defineEmits<{ 'update:routeGroupsInput': [value: string] }>()
+const emit = defineEmits<{
+  'update:routeGroupsInput': [value: string]
+  'update:instance': [value: { id: string; name: string }]
+}>()
 
 /** A section category edits the nested object `config[parentKey]`; other categories edit the root. */
 function valuesOf(group: ConfigGroup): PluginConfigMap {
@@ -139,6 +166,12 @@ function modeLabel(mode: string) {
 .group-desc {
   margin: calc(var(--md-space-2) * -1) 0 var(--md-space-3) var(--md-space-1);
   color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.instance-error {
+  margin: var(--md-space-2) 0 0 var(--md-space-1);
+  color: var(--md-sys-color-error);
   font: var(--md-sys-typescale-body-small);
 }
 

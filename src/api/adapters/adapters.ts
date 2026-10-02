@@ -160,6 +160,20 @@ export async function getAdapters() {
   return Array.isArray(items) ? items.map(normalizeAdapter) : []
 }
 
+export async function getAdapterPackages() {
+  const response = await apiRequest<unknown>('/api/v1/adapter-packages')
+  return Array.isArray(response) ? response.map(normalizeAdapter) : []
+}
+
+/** Package master switch and reload: act on every instance of the package at once. */
+export async function runAdapterPackage(id: string, action: 'start' | 'stop' | 'reload') {
+  return normalizeOperation(await apiRequest<unknown>(`/api/v1/adapter-packages/${encodeURIComponent(id)}/${action}`, { method: 'POST' }))
+}
+
+export async function deleteAdapterPackage(id: string) {
+  return normalizeOperation(await apiRequest<unknown>(`/api/v1/adapter-packages/${encodeURIComponent(id)}`, { method: 'DELETE' }))
+}
+
 export async function getAdapterStatus() {
   return normalizeAdapter(await apiRequest<unknown>('/api/v1/adapter'))
 }
@@ -179,6 +193,12 @@ export async function reloadAdapterById(id: string) {
 export async function createAdapterInstance(packageId: string, id: string, name: string) {
   return normalizeOperation(await apiRequest<unknown>(`/api/v1/adapters/${encodeURIComponent(packageId)}/instances`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name })
+  }))
+}
+
+export async function updateAdapterInstance(id: string, newId: string, name: string) {
+  return normalizeOperation(await apiRequest<unknown>(`/api/v1/adapters/${encodeURIComponent(id)}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: newId, name })
   }))
 }
 

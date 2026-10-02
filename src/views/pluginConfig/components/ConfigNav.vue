@@ -12,7 +12,18 @@
       <span>{{ group.label }}</span>
       <small>{{ group.fields.length }}</small>
     </button>
-    <hr v-if="groups.length && showRoutes" />
+    <hr v-if="groups.length && (showRoutes || showInstance)" />
+    <button
+      v-if="showInstance"
+      type="button"
+      class="nav-pill"
+      :class="{ selected: view === INSTANCE_VIEW }"
+      :aria-current="view === INSTANCE_VIEW ? 'true' : undefined"
+      @click="emit('update:view', INSTANCE_VIEW)"
+    >
+      <span>实例</span>
+      <MdIcon name="code" />
+    </button>
     <button
       v-if="showRoutes"
       type="button"
@@ -29,9 +40,9 @@
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
-import { ROUTES_VIEW, type ConfigGroup } from '../usePluginConfig'
+import { INSTANCE_VIEW, ROUTES_VIEW, type ConfigGroup } from '../usePluginConfig'
 
-withDefaults(defineProps<{ groups: ConfigGroup[]; view: string; showRoutes?: boolean }>(), { showRoutes: true })
+withDefaults(defineProps<{ groups: ConfigGroup[]; view: string; showRoutes?: boolean; showInstance?: boolean }>(), { showRoutes: true, showInstance: false })
 const emit = defineEmits<{ 'update:view': [view: string] }>()
 </script>
 

@@ -53,7 +53,7 @@
             <div class="row">
               <div class="row-text">
                 <label for="cfg-protocol">协议适配器</label>
-                <p>启动时额外加载的适配器，可多选。安装的实例按根 config.toml 中 adapter_instances 清单自动加载，请在适配器页或 CLI 管理，无需在此重复添加；未安装的独立 DLL 可直接输入名称或路径。<code>protocols</code></p>
+                <p>启动时额外加载的适配器，可多选。安装的实例按各适配器 config.toml 中 instances 清单自动加载，请在适配器页或 CLI 管理，无需在此重复添加；未安装的独立 DLL 可直接输入名称或路径。<code>protocols</code></p>
               </div>
               <el-select
                 id="cfg-protocol"
@@ -76,6 +76,13 @@
                 <p>关闭后只保留必要的运行日志。<code>enable_log</code></p>
               </div>
               <el-switch id="cfg-log" v-model="form.enable_log" />
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <label for="cfg-showid">显示群与用户 ID</label>
+                <p>消息日志在名称旁显示群 ID 和用户 ID，保存后即时生效。<code>showid</code></p>
+              </div>
+              <el-switch id="cfg-showid" v-model="form.showid" />
             </div>
             <div class="row">
               <div class="row-text">

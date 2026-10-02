@@ -71,6 +71,8 @@ const demoAdapters: AdapterStatus[] = [demoAdapter, {
   assemblyPath: '/opt/shirobot/adapters/ShiroBot.Adapter.Telegram.dll', description: 'Telegram Bot API 平台连接适配器。', error: null, restartRequired: false, rollback: null
 }]
 
+const demoAdapterPackages: AdapterStatus[] = demoAdapters.map(item => ({ ...item, packageId: item.packageId || item.id, enabled: true }))
+
 const demoAdapterMarket: AdapterMarketEntry[] = [
   { id: 'shirobot.adapter.onebot', name: 'OneBot Adapter', version: '0.2.0', platform: 'qq', description: 'OneBot v11 协议适配，支持 QQ 平台连接。', repository: 'ShirokaProject/ShiroBot.Adapter.OneBot', authors: ['Shirobot Core'], downloadCount: 12400, installedVersion: '0.1.0', health: 'available', asset: { url: 'https://github.com/ShirokaProject/ShiroBot.Adapter.OneBot/releases/download/v0.2.0/ShiroBot.Adapter.OneBot.zip', name: 'ShiroBot.Adapter.OneBot.zip', digest: `sha256:${'4'.repeat(64)}`, size: 256000 } },
   { id: 'shirobot.adapter.telegram', name: 'Telegram Adapter', version: '0.1.0', platform: 'telegram', description: 'Telegram Bot API 平台连接。', repository: 'ShirokaProject/ShiroBot.Adapter.Telegram', authors: ['Community'], downloadCount: 4600, installedVersion: null, health: 'available', asset: { url: 'https://github.com/ShirokaProject/ShiroBot.Adapter.Telegram/releases/download/v0.1.0/ShiroBot.Adapter.Telegram.zip', name: 'ShiroBot.Adapter.Telegram.zip', digest: `sha256:${'5'.repeat(64)}`, size: 198000 } }
@@ -192,6 +194,7 @@ const demoPlugins: BackendPlugin[] = [
 const demoConfig: AppConfig = {
   protocols: [],
   enable_log: true,
+  showid: false,
   disable_console_input: false,
   github_proxy: 'https://gh-proxy.com/',
   host_update_repository: 'ShirokaProject/ShiroBot',
@@ -478,6 +481,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
   if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
+  if (method === 'GET' && pathname === '/api/v1/adapter-packages') return clone(demoAdapterPackages) as T
   if (method === 'GET' && pathname === '/api/v1/adapters') return clone(demoAdapters) as T
   if (method === 'GET' && pathname === '/api/v1/adapter-market/adapters') {
     // Demo: a third-party catalog lists one community adapter so switching is visible.
@@ -531,6 +535,39 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   }
   if (method === 'GET' && pathname === '/api/v1/models/list') return clone(demoModels) as T
 
+  const instanceCreateMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)\/instances$/)
+  if (method === 'POST' && instanceCreateMatch) {
+    const packageId = decodeURIComponent(instanceCreateMatch[1] ?? '')
+    const pkg = demoAdapterPackages.find(item => item.id === packageId)
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { id?: string; name?: string }
+    const id = payload.id?.trim() ?? ''
+    if (!pkg || !/^[a-z0-9._-]{1,64}$/i.test(id) || demoAdapters.some(item => item.id.toLowerCase() === id.toLowerCase())) throw new Error('实例 ID 无效或已存在。')
+    const adapter = { ...pkg, id, packageId, name: payload.name || id, loaded: false, enabled: false }
+    demoAdapters.push(adapter)
+    return { ok: true, adapter: clone(adapter), message: '实例已创建，请配置后启动。' } as T
+  }
+  const packageActionMatch = pathname.match(/^\/api\/v1\/adapter-packages\/([^/]+)\/(start|stop|reload)$/)
+  if (method === 'POST' && packageActionMatch) {
+    const id = decodeURIComponent(packageActionMatch[1] ?? '')
+    const pkg = demoAdapterPackages.find(item => item.id === id)
+    if (!pkg) throw new Error('Demo adapter package not found')
+    const action = packageActionMatch[2]
+    if (action !== 'reload') pkg.enabled = action === 'start'
+    for (const adapter of demoAdapters.filter(item => (item.packageId || item.id) === id)) {
+      if (action === 'stop') adapter.loaded = false
+      else if (action === 'start' && adapter.enabled !== false) adapter.loaded = true
+    }
+    return { ok: true, message: action === 'reload' ? '已重载运行中的实例。' : `适配器已${action === 'start' ? '打开' : '关闭'}。` } as T
+  }
+  const deletePackageMatch = pathname.match(/^\/api\/v1\/adapter-packages\/([^/]+)$/)
+  if (method === 'DELETE' && deletePackageMatch) {
+    const id = decodeURIComponent(deletePackageMatch[1] ?? '')
+    const index = demoAdapterPackages.findIndex(item => item.id === id)
+    if (index >= 0) demoAdapterPackages.splice(index, 1)
+    for (let i = demoAdapters.length - 1; i >= 0; i--) if ((demoAdapters[i]?.packageId || demoAdapters[i]?.id) === id) demoAdapters.splice(i, 1)
+    return { ok: true, message: '适配器包及实例已删除。' } as T
+  }
+
   const adapterActionMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)\/(start|stop|reload)$/)
   if (method === 'POST' && adapterActionMatch) {
     const id = decodeURIComponent(adapterActionMatch[1] ?? '')
@@ -538,11 +575,20 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     if (!adapter) throw new Error('Demo adapter not found')
     const action = adapterActionMatch[2]
     adapter.loaded = action !== 'stop'
+    if (action !== 'reload') adapter.enabled = action === 'start'
     if (adapter.id === demoAdapter.id) demoAdapter = adapter
     return { ok: true, message: `${adapter.name} 已${action === 'start' ? '启动' : action === 'stop' ? '停止' : '重载'}。`, adapter: clone(adapter), restart_required: false } as T
   }
 
   const deleteAdapterMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)$/)
+  if (method === 'PATCH' && deleteAdapterMatch) {
+    const adapter = demoAdapters.find(item => item.id === decodeURIComponent(deleteAdapterMatch[1] ?? ''))
+    if (!adapter) throw new Error('Demo adapter not found')
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { id?: string; name?: string }
+    if (payload.id) adapter.id = payload.id
+    adapter.name = payload.name || adapter.id
+    return { ok: true, adapter: clone(adapter), message: '实例已保存。' } as T
+  }
   if (method === 'DELETE' && deleteAdapterMatch) {
     const id = decodeURIComponent(deleteAdapterMatch[1] ?? '')
     const index = demoAdapters.findIndex(item => item.id === id)
@@ -572,13 +618,13 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     const uploadId = decodeURIComponent(confirmAdapterUploadMatch[1] ?? '')
     const adapter = demoPendingAdapterInstalls.get(uploadId)
     if (!adapter) throw new Error('演示安装预览已过期。')
-    const existing = demoAdapters.findIndex(item => item.id === adapter.id)
-    adapter.loaded = true
-    if (existing >= 0) demoAdapters.splice(existing, 1, adapter)
-    else demoAdapters.push(adapter)
-    if (adapter.id === demoAdapter.id) demoAdapter = adapter
+    const existing = demoAdapterPackages.findIndex(item => item.id === adapter.id)
+    if (existing >= 0) {
+      demoAdapterPackages.splice(existing, 1, adapter)
+      for (const instance of demoAdapters) if ((instance.packageId || instance.id) === adapter.id) instance.version = adapter.version
+    } else demoAdapterPackages.push(adapter)
     demoPendingAdapterInstalls.delete(uploadId)
-    return { ok: true, message: `${adapter.name} 已安装并重载。`, adapter, restart_required: false } as T
+    return { ok: true, message: `${adapter.name} 程序集已安装，可展开添加实例。`, adapter, restart_required: false } as T
   }
 
   const cancelAdapterUploadMatch = pathname.match(/^\/api\/v1\/adapters\/upload\/([^/]+)$/)

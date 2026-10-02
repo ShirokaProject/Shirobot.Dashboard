@@ -8,6 +8,7 @@ export interface AppConfig {
   /** Adapters loaded at startup in addition to the enabled installed ones: ids, DLL names or paths. */
   protocols?: string[]
   enable_log: boolean
+  showid?: boolean
   disable_console_input: boolean
   github_proxy: string
   host_update_repository: string

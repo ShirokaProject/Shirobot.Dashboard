@@ -57,7 +57,7 @@
             <h3 class="list-label">需要处理<span>{{ attention.length }}</span></h3>
             <ul class="rows">
               <li v-for="item in attention" :key="`attention-${item.adapter.id}-${item.kind}`">
-                <button type="button" class="row" @click="installed.selectedId.value = item.adapter.id">
+                <button type="button" class="row" @click="selectAttention(item)">
                   <MdIcon :name="item.kind === 'error' ? 'error' : item.kind === 'update' ? 'arrow_upward' : 'restart_alt'" :class="['row-icon', item.kind]" />
                   <span class="row-text">
                     <strong>{{ item.kind === 'update' ? `程序集 · ${item.adapter.packageId || item.adapter.id}` : item.adapter.name }}</strong>
@@ -68,24 +68,52 @@
             </ul>
           </template>
 
-          <h3 class="list-label">全部<span>{{ installedList.length }}</span></h3>
-          <ul v-if="installedList.length" class="rows">
-            <li v-for="adapter in installedList" :key="adapter.id">
+          <h3 class="list-label">适配器<span>{{ packageGroups.length }}</span></h3>
+          <ul v-if="packageGroups.length" class="rows">
+            <li v-for="group in packageGroups" :key="group.package.id" class="package-item">
               <button
                 type="button"
                 class="row"
-                :class="{ selected: installed.selectedId.value === adapter.id }"
-                @click="installed.selectedId.value = adapter.id"
+                :class="{ selected: !installed.selectedId.value && selectedPackage?.id === group.package.id }"
+                :aria-expanded="isExpanded(group.package.id)"
+                @click="togglePackage(group.package.id)"
               >
+                <MdIcon name="expand_more" class="row-icon chevron" :class="{ open: isExpanded(group.package.id) }" />
                 <span class="row-text">
-                  <strong>{{ adapter.name }}</strong>
-                  <small>{{ adapter.platform }} · v{{ adapter.version }}</small>
+                  <strong>{{ group.package.name }}</strong>
+                  <small>{{ group.package.platform }} · v{{ group.package.version }}</small>
                 </span>
-                <span class="row-status">
-                  <span class="status-dot" :class="adapterTone(adapter)" aria-hidden="true"></span>
-                  {{ adapterLabel(adapter) }}
-                </span>
+                <span class="row-meta">{{ packageEnabled(group.package) ? '' : '已关闭 · ' }}{{ group.instances.length }} 个实例</span>
               </button>
+              <ul v-if="isExpanded(group.package.id)" class="rows instance-rows">
+                <li v-for="adapter in group.instances" :key="adapter.id">
+                  <button
+                    type="button"
+                    class="row"
+                    :class="{ selected: installed.selectedId.value === adapter.id }"
+                    @click="installed.selectedId.value = adapter.id"
+                  >
+                    <span class="row-text">
+                      <strong>{{ adapter.name }}</strong>
+                      <small>{{ adapter.id }}</small>
+                    </span>
+                    <span class="row-status">
+                      <span class="status-dot" :class="adapterTone(adapter)" aria-hidden="true"></span>
+                      {{ adapterLabel(adapter) }}
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="row add-instance"
+                    :disabled="Boolean(installed.operation.value)"
+                    @click="installed.openInstance(group.package.id)"
+                  >
+                    <MdIcon name="add" />添加实例
+                  </button>
+                </li>
+              </ul>
             </li>
           </ul>
           <div v-else-if="!installed.loading.value" class="list-empty">
@@ -210,18 +238,30 @@
 
       <div class="detail-pane panel">
         <AdapterDetail
-          v-if="tab === 'installed'"
+          v-if="tab === 'installed' && installed.selected.value"
           :adapter="installed.selected.value"
-          :update="installed.selected.value ? updateFor(installed.selected.value) : null"
+          :package-name="selectedPackage?.name ?? installed.selected.value.packageId ?? ''"
+          :package-enabled="selectedPackage ? packageEnabled(selectedPackage) : true"
           :busy="Boolean(installed.operation.value) || Boolean(market.busyId.value)"
           :operation="currentOperation"
           @run="action => installed.run(installed.selectedId.value, action)"
-          @update="installUpdate"
           @config="configOpen = true"
-          @instance="installed.openInstance"
+        />
+        <AdapterPackageDetail
+          v-else-if="tab === 'installed' && selectedPackage"
+          :pkg="selectedPackage"
+          :instance-count="instancesOf(selectedPackage.id).length"
+          :update="updateFor(selectedPackage)"
+          :busy="Boolean(installed.operation.value) || Boolean(market.busyId.value)"
+          :enabled="packageEnabled(selectedPackage)"
+          :controls="installed.packageControls.value"
+          :operation="packageOperation"
+          @update="prepareUpdate(selectedPackage)"
+          @run="action => installed.runPackage(selectedPackage!.id, action)"
+          @remove="installed.removePackage(selectedPackage.id)"
         />
         <AdapterMarketDetail
-          v-else
+          v-else-if="tab === 'discover'"
           :entry="selectedEntry"
           :preparing="Boolean(market.busyId.value)"
           :origin="discoverView === 'direct' ? '直接添加的仓库' : market.activeSource.value.name"
@@ -280,6 +320,7 @@
       target="adapter"
       :plugin-id="installed.selected.value?.id ?? ''"
       :plugin-name="installed.selected.value?.name ?? ''"
+      @instance-saved="followRenamedInstance"
     />
 
     <AddSourceDialog
@@ -309,6 +350,7 @@ import { useAdaptersPage } from './Adapters'
 import AdapterDetail from './components/AdapterDetail.vue'
 import AdapterInstallDialog from './components/AdapterInstallDialog.vue'
 import AdapterMarketDetail from './components/AdapterMarketDetail.vue'
+import AdapterPackageDetail from './components/AdapterPackageDetail.vue'
 
 type HubTab = 'installed' | 'discover'
 
@@ -338,10 +380,55 @@ const keyword = computed({
   }
 })
 
-const installedList = computed(() => {
+const selectedPackageId = ref('')
+const expandedPackages = ref<string[]>([])
+const packageOf = (adapter: AdapterStatus) => adapter.packageId || adapter.id
+const instancesOf = (packageId: string) => installed.adapters.value.filter(item => packageOf(item) === packageId)
+const isExpanded = (id: string) => Boolean(keyword.value) || expandedPackages.value.includes(id)
+function selectPackage(id: string) {
+  selectedPackageId.value = id
+  installed.selectedId.value = ''
+}
+// First click on a package selects it; clicking the already-selected package folds/unfolds it.
+function togglePackage(id: string) {
+  const alreadySelected = !installed.selectedId.value && selectedPackage.value?.id === id
+  if (!expandedPackages.value.includes(id)) expandedPackages.value.push(id)
+  else if (alreadySelected) expandedPackages.value = expandedPackages.value.filter(item => item !== id)
+  selectPackage(id)
+}
+watch(installed.selectedId, id => {
+  const adapter = installed.adapters.value.find(item => item.id === id)
+  if (!adapter) return
+  selectedPackageId.value = packageOf(adapter)
+  if (!expandedPackages.value.includes(selectedPackageId.value)) expandedPackages.value.push(selectedPackageId.value)
+})
+const selectedPackage = computed(() => installed.packages.value.find(item => item.id === selectedPackageId.value) ?? installed.packages.value[0] ?? null)
+function selectAttention(item: { adapter: AdapterStatus; kind: string }) {
+  if (item.kind === 'update' || !installed.adapters.value.some(adapter => adapter.id === item.adapter.id)) {
+    const id = packageOf(item.adapter)
+    if (!expandedPackages.value.includes(id)) expandedPackages.value.push(id)
+    selectPackage(id)
+  } else installed.selectedId.value = item.adapter.id
+}
+// Older hosts report no package switch; treat the package as on there.
+const packageEnabled = (pkg: AdapterStatus) => !installed.packageControls.value || pkg.enabled !== false
+const packageOperation = computed(() => {
+  const [id, action] = installed.operation.value.split(':')
+  return selectedPackage.value && id === selectedPackage.value.id ? action ?? '' : ''
+})
+// Reload first, then select: selecting a new ID before the list has it would empty the panel and dialog for a moment.
+async function followRenamedInstance(id: string) {
+  await installed.loadAdapters()
+  installed.selectedId.value = id
+}
+function prepareUpdate(adapter: AdapterStatus) {
+  const entry = updateFor(adapter)
+  if (entry) void market.prepare(entry)
+}
+const packageGroups = computed(() => {
   const query = installedKeyword.value.trim().toLowerCase()
-  return installed.adapters.value.filter(adapter => !query
-    || [adapter.name, adapter.id, adapter.platform, adapter.description].some(value => value.toLowerCase().includes(query)))
+  return installed.packages.value.map(pkg => ({ package: pkg, instances: instancesOf(pkg.id) }))
+    .filter(group => !query || [group.package.name, group.package.id, group.package.platform, ...group.instances.flatMap(item => [item.name, item.id])].some(value => value.toLowerCase().includes(query)))
 })
 
 function compareVersions(left: string, right: string) {
@@ -369,7 +456,7 @@ function adapterLabel(adapter: AdapterStatus) {
 const attention = computed(() => {
   const items: Array<{ adapter: AdapterStatus; kind: 'error' | 'update' | 'restart'; reason: string }> = []
   const packages = new Set<string>()
-  for (const adapter of installed.adapters.value) {
+  for (const adapter of [...installed.adapters.value, ...installed.packages.value.filter(pkg => !installed.adapters.value.some(item => (item.packageId || item.id) === pkg.id))]) {
     if (adapter.error) items.push({ adapter, kind: 'error', reason: adapter.error })
     const update = updateFor(adapter)
     const packageId = adapter.packageId || adapter.id
@@ -387,14 +474,8 @@ const currentOperation = computed(() => {
   return id === installed.selectedId.value ? action ?? '' : ''
 })
 
-function installUpdate() {
-  const adapter = installed.selected.value
-  const entry = adapter ? updateFor(adapter) : null
-  if (entry) void market.prepare(entry)
-}
-
 // 发现 lists only what isn't installed; updates live in 已安装.
-const installedIds = computed(() => new Set(installed.adapters.value.map(adapter => adapter.packageId || adapter.id)))
+const installedIds = computed(() => new Set(installed.packages.value.map(adapter => adapter.id)))
 const discoverList = computed(() => market.filtered.value.filter(entry => !installedIds.value.has(entry.id) && !entry.installedVersion))
 const installedInCatalog = computed(() => market.entries.value.filter(entry => installedIds.value.has(entry.id) || entry.installedVersion).length)
 
@@ -472,11 +553,11 @@ const selectedEntry = computed<AdapterMarketEntry | null>(() => discoverView.val
 const activeDiscoverCount = computed(() => discoverView.value === 'direct' ? directList.value.length : discoverList.value.length)
 
 const tabs = computed(() => [
-  { key: 'installed' as const, label: '已安装', count: installed.adapters.value.length },
+  { key: 'installed' as const, label: '已安装', count: installed.packages.value.length },
   { key: 'discover' as const, label: '发现', count: market.entries.value.length - installedInCatalog.value }
 ])
 
-const detailHasContent = computed(() => tab.value === 'installed' ? Boolean(installed.selected.value) : Boolean(selectedEntry.value))
+const detailHasContent = computed(() => tab.value === 'installed' ? Boolean(installed.selected.value || selectedPackage.value) : Boolean(selectedEntry.value))
 
 async function confirmMarketInstall() {
   await market.confirm()
@@ -497,4 +578,33 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
 <style scoped src="../plugins/PluginsHub.css"></style>
 <style scoped>
 .row-icon.restart { color: var(--md-sys-color-warning); }
+</style>
+
+<style scoped>
+/* `.rows li` centres its child; a package stacks its own row over its instances */
+.rows li.package-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+.chevron {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant);
+  transform: rotate(-90deg);
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+.chevron.open { transform: none; }
+/* Instances sit under the package, text aligned with the package name */
+.instance-rows {
+  margin-top: var(--md-space-1);
+  padding-left: calc(40px + var(--md-space-3));
+}
+.instance-rows .row { min-height: 60px; }
+.row.add-instance {
+  min-height: 44px;
+  gap: var(--md-space-2);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-label-large);
+}
+.row.add-instance .md-icon { font-size: 18px; }
+.row.add-instance:disabled { cursor: default; opacity: .5; }
 </style>

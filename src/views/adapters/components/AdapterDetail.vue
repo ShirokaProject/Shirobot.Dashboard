@@ -3,27 +3,24 @@
     <header class="detail-head">
       <div class="detail-title">
         <h2>{{ adapter.name }}</h2>
-        <p>{{ adapter.platform }}<span class="sep">·</span>{{ adapter.loaded ? '运行中' : '已停止' }}</p>
+        <p>{{ packageName }}<span class="sep">·</span>{{ adapter.loaded ? '运行中' : '已停止' }}</p>
       </div>
       <el-switch
         :model-value="adapter.loaded"
-        :disabled="busy"
-        :aria-label="adapter.loaded ? '停止适配器' : '启动适配器'"
+        :disabled="busy || !packageEnabled"
+        :aria-label="adapter.loaded ? '停止实例' : '启动实例'"
         @change="(value: string | number | boolean) => emit('run', value ? 'start' : 'stop')"
       />
     </header>
 
-    <p v-if="adapter.description" class="detail-desc">{{ adapter.description }}</p>
-
     <!-- At most the things that need attention, most severe first -->
+    <div v-if="!packageEnabled" class="notice">
+      <MdIcon name="power_settings_new" class="notice-icon warning" />
+      <div><strong>适配器已关闭</strong><span>打开适配器后，此实例才能启动。</span></div>
+    </div>
     <div v-if="adapter.error" class="notice">
       <MdIcon name="error" class="notice-icon error" />
       <div><strong>运行出错</strong><span>{{ adapter.error }}</span></div>
-    </div>
-    <div v-if="update" class="notice package-update">
-      <MdIcon name="arrow_upward" class="notice-icon accent" />
-      <div><strong>适配器包可更新到 v{{ update.version }}</strong><span>当前 v{{ adapter.version }}，更新程序集将应用于此包的所有实例，各实例配置保留。</span></div>
-      <button type="button" class="md-button compact filled" :disabled="busy" @click="emit('update')">更新程序集</button>
     </div>
     <div v-if="adapter.restartRequired" class="notice">
       <MdIcon name="restart_alt" class="notice-icon warning" />
@@ -35,25 +32,18 @@
     </div>
 
     <dl class="facts">
-      <div><dt><MdIcon name="sell" />版本</dt><dd class="mono">v{{ adapter.version }}</dd></div>
+      <div><dt><MdIcon name="deployed_code" />名称</dt><dd>{{ adapter.name }}</dd></div>
       <div><dt><MdIcon name="code" />实例 ID</dt><dd class="mono">{{ adapter.id }}</dd></div>
-      <div v-if="adapter.packageId"><dt><MdIcon name="extension" />适配器包</dt><dd class="mono">{{ adapter.packageId }}</dd></div>
-      <div v-if="adapter.configPath"><dt><MdIcon name="settings" />配置</dt><dd class="mono path" :title="adapter.configPath">{{ adapter.configPath }}</dd></div>
-      <div v-if="adapter.assemblyPath">
-        <dt><MdIcon name="folder" />程序集</dt>
-        <dd class="mono path" :title="adapter.assemblyPath">{{ fileName(adapter.assemblyPath) }}</dd>
+      <div><dt><MdIcon name="extension" />适配器</dt><dd>{{ packageName }}</dd></div>
+      <div v-if="adapter.configPath">
+        <dt><MdIcon name="settings" />配置</dt>
+        <dd class="mono path" :title="adapter.configPath">{{ fileName(adapter.configPath) }}</dd>
       </div>
     </dl>
 
-    <button type="button" class="md-button tonal" :disabled="busy" @click="emit('instance')">
-      <MdIcon name="add" />添加实例
-    </button>
     <footer class="detail-foot button-group">
       <button type="button" class="md-button tonal" :disabled="busy" @click="emit('config')">
         <MdIcon name="settings" />配置
-      </button>
-      <button type="button" class="md-button tonal" :disabled="busy" @click="emit('run', 'reload')">
-        <MdIcon name="refresh" />{{ operation === 'reload' ? '重载中…' : '重载' }}
       </button>
       <button type="button" class="md-button tonal danger" :disabled="busy" @click="emit('run', 'delete')">
         <MdIcon name="delete" />{{ operation === 'delete' ? '删除中…' : '删除' }}
@@ -64,22 +54,22 @@
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
-import type { AdapterMarketEntry, AdapterStatus } from '../../../api'
+import type { AdapterStatus } from '../../../api'
 
 defineProps<{
   adapter: AdapterStatus | null
-  /** Catalog entry offering a newer version, when there is one */
-  update: AdapterMarketEntry | null
+  /** Display name of the adapter package this instance belongs to */
+  packageName: string
   busy: boolean
+  /** The package master switch; off keeps this instance from starting */
+  packageEnabled: boolean
   /** The action currently running on this adapter, if any */
   operation: string
 }>()
 
 const emit = defineEmits<{
   run: [action: 'start' | 'stop' | 'reload' | 'delete']
-  update: []
   config: []
-  instance: []
 }>()
 
 // The full path is long and machine-specific; show the file name, keep the path in the tooltip.
@@ -90,15 +80,6 @@ function fileName(path: string) {
 
 <style scoped src="../../plugins/components/detail.css"></style>
 <style scoped>
-.package-update {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 12px;
-}
-.package-update .md-button {
-  grid-column: 2;
-  justify-self: start;
-}
 .facts dd.path {
   overflow: hidden;
   text-overflow: ellipsis;

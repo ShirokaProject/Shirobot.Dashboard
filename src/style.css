@@ -345,6 +345,39 @@ textarea {
   padding: var(--md-space-3) var(--md-space-5) !important;
 }
 
+/* Number fields match the 44px pill: round − / + targets inside each end instead of Element's 32px square steppers */
+.el-input-number {
+  height: 44px;
+  line-height: 44px;
+}
+
+.el-input-number .el-input__wrapper {
+  padding-inline: 44px !important;
+}
+
+.el-input-number__decrease,
+.el-input-number__increase {
+  top: 6px;
+  bottom: 6px;
+  width: 32px;
+  height: auto;
+  border: 0 !important;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.el-input-number__decrease { left: 6px; }
+.el-input-number__increase { right: 6px; }
+
+.el-input-number__decrease:hover:not(.is-disabled),
+.el-input-number__increase:hover:not(.is-disabled) {
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+  color: var(--md-sys-color-on-surface);
+}
+
 /* Dialogs are tinted, so fields use the paper color to stand out */
 .el-dialog .el-input__wrapper,
 .el-dialog .el-select__wrapper,

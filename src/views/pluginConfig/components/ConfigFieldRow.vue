@@ -80,7 +80,6 @@
         :model-value="typeof modelValue === 'number' ? modelValue : undefined"
         :min="field.item.min ?? undefined"
         :max="field.item.max ?? undefined"
-        controls-position="right"
         @update:model-value="emit('update:modelValue', $event ?? null)"
       />
 

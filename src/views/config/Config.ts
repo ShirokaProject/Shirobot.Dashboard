@@ -3,7 +3,7 @@ import { getAdapters, getApiErrorMessage, getAppConfig, updateAppConfig, type Ap
 
 // The host config has a fixed shape, so its categories are defined here (unlike plugin schemas).
 export const sections = [
-  { key: 'general', label: '基本', icon: 'settings', description: '协议适配器、日志、控制台与桌面端主题。', count: 4 },
+  { key: 'general', label: '基本', icon: 'settings', description: '协议适配器、日志、控制台与桌面端主题。', count: 5 },
   { key: 'update', label: '更新', icon: 'download', description: '主程序更新来源与 GitHub 下载代理。', count: 2 },
   { key: 'access', label: '权限', icon: 'shield', description: '拥有最高权限的所有者与管理员账号。', count: 2 },
   { key: 'api', label: 'API', icon: 'code', description: 'Dashboard 与外部工具访问主程序的接口。', count: 6 }
@@ -30,6 +30,7 @@ function normalizeTheme(theme: string) {
 export interface ConfigForm {
   protocols: string[]
   enable_log: boolean
+  showid: boolean
   disable_console_input: boolean
   github_proxy: string
   host_update_repository: string
@@ -47,6 +48,7 @@ export interface ConfigForm {
 const emptyForm: ConfigForm = {
   protocols: [],
   enable_log: true,
+  showid: false,
   disable_console_input: false,
   github_proxy: '',
   host_update_repository: '',
@@ -65,6 +67,7 @@ function configToForm(config: AppConfig): ConfigForm {
   return {
     protocols: config.protocols ?? (config.protocol ? [config.protocol] : []),
     enable_log: config.enable_log,
+    showid: config.showid ?? false,
     disable_console_input: config.disable_console_input,
     github_proxy: config.github_proxy,
     host_update_repository: config.host_update_repository,
@@ -88,6 +91,7 @@ function formToConfig(form: ConfigForm): AppConfig {
   return {
     protocols: form.protocols.map(value => value.trim()).filter(Boolean),
     enable_log: form.enable_log,
+    showid: form.showid,
     disable_console_input: form.disable_console_input,
     github_proxy: form.github_proxy.trim(),
     host_update_repository: form.host_update_repository.trim(),

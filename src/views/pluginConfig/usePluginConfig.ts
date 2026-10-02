@@ -49,6 +49,8 @@ const DEFAULT_GROUP = '常规'
 
 /** Navigator key for the routes view, alongside the config group keys. */
 export const ROUTES_VIEW = '__routes__'
+/** Navigator key for an adapter instance's name / ID. */
+export const INSTANCE_VIEW = '__instance__'
 
 const emptyRoutes: PluginRoutesConfig = {
   configured: false,
