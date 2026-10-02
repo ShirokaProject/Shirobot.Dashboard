@@ -52,26 +52,6 @@
           <template v-if="activeSection === 'general'">
             <div class="row">
               <div class="row-text">
-                <label for="cfg-protocol">协议适配器</label>
-                <p>启动时额外加载的适配器，可多选。安装的实例按各适配器 config.toml 中 instances 清单自动加载，请在适配器页或 CLI 管理，无需在此重复添加；未安装的独立 DLL 可直接输入名称或路径。<code>protocols</code></p>
-              </div>
-              <el-select
-                id="cfg-protocol"
-                v-model="form.protocols"
-                class="control-select"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                collapse-tags
-                collapse-tags-tooltip
-                placeholder="不额外加载"
-              >
-                <el-option v-for="protocol in protocols" :key="protocol.value" :label="protocol.label" :value="protocol.value" />
-              </el-select>
-            </div>
-            <div class="row">
-              <div class="row-text">
                 <label for="cfg-log">启用日志</label>
                 <p>关闭后只保留必要的运行日志。<code>enable_log</code></p>
               </div>
@@ -141,9 +121,9 @@
               <el-input-tag
                 id="cfg-owners"
                 :model-value="form.owner_list"
-                :delimiter="ID_DELIMITER"
+                :delimiter="ID_TAG_DELIMITER"
                 placeholder="输入账号 ID 后回车"
-                @update:model-value="form.owner_list = onlyIds($event)"
+                @update:model-value="form.owner_list = normalizeIdTags($event)"
               />
             </div>
             <div class="row stacked">
@@ -154,9 +134,9 @@
               <el-input-tag
                 id="cfg-admins"
                 :model-value="form.admin_list"
-                :delimiter="ID_DELIMITER"
+                :delimiter="ID_TAG_DELIMITER"
                 placeholder="输入账号 ID 后回车"
-                @update:model-value="form.admin_list = onlyIds($event)"
+                @update:model-value="form.admin_list = normalizeIdTags($event)"
               />
             </div>
           </template>
@@ -229,13 +209,13 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
 import { DOCS_URL } from '../../features/docs'
-import { generateToken, isValidId, sections, themeOptions, useConfigPage } from './Config'
+import { generateToken, sections, themeOptions, useConfigPage } from './Config'
+import { ID_TAG_DELIMITER, normalizeIdTags } from '../../features/idTags'
 
 const {
   activeSection,
   currentSection,
   form,
-  protocols,
   loading,
   saving,
   loadError,
@@ -246,14 +226,6 @@ const {
   discard
 } = useConfigPage()
 
-// Pasting "123, 456 789" adds three tags
-const ID_DELIMITER = /[,，\s]+/
-
-function onlyIds(values: string[] | undefined) {
-  const ids = (values ?? []).map(value => value.trim())
-  if (ids.some(id => !isValidId(id))) ElMessage.warning('账号 ID 只能包含数字')
-  return [...new Set(ids.filter(isValidId))]
-}
 
 async function save() {
   if (await saveConfig()) ElMessage.success('配置已保存')

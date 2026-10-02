@@ -13,6 +13,7 @@ import {
   type PluginConfigValue,
   type PluginRoutesConfig
 } from '../../api'
+import { normalizeIdTags } from '../../features/idTags'
 
 export interface EnumOption {
   value: number
@@ -60,15 +61,6 @@ const emptyRoutes: PluginRoutesConfig = {
   effective_groups: [],
   default_mode: 'blacklist',
   default_groups: []
-}
-
-function parseGroupList(value: string) {
-  return value
-    .split(/[,，\s]+/)
-    .map(item => item.trim())
-    .filter(Boolean)
-    .map(Number)
-    .filter(Number.isFinite)
 }
 
 function inferValueType(value: PluginConfigValue | undefined): string {
@@ -248,7 +240,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   // Typed as the plain map: Vue's deep reactive type does not terminate on the recursive config value type.
   const config: PluginConfigMap = reactive({})
   const routes = reactive<PluginRoutesConfig>({ ...emptyRoutes })
-  const routeGroupsInput = ref('')
+  const routeGroups = ref<string[]>([])
   const snapshot = ref('')
 
   const groups = computed<ConfigGroup[]>(() => {
@@ -292,7 +284,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       .sort((left, right) => left.order - right.order)
   })
 
-  const currentState = () => JSON.stringify({ config, mode: routes.mode, groups: parseGroupList(routeGroupsInput.value) })
+  const currentState = () => JSON.stringify({ config, mode: routes.mode, groups: routeGroups.value })
   const dirty = computed(() => Boolean(snapshot.value) && currentState() !== snapshot.value)
 
   function markClean() {
@@ -306,7 +298,8 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
 
   function applyRoutes(next: PluginRoutesConfig) {
     Object.assign(routes, { ...emptyRoutes, ...next })
-    routeGroupsInput.value = routes.groups.join(', ')
+    // Older hosts sent numbers; keep everything as strings
+    routeGroups.value = normalizeIdTags(routes.groups.map(String))
   }
 
   function assignResponse(response: PluginConfigResponse) {
@@ -353,7 +346,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       if (hasRoutes.value) {
         const response = await updatePluginConfig(pluginId.value, {
           config: { ...config },
-          routes: { mode: routes.mode, groups: parseGroupList(routeGroupsInput.value) }
+          routes: { mode: routes.mode, groups: routeGroups.value }
         })
         if (response) assignUpdateResponse(response)
         else await load()
@@ -408,7 +401,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
     groups,
     config,
     routes,
-    routeGroupsInput,
+    routeGroups,
     dirty,
     load,
     save,

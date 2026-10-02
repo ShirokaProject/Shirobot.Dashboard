@@ -55,11 +55,12 @@ export interface PluginConfigSchemaItem {
 export interface PluginRoutesConfig {
   configured: boolean
   mode: 'default' | 'blacklist' | 'whitelist' | string
-  groups: number[]
+  /** Group IDs as strings: not every platform uses numeric IDs */
+  groups: string[]
   effective_mode: 'blacklist' | 'whitelist' | string
-  effective_groups: number[]
+  effective_groups: string[]
   default_mode: 'blacklist' | 'whitelist' | string
-  default_groups: number[]
+  default_groups: string[]
 }
 
 export interface PluginConfigResponse {
@@ -74,7 +75,7 @@ export interface PluginConfigUpdateRequest {
   config?: PluginConfigMap
   routes?: {
     mode: string
-    groups: number[]
+    groups: string[]
   }
 }
 

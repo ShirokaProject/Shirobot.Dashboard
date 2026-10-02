@@ -35,7 +35,7 @@
         <PluginConfigForm
           v-model:instance="instanceDraft"
           :instance-error="instanceDirty ? idError : ''"
-          v-model:route-groups-input="state.routeGroupsInput.value"
+          v-model:route-groups="state.routeGroups.value"
           :view="view"
           :groups="state.groups.value"
           :config="state.config"

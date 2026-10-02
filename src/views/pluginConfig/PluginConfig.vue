@@ -53,7 +53,7 @@
         <ConfigNav v-model:view="view" class="page-nav" :groups="groups" :show-routes="hasRoutes" />
         <div class="page-main">
           <PluginConfigForm
-            v-model:route-groups-input="routeGroupsInput"
+            v-model:route-groups="routeGroups"
             :view="view"
             :groups="groups"
             :config="config"
@@ -90,7 +90,7 @@ const {
   groups,
   config,
   routes,
-  routeGroupsInput,
+  routeGroups,
   dirty,
   save,
   discard

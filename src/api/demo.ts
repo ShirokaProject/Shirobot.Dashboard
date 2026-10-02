@@ -199,7 +199,7 @@ const demoConfig: AppConfig = {
   github_proxy: 'https://gh-proxy.com/',
   host_update_repository: 'ShirokaProject/ShiroBot',
   avalonia_theme: 'Light',
-  owner_list: [1034028486],
+  owner_list: ['1034028486'],
   admin_list: [],
   api: {
     enable: true,
@@ -805,7 +805,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return clone(demoPluginConfig) as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
-    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: number[] } }
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[] } }
     if (payload.config) demoPluginConfig.config = { ...demoPluginConfig.config, ...payload.config }
     if (payload.routes) {
       demoPluginConfig.routes = {

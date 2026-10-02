@@ -13,8 +13,9 @@ export interface AppConfig {
   github_proxy: string
   host_update_repository: string
   avalonia_theme: string
-  owner_list: number[]
-  admin_list: number[]
+  /** Account IDs as strings; older hosts may still return numbers */
+  owner_list: Array<string | number>
+  admin_list: Array<string | number>
   api: {
     enable: boolean
     listen_url: string

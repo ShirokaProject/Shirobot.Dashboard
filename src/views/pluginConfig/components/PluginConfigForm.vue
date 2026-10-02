@@ -62,14 +62,16 @@
             </div>
           </div>
 
-          <label v-if="routes.mode !== 'default'" class="route-groups">
-            <strong>{{ routes.mode === 'whitelist' ? '只在这些群组生效' : '在这些群组不生效' }}</strong>
-            <el-input
-              :model-value="routeGroupsInput"
-              placeholder="群号，用逗号或空格分隔，例如 123456789, 987654321"
-              @update:model-value="emit('update:routeGroupsInput', $event)"
+          <div v-if="routes.mode !== 'default'" class="route-groups">
+            <label for="route-groups"><strong>{{ routes.mode === 'whitelist' ? '只在这些群组生效' : '在这些群组不生效' }}</strong></label>
+            <el-input-tag
+              id="route-groups"
+              :model-value="routeGroups"
+              :delimiter="ID_TAG_DELIMITER"
+              placeholder="输入群组 ID 后回车，可粘贴多个"
+              @update:model-value="emit('update:routeGroups', normalizeIdTags($event))"
             />
-          </label>
+          </div>
         </div>
 
         <!-- What actually applies right now, merged in from the old side panel -->
@@ -90,6 +92,7 @@ import MdIcon from '../../../components/MdIcon.vue'
 import type { PluginConfigMap, PluginConfigValue, PluginRoutesConfig } from '../../../api'
 import { INSTANCE_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
 import ConfigFieldRow from './ConfigFieldRow.vue'
+import { ID_TAG_DELIMITER, normalizeIdTags } from '../../../features/idTags'
 
 const props = defineProps<{
   /** A group key, or ROUTES_VIEW */
@@ -97,7 +100,7 @@ const props = defineProps<{
   groups: ConfigGroup[]
   config: PluginConfigMap
   routes: PluginRoutesConfig
-  routeGroupsInput: string
+  routeGroups: string[]
   /** Adapter instance name / ID drafts, shown under INSTANCE_VIEW */
   instance?: { id: string; name: string } | null
   instanceError?: string
@@ -114,7 +117,7 @@ const visibleGroups = computed(() => {
 })
 
 const emit = defineEmits<{
-  'update:routeGroupsInput': [value: string]
+  'update:routeGroups': [value: string[]]
   'update:instance': [value: { id: string; name: string }]
 }>()
 
@@ -185,7 +188,8 @@ function modeLabel(mode: string) {
 .group-card :deep(.el-input__wrapper),
 .group-card :deep(.el-select__wrapper),
 .group-card :deep(.el-textarea__inner),
-.group-card :deep(.el-input-number .el-input__wrapper) {
+.group-card :deep(.el-input-number .el-input__wrapper),
+.group-card :deep(.el-input-tag__wrapper) {
   background: var(--app-card) !important;
   box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant) !important;
 }
