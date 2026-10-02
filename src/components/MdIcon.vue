@@ -1,6 +1,6 @@
 <template>
   <svg class="md-icon" viewBox="0 -960 960 960" aria-hidden="true" focusable="false">
-    <path :d="paths[name]" />
+    <path :d="iconPaths[name] ?? ''" />
   </svg>
 </template>
 
@@ -43,7 +43,8 @@ const paths = {
   power_settings_new: 'M440-440v-400h80v400h-80Zm40 320q-74 0-139.5-28.5T226-226q-49-49-77.5-114.5T120-480q0-80 33-151t93-123l56 56q-48 40-75 97t-27 121q0 116 82 198t198 82q117 0 198.5-82T760-480q0-64-26.5-121T658-698l56-56q60 52 93 123t33 151q0 74-28.5 139.5t-77.5 114T620-148.5Q555-120 480-120Z'
 } as const
 
-defineProps<{ name: keyof typeof paths }>()
+const iconPaths: Record<string, string> = paths
+defineProps<{ name: string }>()
 </script>
 
 <style scoped>

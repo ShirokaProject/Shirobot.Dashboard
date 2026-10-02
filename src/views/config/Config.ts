@@ -1,143 +1,212 @@
-import { computed, onMounted, reactive, ref } from 'vue'
-import { getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfig } from '../../api'
-import { normalizeIdTags } from '../../features/idTags'
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfigData } from '../../api'
+import type { ConfigField, ConfigGroup } from '../pluginConfig/usePluginConfig'
+import type { PluginConfigSchemaItem } from '../../api/plugins/config'
 
-// The host config has a fixed shape, so its categories are defined here (unlike plugin schemas).
-export const sections = [
-  { key: 'general', label: '基本', icon: 'settings', description: '日志、控制台与桌面端主题。', count: 4 },
-  { key: 'update', label: '更新', icon: 'download', description: '主程序更新来源与 GitHub 下载代理。', count: 2 },
-  { key: 'access', label: '权限', icon: 'shield', description: '拥有最高权限的所有者与管理员账号。', count: 2 },
-  { key: 'api', label: 'API', icon: 'code', description: 'Dashboard 与外部工具访问主程序的接口。', count: 6 }
-] as const
-
-export type SectionKey = (typeof sections)[number]['key']
-
-// Auto switches by the clock on the host (dark from 18:00 to 06:00); it does not follow the OS.
-export const themeOptions = [
-  { value: 'Light', label: '浅色' },
-  { value: 'Dark', label: '深色' },
-  { value: 'Auto', label: '自动（按时间）' }
-]
-
-/** Older dashboards saved "System" for the clock-based mode. */
-function normalizeTheme(theme: string) {
-  const value = theme.trim().toLowerCase()
-  if (value === 'dark') return 'Dark'
-  if (value === 'auto' || value === 'system') return 'Auto'
-  return 'Light'
+export interface HostConfigField extends ConfigField {
+  path: string
+  group: string
+  groupLabel: string
+  groupOrder: number
+  groupIcon: string
+  groupDescription: string
 }
 
-/**
- * Editable copy of AppConfig: lists stay lists (tag inputs), null base URL becomes ''.
- * `protocols` is left out on purpose: adapters are managed on the adapter page, so the dashboard
- * neither shows nor sends it and the value in config.toml (standalone DLL paths) is kept as written.
- */
-export interface ConfigForm {
-  enable_log: boolean
-  showid: boolean
-  disable_console_input: boolean
-  github_proxy: string
-  host_update_repository: string
-  avalonia_theme: string
-  owner_list: string[]
-  admin_list: string[]
-  api_enable: boolean
-  api_listen_url: string
-  api_listen_urls: string[]
-  api_public_base_url: string
-  api_auth_enable: boolean
-  api_token: string
+interface HostConfigGroup extends Omit<ConfigGroup, 'fields'> {
+  icon: string
+  description: string
+  fields: HostConfigField[]
 }
 
-const emptyForm: ConfigForm = {
-  enable_log: true,
-  showid: false,
-  disable_console_input: false,
-  github_proxy: '',
-  host_update_repository: '',
-  avalonia_theme: 'Auto',
-  owner_list: [],
-  admin_list: [],
-  api_enable: false,
-  api_listen_url: '',
-  api_listen_urls: [],
-  api_public_base_url: '',
-  api_auth_enable: true,
-  api_token: ''
+const EMPTY_CONFIG: AppConfigData = {}
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
 }
 
-function configToForm(config: AppConfig): ConfigForm {
-  return {
-    enable_log: config.enable_log,
-    showid: config.showid ?? false,
-    disable_console_input: config.disable_console_input,
-    github_proxy: config.github_proxy,
-    host_update_repository: config.host_update_repository,
-    avalonia_theme: normalizeTheme(config.avalonia_theme),
-    owner_list: config.owner_list.map(String),
-    admin_list: config.admin_list.map(String),
-    api_enable: config.api.enable,
-    api_listen_url: config.api.listen_url,
-    api_listen_urls: [...config.api.listen_urls],
-    api_public_base_url: config.api.public_base_url ?? '',
-    api_auth_enable: config.api.auth_enable,
-    api_token: config.api.token
+function pathValue(source: AppConfigData, path: string): unknown {
+  let value: unknown = source
+  for (const part of path.split('.')) {
+    if (value === null || typeof value !== 'object') return undefined
+    value = (value as Record<string, unknown>)[part]
   }
+  return value
 }
 
-function formToConfig(form: ConfigForm): AppConfig {
-  return {
-    enable_log: form.enable_log,
-    showid: form.showid,
-    disable_console_input: form.disable_console_input,
-    github_proxy: form.github_proxy.trim(),
-    host_update_repository: form.host_update_repository.trim(),
-    avalonia_theme: form.avalonia_theme,
-    // Sent as strings: IDs are not always numeric, and large numbers would lose precision as numbers
-    owner_list: normalizeIdTags(form.owner_list),
-    admin_list: normalizeIdTags(form.admin_list),
-    api: {
-      enable: form.api_enable,
-      listen_url: form.api_listen_url.trim(),
-      listen_urls: form.api_listen_urls.map(url => url.trim()).filter(Boolean),
-      public_base_url: form.api_public_base_url.trim() || null,
-      auth_enable: form.api_auth_enable,
-      token: form.api_token
+function setPathValue(target: AppConfigData, path: string, value: unknown) {
+  const parts = path.split('.')
+  let node = target
+  for (const part of parts.slice(0, -1)) {
+    const next = node[part]
+    if (!next || typeof next !== 'object' || Array.isArray(next)) node[part] = {}
+    node = node[part] as AppConfigData
+  }
+  node[parts.at(-1)!] = value
+}
+
+function collectFields(
+  schema: PluginConfigSchemaItem[],
+  prefix = '',
+  inheritedGroup?: { id: string; label: string; order: number; icon: string; description: string }
+): HostConfigField[] {
+  const fields: HostConfigField[] = []
+  for (const item of schema) {
+    const path = prefix ? `${prefix}.${item.key}` : item.key
+    const ownId = item.group_id?.trim() || item.group?.trim()
+    const ownLabel = item.group_label?.trim() || item.group?.trim()
+    const group = {
+      id: ownId || inheritedGroup?.id || item.key,
+      label: ownLabel || inheritedGroup?.label || item.label || item.key,
+      order: item.group_order ?? inheritedGroup?.order ?? Number.MAX_SAFE_INTEGER,
+      icon: item.group_icon?.trim() || inheritedGroup?.icon || '',
+      description: item.group_description?.trim() || inheritedGroup?.description || ''
+    }
+
+    if (item.type === 'section' && item.fields?.length) {
+      fields.push(...collectFields(item.fields, path, group))
+      continue
+    }
+    if (item.type === 'object') continue
+
+    fields.push({
+      item,
+      path,
+      group: group.id,
+      groupLabel: group.label,
+      groupOrder: group.order,
+      groupIcon: group.icon,
+      groupDescription: group.description,
+      label: item.label || item.key,
+      description: item.description ?? '',
+      enabled: true,
+      enumOptions: null
+    })
+  }
+  return fields
+}
+
+function fieldsWithDefaults(config: AppConfigData, schema: PluginConfigSchemaItem[], prefix = '') {
+  for (const item of schema) {
+    const path = prefix ? `${prefix}.${item.key}` : item.key
+    if (item.type === 'section' && item.fields) {
+      if (pathValue(config, path) === undefined) setPathValue(config, path, {})
+      fieldsWithDefaults(config, item.fields, path)
+    } else if (pathValue(config, path) === undefined && item.default_value !== undefined && item.default_value !== null) {
+      setPathValue(config, path, clone(item.default_value))
     }
   }
 }
 
-function cloneForm(form: ConfigForm): ConfigForm {
-  return JSON.parse(JSON.stringify(form)) as ConfigForm
+function findNullPaths(value: unknown, prefix = ''): string[] {
+  if (value === null) return [prefix || '(根配置)']
+  if (Array.isArray(value)) return value.flatMap((item, index) => findNullPaths(item, `${prefix}[${index}]`))
+  if (typeof value !== 'object') return []
+  return Object.entries(value).flatMap(([key, item]) => findNullPaths(item, prefix ? `${prefix}.${key}` : key))
 }
 
-export function generateToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(24))
-  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+function passesConditions(item: PluginConfigSchemaItem, config: AppConfigData, effect: 'visible' | 'enabled') {
+  return (item.conditions ?? []).filter(condition => condition.effect === effect).every(condition => {
+    const current = pathValue(config, condition.field)
+    const expected = condition.value ?? ''
+    if (current === undefined) return true
+    if (['gt', 'gte', 'lt', 'lte'].includes(condition.operator)) {
+      const left = Number(current)
+      const right = Number(expected)
+      if (!Number.isFinite(left) || !Number.isFinite(right)) return false
+      if (condition.operator === 'gt') return left > right
+      if (condition.operator === 'gte') return left >= right
+      if (condition.operator === 'lt') return left < right
+      return left <= right
+    }
+    const equal = String(current ?? '') === expected
+    return condition.operator === 'ne' ? !equal : equal
+  })
+}
+
+function makePatch(config: AppConfigData, fields: HostConfigField[]): AppConfigData {
+  const patch: AppConfigData = {}
+  for (const field of fields) {
+    let value = pathValue(config, field.path)
+    if (value === null) {
+      if (['string', 'text', 'password'].includes(field.item.type)) value = ''
+      else throw new Error(`配置项“${field.label}”当前为空值，请填写后再保存。`)
+    }
+    if (value !== undefined) {
+      const nestedNulls = findNullPaths(value)
+      if (nestedNulls.length) throw new Error(`配置项“${field.label}”包含空值（null），请修正后再保存。`)
+    }
+    setPathValue(patch, field.path, value)
+  }
+  return patch
 }
 
 export function useConfigPage() {
-  const activeSection = ref<SectionKey>('general')
-  const currentSection = computed(() => sections.find(section => section.key === activeSection.value) ?? sections[0])
+  const activeGroup = ref('')
   const loading = ref(true)
   const saving = ref(false)
   const loadError = ref('')
+  const loadWarning = ref('')
   const saveError = ref('')
+  const schema = shallowRef<PluginConfigSchemaItem[]>([])
+  const config = reactive<AppConfigData>({})
+  const loadedSnapshot = ref('')
 
-  const form = reactive<ConfigForm>(cloneForm(emptyForm))
-  const loaded = ref<ConfigForm>(cloneForm(emptyForm))
-  const dirty = computed(() => JSON.stringify(form) !== JSON.stringify(loaded.value))
+  const allFields = computed<HostConfigField[]>(() => collectFields(schema.value))
+  const visibleFields = computed(() => allFields.value.filter(field => passesConditions(field.item, config, 'visible')))
+  const groups = computed<HostConfigGroup[]>(() => {
+    const map = new Map<string, HostConfigGroup>()
+    for (const field of visibleFields.value) {
+      const group = map.get(field.group) ?? {
+        key: field.group,
+        label: field.groupLabel,
+        order: field.groupOrder,
+        icon: field.groupIcon,
+        description: field.groupDescription,
+        fields: [] as HostConfigField[]
+      }
+      group.fields.push({ ...field, enabled: passesConditions(field.item, config, 'enabled') })
+      map.set(field.group, group)
+    }
+    return [...map.values()]
+      .map(group => ({
+        ...group,
+        fields: group.fields.sort((left, right) => (left.item.order ?? 0) - (right.item.order ?? 0))
+      }))
+      .sort((left, right) => left.order - right.order)
+  })
+  const currentGroup = computed(() => groups.value.find(group => group.key === activeGroup.value) ?? groups.value[0])
+  const dirty = computed(() => Boolean(loadedSnapshot.value) && JSON.stringify(config) !== loadedSnapshot.value)
+
+  function replaceConfig(next: AppConfigData) {
+    Object.keys(config).forEach(key => delete config[key])
+    Object.assign(config, clone(next))
+  }
+
+  function setFieldValue(path: string, value: unknown) {
+    setPathValue(config, path, value)
+  }
 
   async function loadConfig() {
     loading.value = true
     loadError.value = ''
+    loadWarning.value = ''
+    saveError.value = ''
+    loadedSnapshot.value = ''
     try {
-      loaded.value = configToForm(await getAppConfig())
+      const response = await getAppConfig()
+      schema.value = Array.isArray(response.schema) ? response.schema : []
+      const next = clone(response.config ?? EMPTY_CONFIG)
+      fieldsWithDefaults(next, schema.value)
+      const nullPaths = findNullPaths(next)
+      replaceConfig(next)
+      if (nullPaths.length) loadWarning.value = `服务器配置含 null：${nullPaths.join('、')}。保存前请填写这些值。`
+      loadedSnapshot.value = JSON.stringify(config)
+      if (!groups.value.some(group => group.key === activeGroup.value)) activeGroup.value = groups.value[0]?.key ?? ''
     } catch (error) {
-      loaded.value = cloneForm(emptyForm)
+      replaceConfig({})
+      schema.value = []
       loadError.value = getApiErrorMessage(error, '读取配置失败')
     } finally {
-      Object.assign(form, cloneForm(loaded.value))
       loading.value = false
     }
   }
@@ -146,11 +215,11 @@ export function useConfigPage() {
     saving.value = true
     saveError.value = ''
     try {
-      const payload = formToConfig(form)
-      await updateAppConfig(payload)
-      loaded.value = configToForm(payload)
-      Object.assign(form, cloneForm(loaded.value))
-      return true
+      await updateAppConfig(makePatch(config, allFields.value))
+      await loadConfig()
+      if (!loadError.value) return true
+      saveError.value = loadError.value
+      return false
     } catch (error) {
       saveError.value = getApiErrorMessage(error, '配置保存失败')
       return false
@@ -160,25 +229,31 @@ export function useConfigPage() {
   }
 
   function discard() {
-    Object.assign(form, cloneForm(loaded.value))
+    if (!loadedSnapshot.value) return
+    replaceConfig(JSON.parse(loadedSnapshot.value) as AppConfigData)
     saveError.value = ''
   }
 
-  onMounted(() => {
-    void loadConfig()
+  watch(groups, next => {
+    if (!next.some(group => group.key === activeGroup.value)) activeGroup.value = next[0]?.key ?? ''
   })
+  onMounted(() => { void loadConfig() })
 
   return {
-    activeSection,
-    currentSection,
-    form,
+    activeGroup,
+    currentGroup,
+    groups,
+    config,
     loading,
     saving,
     loadError,
+    loadWarning,
     saveError,
     dirty,
     loadConfig,
     saveConfig,
-    discard
+    discard,
+    setFieldValue,
+    fieldValue: (path: string) => pathValue(config, path)
   }
 }

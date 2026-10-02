@@ -3,7 +3,7 @@
     <!-- Inline types: text on the left, a compact control on the right. Long text types stack. -->
     <div class="field-text">
       <label :for="inputId" class="field-label">{{ field.label }}</label>
-      <p class="field-desc">{{ field.description }}<code class="field-key">{{ field.item.key }}</code></p>
+      <p class="field-desc">{{ field.description }}<code class="field-key">{{ field.path || field.item.key }}</code></p>
     </div>
 
     <div class="field-control">
@@ -84,7 +84,7 @@
       />
 
       <el-select
-        v-else-if="type === 'select'"
+        v-else-if="type === 'select' || (field.item.options?.length ?? 0) > 0"
         :id="inputId"
         class="select-input"
         :disabled="isDisabled"

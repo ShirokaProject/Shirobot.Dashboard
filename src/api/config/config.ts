@@ -1,29 +1,11 @@
 import { apiRequest } from '../core/http'
 import type { PluginConfigSchemaItem } from '../plugins/config'
 
-export interface AppConfig {
-  schema?: PluginConfigSchemaItem[]
-  /** Legacy single adapter; superseded by `protocols`. */
-  protocol?: string
-  /** Adapters loaded at startup in addition to the enabled installed ones: ids, DLL names or paths. */
-  protocols?: string[]
-  enable_log: boolean
-  showid?: boolean
-  disable_console_input: boolean
-  github_proxy: string
-  host_update_repository: string
-  avalonia_theme: string
-  /** Account IDs as strings; older hosts may still return numbers */
-  owner_list: Array<string | number>
-  admin_list: Array<string | number>
-  api: {
-    enable: boolean
-    listen_url: string
-    listen_urls: string[]
-    public_base_url: string | null
-    auth_enable: boolean
-    token: string
-  }
+export type AppConfigData = Record<string, unknown>
+
+export interface AppConfigResponse {
+  schema: PluginConfigSchemaItem[]
+  config: AppConfigData
 }
 
 export interface AppConfigUpdateResponse {
@@ -32,13 +14,13 @@ export interface AppConfigUpdateResponse {
 }
 
 export function getAppConfig() {
-  return apiRequest<AppConfig>('/api/v1/config')
+  return apiRequest<AppConfigResponse>('/api/v1/config')
 }
 
-export function updateAppConfig(config: Partial<AppConfig>) {
+export function updateAppConfig(config: AppConfigData) {
   return apiRequest<AppConfigUpdateResponse>('/api/v1/config', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(config)
+    body: JSON.stringify({ config })
   })
 }

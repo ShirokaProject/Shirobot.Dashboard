@@ -40,6 +40,8 @@ export interface PluginConfigSchemaItem {
   /** Stable category identifier; `group` remains the display-label compatibility field. */
   group_id?: string | null
   group_label?: string | null
+  group_icon?: string | null
+  group_description?: string | null
   order?: number | null
   group_order?: number | null
   conditions?: PluginConfigCondition[] | null

@@ -1,5 +1,5 @@
 import type { AdapterMarketEntry, AdapterStatus, ModelInfo } from './adapters/adapters'
-import type { AppConfig } from './config/config'
+import type { AppConfigData, AppConfigResponse } from './config/config'
 import type { LogEntry, LogSourceInfo, LogStreamMessage, RuntimeLogsResponse } from './logs/logs'
 import type { OverviewResponse } from './overview/overview'
 import type { PluginMarketResponse } from './pluginMarket/pluginMarket'
@@ -191,23 +191,47 @@ const demoPlugins: BackendPlugin[] = [
   }
 ]
 
-const demoConfig: AppConfig = {
-  protocols: [],
-  enable_log: true,
-  showid: false,
-  disable_console_input: false,
-  github_proxy: 'https://gh-proxy.com/',
-  host_update_repository: 'ShirokaProject/ShiroBot',
-  avalonia_theme: 'Light',
-  owner_list: ['1034028486'],
-  admin_list: [],
-  api: {
-    enable: true,
-    listen_url: 'http://localhost:8080',
-    listen_urls: [],
-    public_base_url: null,
-    auth_enable: true,
-    token: 'xxx'
+const demoConfig: AppConfigResponse = {
+  schema: [
+    { key: 'enable_log', label: '启用日志', type: 'boolean', description: '是否输出普通运行日志。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 20 },
+    { key: 'showid', label: '显示群与用户 ID', type: 'boolean', description: '在消息日志中显示群 ID 和用户 ID。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 25 },
+    { key: 'disable_console_input', label: '禁用控制台输入', type: 'boolean', description: '关闭交互式控制台输入。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 30 },
+    { key: 'github_proxy', label: 'GitHub 代理', type: 'string', description: '下载 GitHub 资源时使用的代理前缀。', group_id: 'updates', group_label: '更新与主题', group_icon: 'download', group_description: '主程序更新来源和主题设置。', group_order: 20, order: 10 },
+    { key: 'host_update_repository', label: '宿主更新仓库', type: 'string', description: '格式为 owner/repository。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 20 },
+    { key: 'avalonia_theme', label: '宿主主题', type: 'string', description: 'Avalonia 宿主主题。', options: ['Light', 'Dark', 'Auto'], group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 30 },
+    { key: 'owner_list', label: 'Owner 列表', type: 'array', item_type: 'string', description: '所有者账号列表。', group_id: 'permissions', group_label: '权限', group_icon: 'shield', group_description: '定义供插件权限检查使用的账号列表。', group_order: 30, order: 10 },
+    { key: 'admin_list', label: 'Admin 列表', type: 'array', item_type: 'string', description: '管理员账号列表。', group_id: 'permissions', group_label: '权限', group_order: 30, order: 20 },
+    {
+      key: 'api', label: 'HTTP API', type: 'section', group_id: 'api', group_label: 'API', group_icon: 'code', group_description: 'Dashboard 和外部工具访问主程序的 HTTP API。', group_order: 40,
+      fields: [
+        { key: 'enable', label: '启用 API', type: 'boolean', description: '允许 Dashboard 和外部工具访问主程序。', order: 10 },
+        { key: 'listen_urls', label: '监听地址', type: 'array', item_type: 'string', description: 'API 服务监听的地址列表。', order: 20 },
+        { key: 'public_base_url', label: '公开访问地址', type: 'string', description: '反向代理后的外部基础 URL。', order: 30 },
+        {
+          key: 'auth', label: '身份验证', type: 'section', fields: [
+            { key: 'enable', label: '启用认证', type: 'boolean', description: '访问 API 时要求 Bearer 令牌。', order: 10 },
+            { key: 'key', label: '访问令牌', type: 'password', description: '客户端访问 API 使用的密钥。', order: 20 }
+          ]
+        }
+      ]
+    }
+  ],
+  config: {
+    protocols: [],
+    enable_log: true,
+    showid: false,
+    disable_console_input: false,
+    github_proxy: 'https://gh-proxy.com/',
+    host_update_repository: 'ShirokaProject/ShiroBot',
+    avalonia_theme: 'Light',
+    owner_list: ['1034028486'],
+    admin_list: [],
+    api: {
+      enable: true,
+      listen_urls: ['http://localhost:8080'],
+      public_base_url: '',
+      auth: { enable: true, key: 'xxx' }
+    }
   }
 }
 
@@ -391,6 +415,17 @@ const demoPendingGithubInstalls = new Map<string, PluginUploadParsedResponse>()
 
 function clone<T>(value: T): T {
   return structuredClone(value)
+}
+
+function mergeConfig(target: AppConfigData, patch: AppConfigData) {
+  for (const [key, value] of Object.entries(patch)) {
+    const current = target[key]
+    if (value && typeof value === 'object' && !Array.isArray(value) && current && typeof current === 'object' && !Array.isArray(current)) {
+      mergeConfig(current as AppConfigData, value as AppConfigData)
+    } else {
+      target[key] = clone(value)
+    }
+  }
 }
 
 function methodOf(init?: RequestInit) {
@@ -827,9 +862,8 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && pathname === '/api/v1/config') return clone(demoConfig) as T
   if (method === 'PATCH' && pathname === '/api/v1/config') {
-    const payload = JSON.parse(String(init?.body ?? '{}')) as Partial<AppConfig>
-    Object.assign(demoConfig, payload)
-    if (payload.api) demoConfig.api = { ...demoConfig.api, ...payload.api }
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: AppConfigData }
+    if (payload.config) mergeConfig(demoConfig.config, payload.config)
     return { ok: true, msg: '配置更新成功' } as T
   }
 

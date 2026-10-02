@@ -23,6 +23,7 @@ export interface EnumOption {
 /** A schema item prepared for display: group split out of the label, enum parsed out of the description. */
 export interface ConfigField {
   item: PluginConfigSchemaItem
+  path?: string
   label: string
   description: string
   enabled: boolean
