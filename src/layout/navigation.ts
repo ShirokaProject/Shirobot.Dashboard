@@ -1,6 +1,16 @@
+import type { Component } from 'vue'
 import { Box, Connection, Document, InfoFilled, Monitor, Setting } from '@element-plus/icons-vue'
 
-export const menuItems = [
+export interface MenuItem {
+  path: string
+  label: string
+  short: string
+  icon: Component
+  /** Optional badge; leave unset unless it shows a real, live number */
+  count?: number
+}
+
+export const menuItems: MenuItem[] = [
   {
     path: '/',
     label: '概览',
@@ -12,8 +22,7 @@ export const menuItems = [
     path: '/plugins',
     label: '插件',
     short: '插件',
-    icon: Box,
-    count: 4
+    icon: Box
   },
   {
     // 已安装 + 发现 (the former Adapter 市场) live on one page as tabs
@@ -32,8 +41,7 @@ export const menuItems = [
     path: '/logs',
     label: '运行日志',
     short: '日志',
-    icon: Document,
-    count: 11
+    icon: Document
   },
   {
     path: '/about',
