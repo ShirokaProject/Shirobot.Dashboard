@@ -114,6 +114,7 @@ function normalizePlugin(plugin: BackendPlugin): Plugin {
     id: plugin.id,
     name: plugin.name,
     author: plugin.author || 'Unknown',
+    repo: plugin.repo,
     version: plugin.version,
     latestVersion: plugin.latestVersion ?? plugin.version,
     status,

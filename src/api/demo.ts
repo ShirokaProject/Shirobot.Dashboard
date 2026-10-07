@@ -888,7 +888,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
       authors: [{ name: owner }],
       repository,
       license: qualifies ? 'MIT' : '',
-      compatibility: { shirobot: '>=0.9.1 <1.0.0', framework: 'net10.0' },
+      compatibility: { shirobot: '>=0.9.1', framework: 'net10.0' },
       deprecated: false,
       release: qualifies
         ? { version: '0.3.0', prerelease: false, publishedAt: '2026-09-20T08:00:00Z', pageUrl: null, downloadCount: 12, asset: { name: `${repo}.zip`, url: `${repository}/releases/download/v0.3.0/${repo}.zip`, size: 84000, digest: `sha256:${'6'.repeat(64)}` } }

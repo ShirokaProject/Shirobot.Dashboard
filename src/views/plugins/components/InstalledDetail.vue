@@ -31,11 +31,14 @@
       >{{ hostOperation === 'update' ? '更新中…' : '更新' }}</button>
     </div>
 
-    <dl class="facts">
-      <div><dt>版本</dt><dd class="mono">v{{ plugin.version }}</dd></div>
-      <div><dt>状态</dt><dd>{{ statusText(plugin.status) }}</dd></div>
-      <div v-if="plugin.permissions.length" class="wide"><dt>权限</dt><dd>{{ plugin.permissions.join(' · ') }}</dd></div>
-    </dl>
+    <MarketFacts
+      :plugin="marketPlugin"
+      :published-at="publishedAt"
+      :compatibility="compatibility"
+      :version="plugin.version"
+      :status="statusText(plugin.status)"
+      :permissions="plugin.permissions"
+    />
 
     <section v-if="actionsLoading || actionsError || extraActions.length" class="actions">
       <h3>插件操作</h3>
@@ -76,7 +79,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
-import type { PluginActionDefinition } from '../../../api'
+import MarketFacts from './MarketFacts.vue'
+import type { MarketplacePlugin, PluginActionDefinition } from '../../../api'
 import type { Plugin, PluginStatus } from '../../../features/plugins/types'
 
 // The pane already offers update / uninstall; hide backend actions that duplicate them.
@@ -84,6 +88,9 @@ const HOST_ACTION_IDS = new Set(['update', 'uninstall', 'delete', 'remove'])
 
 const props = defineProps<{
   plugin: Plugin | null
+  marketPlugin: MarketplacePlugin | null
+  publishedAt: string
+  compatibility: string
   statusText: (status: PluginStatus) => string
   actions: PluginActionDefinition[]
   actionsLoading: boolean

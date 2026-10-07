@@ -219,7 +219,8 @@
                   <strong>{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
                 </span>
-                <span class="row-meta"><MdIcon name="download" />{{ market.formatDownloads(plugin.release.downloadCount) }}</span>
+                <span v-if="plugin.installed" class="row-status">已安装</span>
+                <span v-else class="row-meta"><MdIcon name="download" />{{ market.formatDownloads(plugin.release.downloadCount) }}</span>
               </button>
             </li>
           </ul>
@@ -228,10 +229,6 @@
             <strong>{{ discoverEmptyText }}</strong>
           </div>
 
-          <p v-if="installedInCatalog" class="list-note">
-            另有 {{ installedInCatalog }} 个已安装的插件，
-            <button type="button" class="inline-link" @click="setTab('installed')">在「已安装」中查看</button>
-          </p>
         </template>
       </div>
 
@@ -240,6 +237,9 @@
         <InstalledDetail
           v-if="tab === 'installed'"
           :plugin="installed.selectedPlugin.value"
+          :market-plugin="installedMarketPlugin"
+          :published-at="installedMarketPlugin ? market.formatDate(installedMarketPlugin.release.publishedAt) : ''"
+          :compatibility="installedMarketPlugin ? market.formatCompatibility(installedMarketPlugin) : '—'"
           :status-text="installed.statusText"
           :actions="installed.pluginActions.value"
           :actions-loading="installed.pluginActionsLoading.value"
@@ -372,20 +372,29 @@ const keyword = computed({
 
 const installedList = computed(() => installed.filteredInstalled.value)
 
-// 发现 lists only what isn't installed yet; updates live in 已安装.
-const discoverList = computed(() => market.filteredPlugins.value.filter(plugin => !plugin.installed))
-const installedInCatalog = computed(() => market.marketplacePlugins.value.filter(plugin => plugin.installed).length)
+const installedMarketPlugin = computed(() => {
+  const plugin = installed.selectedPlugin.value
+  if (!plugin) return null
+  const normalizeRepo = (repo: string) => (githubRepoOf(repo) ?? repo.trim()).replace(/\/+$/, '').replace(/\.git$/i, '').toLowerCase()
+  const entries = [...market.marketplacePlugins.value, ...market.directEntries.value.map(entry => entry.plugin)]
+  return entries.find(entry => plugin.repo && normalizeRepo(entry.repository) === normalizeRepo(plugin.repo))
+    ?? entries.find(entry => entry.id.toLowerCase() === plugin.id.toLowerCase())
+    ?? null
+})
+
+// Keep the selected market sort within each group, with installed plugins last.
+const discoverList = computed(() => [...market.filteredPlugins.value]
+  .sort((a, b) => Number(Boolean(a.installed)) - Number(Boolean(b.installed))))
 
 const discoverEmptyText = computed(() => {
   const total = market.marketplacePlugins.value.length
   if (!total) return '这个源暂无插件'
-  if (market.keyword.value.trim() || market.activeCategory.value !== '全部') return '没有匹配的插件'
-  return '这个源里的插件都已安装'
+  return '没有匹配的插件'
 })
 
 const tabs = computed(() => [
   { key: 'installed' as const, label: '已安装', count: installed.installedPlugins.value.length },
-  { key: 'discover' as const, label: '发现', count: market.marketplacePlugins.value.length - installedInCatalog.value }
+  { key: 'discover' as const, label: '发现', count: market.marketplacePlugins.value.length }
 ])
 
 const attention = computed(() => installed.installedPlugins.value.flatMap(plugin => {
@@ -438,6 +447,7 @@ const directList = computed(() => {
   const query = market.keyword.value.trim().toLowerCase()
   return market.directEntries.value.filter(entry => !query
     || [entry.plugin.name, entry.repo.owner, entry.repo.repo, entry.repo.domain].some(value => value.toLowerCase().includes(query)))
+    .sort((a, b) => Number(Boolean(a.plugin.installed)) - Number(Boolean(b.plugin.installed)))
 })
 
 function directTone(entry: DirectEntry) {

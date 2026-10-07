@@ -4,6 +4,7 @@ export type Plugin = {
   id: string
   name: string
   author: string
+  repo?: string
   version: string
   latestVersion?: string
   status: PluginStatus
