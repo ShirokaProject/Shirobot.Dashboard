@@ -10,6 +10,8 @@ export interface MenuItem {
   icon: Component
   /** Optional badge; leave unset unless it shows a real, live number */
   count?: number
+  /** Optional text shown instead of the number */
+  badgeText?: string
 }
 
 export const menuItems: MenuItem[] = [
@@ -56,5 +58,6 @@ export const menuItems: MenuItem[] = [
 export const navigationItems = computed(() => menuItems.map(item => ({
   ...item,
   count: item.path === '/plugins' ? pluginUpdateCount.value
-    : item.path === '/adapters' ? adapterUpdateCount.value : item.path === '/about' ? hostUpdateCount.value : item.count
+    : item.path === '/adapters' ? adapterUpdateCount.value : item.path === '/about' ? hostUpdateCount.value : item.count,
+  badgeText: item.path === '/about' ? '有新版本' : item.badgeText
 })))

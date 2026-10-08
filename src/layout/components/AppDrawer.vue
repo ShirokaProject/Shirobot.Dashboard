@@ -46,7 +46,7 @@
       >
         <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
         <span class="drawer-label">{{ item.label }}</span>
-        <NavigationUpdateBadge :count="item.count" :floating="isDrawerCollapsed" />
+        <NavigationUpdateBadge :count="item.count" :text="item.badgeText" :floating="isDrawerCollapsed" />
       </button>
     </nav>
 
@@ -70,7 +70,7 @@
       @click="router.push(item.path)"
     >
       <span class="rail-indicator">
-        <NavigationUpdateBadge :count="item.count" floating />
+        <NavigationUpdateBadge :count="item.count" :text="item.badgeText" floating />
         <el-icon><component :is="item.icon" /></el-icon>
       </span>
       <span class="rail-label">{{ item.short }}</span>
@@ -347,6 +347,14 @@ function triggerAvatarSpin() {
   margin-left: 8px;
   padding: 0;
   border-radius: var(--md-sys-shape-corner-large);
+}
+
+.md3-drawer.collapsed .drawer-item .update-badge.floating {
+  top: 7px;
+}
+
+.md3-drawer.collapsed .drawer-item .update-badge.dot {
+  top: 11px;
 }
 
 .drawer-label {

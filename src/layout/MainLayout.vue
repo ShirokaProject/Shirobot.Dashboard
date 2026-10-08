@@ -24,7 +24,7 @@
         @click="$router.push(item.path)"
       >
         <span class="bottom-indicator">
-          <NavigationUpdateBadge :count="item.count" floating />
+          <NavigationUpdateBadge :count="item.count" :text="item.badgeText" floating />
           <el-icon><component :is="item.icon" /></el-icon>
         </span>
         <span>{{ item.short }}</span>
