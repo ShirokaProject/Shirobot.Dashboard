@@ -9,7 +9,7 @@
 
     <p class="detail-desc">{{ plugin.description }}</p>
 
-    <!-- At most one notice: the thing that needs doing -->
+    <!-- Updates remain available when the old plugin is disabled or fails to load. -->
     <div v-if="plugin.status === 'error'" class="notice">
       <MdIcon name="error" class="notice-icon error" />
       <div>
@@ -17,7 +17,7 @@
         <span>{{ plugin.errorMessage || '加载失败，请查看运行日志。' }}</span>
       </div>
     </div>
-    <div v-else-if="plugin.hasUpdate" class="notice">
+    <div v-if="plugin.hasUpdate" class="notice">
       <MdIcon name="arrow_upward" class="notice-icon accent" />
       <div>
         <strong>可更新到 v{{ plugin.latestVersion }}</strong>
@@ -26,7 +26,7 @@
       <button
         type="button"
         class="md-button compact filled"
-        :disabled="plugin.status !== 'enabled' || Boolean(hostOperation)"
+        :disabled="!canUpdate || Boolean(hostOperation) || Boolean(runningActionId)"
         @click="emit('update', plugin)"
       >{{ hostOperation === 'update' ? '更新中…' : '更新' }}</button>
     </div>
@@ -97,6 +97,7 @@ const props = defineProps<{
   actionsError: string
   runningActionId: string
   hostOperation: string
+  canUpdate: boolean
 }>()
 
 const emit = defineEmits<{

@@ -236,7 +236,7 @@
       <div class="detail-pane panel">
         <InstalledDetail
           v-if="tab === 'installed'"
-          :plugin="installed.selectedPlugin.value"
+          :plugin="selectedInstalledPlugin"
           :market-plugin="installedMarketPlugin"
           :published-at="installedMarketPlugin ? market.formatDate(installedMarketPlugin.release.publishedAt) : ''"
           :compatibility="installedMarketPlugin ? market.formatCompatibility(installedMarketPlugin) : '—'"
@@ -245,10 +245,11 @@
           :actions-loading="installed.pluginActionsLoading.value"
           :actions-error="installed.pluginActionsError.value"
           :running-action-id="installed.runningPluginActionId.value"
-          :host-operation="installed.hostOperation.value"
+          :host-operation="market.preparingPluginId.value ? 'update' : installed.hostOperation.value"
+          :can-update="Boolean(installedMarketPlugin && market.canInstallPlugin(installedMarketPlugin))"
           @open-config="openConfig"
           @action="installed.executePluginAction"
-          @update="installed.updatePlugin"
+          @update="preparePluginUpdate"
           @delete="installed.deletePlugin"
         />
         <MarketDetail
@@ -334,6 +335,7 @@ import {
   type SourceType
 } from '../../features/plugins/catalogSources'
 import type { Plugin } from '../../features/plugins/types'
+import { findPluginMarketEntry, withPluginUpdate } from '../../features/plugins/updates'
 import PluginUploadDialog from '../plugin/components/PluginUploadDialog.vue'
 import { usePluginsPage } from '../plugin/Plugins'
 import { usePluginMarketPage, type DirectEntry } from '../pluginMarket/PluginMarket'
@@ -370,17 +372,22 @@ const keyword = computed({
   }
 })
 
-const installedList = computed(() => installed.filteredInstalled.value)
+const marketEntries = computed(() => [
+  ...market.marketplacePlugins.value,
+  ...market.directEntries.value.map(entry => entry.plugin)
+])
+const installedList = computed(() => installed.filteredInstalled.value.map(plugin => withPluginUpdate(plugin, marketEntries.value)))
+const selectedInstalledPlugin = computed(() => installed.selectedPlugin.value
+  ? withPluginUpdate(installed.selectedPlugin.value, marketEntries.value)
+  : null)
+const installedMarketPlugin = computed(() => installed.selectedPlugin.value
+  ? findPluginMarketEntry(installed.selectedPlugin.value, marketEntries.value)
+  : null)
 
-const installedMarketPlugin = computed(() => {
-  const plugin = installed.selectedPlugin.value
-  if (!plugin) return null
-  const normalizeRepo = (repo: string) => (githubRepoOf(repo) ?? repo.trim()).replace(/\/+$/, '').replace(/\.git$/i, '').toLowerCase()
-  const entries = [...market.marketplacePlugins.value, ...market.directEntries.value.map(entry => entry.plugin)]
-  return entries.find(entry => plugin.repo && normalizeRepo(entry.repository) === normalizeRepo(plugin.repo))
-    ?? entries.find(entry => entry.id.toLowerCase() === plugin.id.toLowerCase())
-    ?? null
-})
+function preparePluginUpdate(plugin: Plugin) {
+  const entry = findPluginMarketEntry(plugin, marketEntries.value)
+  if (entry) void market.preparePluginInstall(entry)
+}
 
 // Keep the selected market sort within each group, with installed plugins last.
 const discoverList = computed(() => [...market.filteredPlugins.value]
@@ -397,7 +404,7 @@ const tabs = computed(() => [
   { key: 'discover' as const, label: '发现', count: market.marketplacePlugins.value.length }
 ])
 
-const attention = computed(() => installed.installedPlugins.value.flatMap(plugin => {
+const attention = computed(() => installed.installedPlugins.value.map(plugin => withPluginUpdate(plugin, marketEntries.value)).flatMap(plugin => {
   const items: Array<{ plugin: Plugin; kind: 'error' | 'update'; reason: string }> = []
   if (plugin.status === 'error') items.push({ plugin, kind: 'error', reason: plugin.errorMessage || '加载失败' })
   else if (plugin.hasUpdate) items.push({ plugin, kind: 'update', reason: `可更新到 v${plugin.latestVersion}` })

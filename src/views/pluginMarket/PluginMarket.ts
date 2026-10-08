@@ -1,3 +1,4 @@
+import { compareVersions } from '../../features/plugins/updates'
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getSessionBaseUrl } from '../../auth/session'
@@ -394,28 +395,6 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
     const parts = [plugin.compatibility.shirobot, plugin.compatibility.framework]
     if (plugin.compatibility.platforms?.length) parts.push(plugin.compatibility.platforms.join(', '))
     return parts.filter(Boolean).join(' · ') || '—'
-  }
-
-  function compareVersions(left: string, right: string) {
-    const parse = (value: string) => {
-      const normalized = value.trim().replace(/^v(?=\d)/i, '')
-      const [main, prerelease = ''] = normalized.split('-', 2)
-      const numbers = main.split('.').map(part => Number(part))
-      if (!numbers.length || numbers.some(number => !Number.isInteger(number) || number < 0)) return null
-      while (numbers.length < 3) numbers.push(0)
-      return { numbers, prerelease }
-    }
-    const a = parse(left)
-    const b = parse(right)
-    if (!a || !b) return left.localeCompare(right, 'en', { numeric: true })
-    for (let index = 0; index < Math.max(a.numbers.length, b.numbers.length); index += 1) {
-      const difference = (a.numbers[index] ?? 0) - (b.numbers[index] ?? 0)
-      if (difference !== 0) return difference
-    }
-    if (a.prerelease === b.prerelease) return 0
-    if (!a.prerelease) return 1
-    if (!b.prerelease) return -1
-    return a.prerelease.localeCompare(b.prerelease, 'en', { numeric: true })
   }
 
   onMounted(() => {
