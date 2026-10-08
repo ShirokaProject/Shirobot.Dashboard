@@ -381,7 +381,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   function applyStatusMessage(status?: string) {
     if (status === 'applied') return '配置已保存并应用'
     if (status === 'pending_start') return '配置已保存，将在组件启动时应用'
-    if (status === 'legacy_saved_only') return '配置已保存；此旧版组件未热更新'
+    if (status === 'legacy_saved_only') return '配置已保存；组件未接入统一配置应用接口，宿主无法确认即时生效'
     return ''
   }
 
