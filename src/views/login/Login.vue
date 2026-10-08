@@ -89,17 +89,28 @@
           </template>
 
           <div v-if="!adding" class="key-row">
-            <label class="text-field" :class="{ invalid: Boolean(errorMessage) }">
+            <div class="text-field key-field" :class="{ invalid: Boolean(errorMessage) }">
               <input
                 v-model="form.token"
-                type="password"
+                :type="showToken ? 'text' : 'password'"
                 autocomplete="current-password"
                 aria-label="登录密钥"
                 placeholder="登录密钥（后端未启用鉴权时可留空）"
                 :disabled="verifying"
                 @input="errorMessage = ''"
               />
-            </label>
+              <button
+                type="button"
+                class="visibility-toggle"
+                :aria-label="showToken ? '隐藏密钥' : '显示密钥'"
+                :title="showToken ? '隐藏密钥' : '显示密钥'"
+                :aria-pressed="showToken"
+                :disabled="verifying"
+                @click="showToken = !showToken"
+              >
+                <el-icon><Hide v-if="showToken" /><View v-else /></el-icon>
+              </button>
+            </div>
 
             <button
               type="button"
@@ -133,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { Close, Key, Plus } from '@element-plus/icons-vue'
+import { Close, Hide, Key, Plus, View } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
 import ThemeControls from '../../layout/components/ThemeControls.vue'
 import { useLoginPage } from './Login'
@@ -147,6 +158,7 @@ const {
   adding,
   draft,
   form,
+  showToken,
   verifying,
   entering,
   errorMessage,

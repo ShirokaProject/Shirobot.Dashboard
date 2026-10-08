@@ -26,6 +26,7 @@ export function useLoginPage() {
   const adding = ref(switchingEnabled && (route.query.add !== undefined || backends.value.length === 0))
   const draft = reactive({ name: '', baseUrl: '' })
   const form = reactive({ token: '', remember: false })
+  const showToken = ref(false)
   const verifying = ref(false)
   // Set once the key checks out: the card plays its exit animation before the dashboard loads
   const entering = ref(false)
@@ -56,6 +57,7 @@ export function useLoginPage() {
   }
 
   watch([selectedId, adding], () => {
+    showToken.value = false
     errorMessage.value = ''
     syncCredentials()
   }, { immediate: true })
@@ -175,6 +177,7 @@ export function useLoginPage() {
     adding,
     draft,
     form,
+    showToken,
     verifying,
     entering,
     errorMessage,

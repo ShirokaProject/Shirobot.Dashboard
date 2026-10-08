@@ -330,6 +330,46 @@
   flex: 1;
 }
 
+.key-field {
+  position: relative;
+}
+
+.key-field input {
+  padding-right: 48px;
+  font-family: Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+.visibility-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.visibility-toggle:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.visibility-toggle:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+}
+
+.visibility-toggle:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 .remember-toggle {
   width: 40px;
   height: 40px;
