@@ -324,6 +324,7 @@
     />
 
     <AddSourceDialog
+      v-if="CUSTOM_MARKET_SOURCES_ENABLED"
       v-model:visible="addSourceOpen"
       noun="适配器"
       :initial-type="addSourceType"
@@ -341,7 +342,7 @@ import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
 import SiteIcon from '../../components/SiteIcon.vue'
 import type { AdapterMarketEntry, AdapterStatus } from '../../api'
-import { githubRepoOf, repoHostLabel, type ParsedRepository, type SourceType } from '../../features/plugins/catalogSources'
+import { CUSTOM_MARKET_SOURCES_ENABLED, githubRepoOf, repoHostLabel, type ParsedRepository, type SourceType } from '../../features/plugins/catalogSources'
 import { isInstallableEntry, useAdapterMarketPage, type DirectAdapterEntry } from '../adapterMarket/AdapterMarket'
 import PluginConfigDialog from '../pluginConfig/components/PluginConfigDialog.vue'
 import AddSourceDialog from '../plugins/components/AddSourceDialog.vue'
@@ -500,6 +501,7 @@ function selectCatalog(id: string) {
 }
 
 function openAddSource(type: SourceType) {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return
   addSourceType.value = type
   addSourceOpen.value = true
 }

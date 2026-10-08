@@ -28,12 +28,12 @@
         </button>
       </li>
     </ul>
-    <button type="button" class="rail-add" @click="emit('add', 'catalog')">
+    <button v-if="CUSTOM_MARKET_SOURCES_ENABLED" type="button" class="rail-add" @click="emit('add', 'catalog')">
       <MdIcon name="add" />添加目录
     </button>
 
-    <h3>直接添加</h3>
-    <ul class="rail-list">
+    <h3 v-if="CUSTOM_MARKET_SOURCES_ENABLED">直接添加</h3>
+    <ul v-if="CUSTOM_MARKET_SOURCES_ENABLED" class="rail-list">
       <li>
         <button
           type="button"
@@ -51,7 +51,7 @@
         </button>
       </li>
     </ul>
-    <button type="button" class="rail-add" @click="emit('add', 'repo')">
+    <button v-if="CUSTOM_MARKET_SOURCES_ENABLED" type="button" class="rail-add" @click="emit('add', 'repo')">
       <MdIcon name="add" />添加仓库
     </button>
   </nav>
@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
-import type { CatalogSource, SourceType } from '../../../features/plugins/catalogSources'
+import { CUSTOM_MARKET_SOURCES_ENABLED, type CatalogSource, type SourceType } from '../../../features/plugins/catalogSources'
 
 withDefaults(defineProps<{
   sources: CatalogSource[]

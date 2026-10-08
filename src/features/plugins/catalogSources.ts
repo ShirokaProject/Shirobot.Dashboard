@@ -2,6 +2,9 @@
 // serves by default; third-party sources are stored per browser and passed to the backend
 // as `?source=`. Plugins and adapters keep separate lists (the `scope` argument).
 
+// Temporarily expose only the official market; keep saved custom sources for later.
+export const CUSTOM_MARKET_SOURCES_ENABLED: boolean = false
+
 export type SourceScope = 'plugins' | 'adapters'
 
 export interface CatalogSource {
@@ -49,10 +52,12 @@ function writeCustom(scope: SourceScope, sources: CatalogSource[]) {
 }
 
 export function listCatalogSources(scope: SourceScope = 'plugins'): CatalogSource[] {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return [OFFICIAL_SOURCE]
   return [OFFICIAL_SOURCE, ...readCustom(scope)]
 }
 
 export function getActiveCatalogSource(scope: SourceScope = 'plugins'): CatalogSource {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return OFFICIAL_SOURCE
   let id: string | null = null
   try {
     id = localStorage.getItem(KEYS[scope].active)
@@ -63,6 +68,7 @@ export function getActiveCatalogSource(scope: SourceScope = 'plugins'): CatalogS
 }
 
 export function setActiveCatalogSource(id: string, scope: SourceScope = 'plugins') {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return
   try {
     localStorage.setItem(KEYS[scope].active, id)
   } catch {
@@ -83,6 +89,7 @@ export function isValidCatalogUrl(value: string) {
 }
 
 export function addCatalogSource(name: string, url: string, scope: SourceScope = 'plugins'): CatalogSource {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) throw new Error('自定义市场源暂未开放')
   const source: CatalogSource = {
     id: `source-${Date.now().toString(36)}`,
     name: name.trim() || url,
@@ -93,6 +100,7 @@ export function addCatalogSource(name: string, url: string, scope: SourceScope =
 }
 
 export function removeCatalogSource(id: string, scope: SourceScope = 'plugins') {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return
   writeCustom(scope, readCustom(scope).filter(source => source.id !== id))
 }
 
@@ -183,6 +191,7 @@ export function repoHostLabel(repo: Pick<ParsedRepository, 'host' | 'domain'>) {
 }
 
 export function listDirectRepos(scope: SourceScope = 'plugins'): DirectRepository[] {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return []
   try {
     const parsed = JSON.parse(localStorage.getItem(KEYS[scope].direct) ?? '[]') as unknown
     if (!Array.isArray(parsed)) return []
@@ -203,11 +212,13 @@ function writeDirectRepos(scope: SourceScope, repos: DirectRepository[]) {
 }
 
 export function addDirectRepo(parsed: ParsedRepository, scope: SourceScope = 'plugins'): DirectRepository {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) throw new Error('单个仓库安装暂未开放')
   const repo: DirectRepository = { ...parsed, id: `repo-${Date.now().toString(36)}` }
   writeDirectRepos(scope, [...listDirectRepos(scope).filter(item => item.url !== parsed.url), repo])
   return repo
 }
 
 export function removeDirectRepo(id: string, scope: SourceScope = 'plugins') {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return
   writeDirectRepos(scope, listDirectRepos(scope).filter(repo => repo.id !== id))
 }

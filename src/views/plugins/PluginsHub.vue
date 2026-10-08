@@ -313,6 +313,7 @@
     />
 
     <AddSourceDialog
+      v-if="CUSTOM_MARKET_SOURCES_ENABLED"
       v-model:visible="addSourceOpen"
       :initial-type="addSourceType"
       @add-repo="addRepo"
@@ -329,6 +330,7 @@ import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
 import SiteIcon from '../../components/SiteIcon.vue'
 import {
+  CUSTOM_MARKET_SOURCES_ENABLED,
   githubRepoOf,
   repoHostLabel,
   type ParsedRepository,
@@ -434,6 +436,7 @@ function selectCatalog(id: string) {
 }
 
 function openAddSource(type: SourceType) {
+  if (!CUSTOM_MARKET_SOURCES_ENABLED) return
   addSourceType.value = type
   addSourceOpen.value = true
 }
