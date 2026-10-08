@@ -16,7 +16,7 @@
 
     <nav class="md3-bottom-bar" aria-label="主导航">
       <button
-        v-for="item in menuItems"
+        v-for="item in navigationItems"
         :key="item.path"
         type="button"
         class="bottom-item"
@@ -24,6 +24,7 @@
         @click="$router.push(item.path)"
       >
         <span class="bottom-indicator">
+          <NavigationUpdateBadge :count="item.count" floating />
           <el-icon><component :is="item.icon" /></el-icon>
         </span>
         <span>{{ item.short }}</span>
@@ -39,11 +40,23 @@ import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
 import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
-import { menuItems } from './navigation'
+import { menuItems, navigationItems } from './navigation'
+import NavigationUpdateBadge from './components/NavigationUpdateBadge.vue'
+import { getInstalledPlugins } from '../api/plugins/plugins'
+import { checkHostUpdate } from '../api/system/system'
+import { getAdapterMarketAdapters } from '../api/adapters/adapters'
+import { installedPluginSnapshot, pluginMarketSnapshot, adapterMarketSnapshot, hostUpdateSnapshot } from '../features/plugins/updateCounts'
 import { consumeDashboardEntrance } from '../auth/signIn'
 import { refreshDashboardMarketplace } from '../features/plugins/dashboardMarketplace'
 
+installedPluginSnapshot.value = []
+pluginMarketSnapshot.value = []
+adapterMarketSnapshot.value = []
+hostUpdateSnapshot.value = null
 refreshDashboardMarketplace()
+void getInstalledPlugins().catch(() => {})
+void getAdapterMarketAdapters().catch(() => {})
+void checkHostUpdate().catch(() => {})
 
 // Right after a login the dashboard assembles itself piece by piece instead of appearing at once
 const entering = ref(false)
@@ -181,6 +194,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 }
 
 .bottom-indicator {
+  position: relative;
   width: 56px;
   height: 32px;
   border-radius: var(--md-sys-shape-corner-full);

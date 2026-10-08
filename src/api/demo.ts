@@ -9,7 +9,7 @@ import type { RuntimeLog } from '../features/logs/types'
 
 const demoOverview: OverviewResponse = {
   runtime: {
-    mode: 'docker',
+    mode: 'native',
     os: 'Debian GNU/Linux 12 (bookworm)',
     arch: 'x64',
     version_tag: 'v0.9.3',
@@ -18,7 +18,7 @@ const demoOverview: OverviewResponse = {
     gc_heap_bytes: 32 * 1024 * 1024,
     build_time: '2026-09-28T06:12:00Z'
   },
-  bot_version: 'v0.1.0-demo',
+  bot_version: 'v0.9.3',
   sdk_abi_version: '1.1.0.0',
   uptime_seconds: 130320,
   plugins_count: 12,
@@ -412,6 +412,23 @@ const demoMarketplace: PluginMarketResponse = {
   ]
 }
 
+for (const plugin of demoPlugins.filter(plugin => plugin.hasUpdate && !demoMarketplace.plugins.some(entry => entry.id === plugin.id))) {
+  const repository = `https://github.com/ShirokaProject/ShiroBot.Plugin.${plugin.name.replace(/\s+/g, '')}`
+  const version = plugin.latestVersion ?? plugin.version
+  demoMarketplace.plugins.push({
+    id: plugin.id, kind: 'plugin', name: plugin.name, description: plugin.description ?? '',
+    category: plugin.category ?? '工具', authors: [{ name: plugin.author ?? 'Shiro Labs' }], repository,
+    license: 'MIT', compatibility: { shirobot: '>=0.9.3', framework: 'net10.0' }, deprecated: false,
+    release: {
+      version, prerelease: false, publishedAt: '2026-10-09T00:00:00Z', pageUrl: `${repository}/releases/tag/v${version}`,
+      downloadCount: 1200,
+      asset: { name: `${plugin.id}.dll`, url: `${repository}/releases/download/v${version}/${plugin.id}.dll`, size: 131072, digest: `sha256:${'9'.repeat(64)}` }
+    },
+    health: { status: 'available', message: '演示更新包。' },
+    installed: { version: plugin.version, enabled: plugin.status === 'enabled' }
+  })
+}
+
 const demoPendingGithubInstalls = new Map<string, PluginUploadParsedResponse>()
 
 function clone<T>(value: T): T {
@@ -524,7 +541,10 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     if (url.searchParams.get('source')) {
       return [{ id: 'community.adapter.kook', name: 'KOOK 适配器', version: '0.3.1', platform: 'kook', description: '演示：社区维护的 KOOK 平台连接适配器。', repository: 'community/ShiroBot.Adapter.Kook', authors: ['Community'], downloadCount: 320, installedVersion: null, health: 'available', asset: { url: 'https://github.com/community/ShiroBot.Adapter.Kook/releases/download/v0.3.1/Kook.zip', name: 'Kook.zip', digest: `sha256:${'7'.repeat(64)}`, size: 142000 } }] as T
     }
-    return clone(demoAdapterMarket) as T
+    return clone(demoAdapterMarket.map(entry => ({
+      ...entry,
+      installedVersion: demoAdapterPackages.find(adapter => adapter.id === entry.id)?.version ?? null
+    }))) as T
   }
 
   if (method === 'GET' && pathname === '/api/v1/adapter-market/resolve') {
@@ -911,13 +931,20 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   }
 
   if (pathname === '/api/v1/system/update' && method === 'GET') {
+    const available = demoOverview.bot_version !== 'v0.9.5'
     return {
-      current_version: '0.9.3', latest_version: '0.9.5', update_available: true,
+      current_version: demoOverview.bot_version, latest_version: 'v0.9.5', update_available: available,
       asset_name: 'shirobot-host-linux-x64-self-contained.zip',
       release_url: 'https://github.com/ShirokaProject/ShiroBot/releases', release_notes: null,
-      can_apply: false,
-      reason: 'Docker 中运行的主程序请通过更新镜像升级：docker compose pull && docker compose up -d。'
+      can_apply: available,
+      reason: '演示模式：升级仅修改示例数据，不会下载文件或重启真实宿主。'
     } as T
+  }
+
+  if (pathname === '/api/v1/system/update' && method === 'POST') {
+    demoOverview.bot_version = 'v0.9.5'
+    if (demoOverview.runtime) demoOverview.runtime.version_tag = 'v0.9.5'
+    return { ok: true, restarting: false, message: '演示：主程序已升级到 v0.9.5。' } as T
   }
 
   const powerMatch = pathname.match(/^\/api\/v1\/system\/(restart|shutdown)$/)

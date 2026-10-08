@@ -1,3 +1,4 @@
+import { hostUpdateSnapshot } from '../../features/plugins/updateCounts'
 import { apiRequest } from '../core/http'
 
 export type HostPowerAction = 'restart' | 'shutdown'
@@ -22,8 +23,10 @@ export interface HostUpdateCheck {
   reason: string | null
 }
 
-export function checkHostUpdate() {
-  return apiRequest<HostUpdateCheck>('/api/v1/system/update')
+export async function checkHostUpdate() {
+  const response = await apiRequest<HostUpdateCheck>('/api/v1/system/update')
+  hostUpdateSnapshot.value = response
+  return response
 }
 
 export function applyHostUpdate() {

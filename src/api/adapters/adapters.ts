@@ -1,3 +1,4 @@
+import { adapterMarketSnapshot } from '../../features/plugins/updateCounts'
 import { apiRequest } from '../core/http'
 import type { ConfigApplyStatus, PluginConfigMap, PluginConfigSchemaItem } from '../plugins/config'
 
@@ -257,7 +258,9 @@ export async function getAdapterMarketAdapters(forceRefresh = false, source = ''
   const query = params.toString()
   const response = await apiRequest<unknown>(`/api/v1/adapter-market/adapters${query ? `?${query}` : ''}`)
   const entries = Array.isArray(response) ? response : record(response).adapters
-  return (Array.isArray(entries) ? entries : []).map(normalizeMarketEntry)
+  const normalized = (Array.isArray(entries) ? entries : []).map(normalizeMarketEntry)
+  if (!source) adapterMarketSnapshot.value = normalized
+  return normalized
 }
 
 /**

@@ -1,6 +1,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { applyHostUpdate, checkHostUpdate, getApiErrorMessage, getOverview, type HostUpdateCheck, type OverviewResponse } from '../../api'
+import { applyHostUpdate, checkHostUpdate, getApiErrorMessage, getOverview, type OverviewResponse } from '../../api'
+import { hostUpdateSnapshot } from '../../features/plugins/updateCounts'
 import { DOCS_URL } from '../../features/docs'
 import { DASHBOARD_VERSION } from '../../version'
 
@@ -22,7 +23,7 @@ function formatBuildTime(value?: string) {
 
 export function useAboutPage() {
   const overview = ref<OverviewResponse | null>(null)
-  const updateCheck = ref<HostUpdateCheck | null>(null)
+  const updateCheck = hostUpdateSnapshot
   const checkingUpdate = ref(false)
   const applyingUpdate = ref(false)
   const restarting = ref(false)

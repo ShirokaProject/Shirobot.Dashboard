@@ -35,7 +35,7 @@
 
     <nav class="drawer-tree">
       <button
-        v-for="item in menuItems"
+        v-for="item in navigationItems"
         :key="item.path"
         type="button"
         class="drawer-item"
@@ -46,7 +46,7 @@
       >
         <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
         <span class="drawer-label">{{ item.label }}</span>
-        <span v-if="item.count" class="drawer-count">{{ item.count }}</span>
+        <NavigationUpdateBadge :count="item.count" :floating="isDrawerCollapsed" />
       </button>
     </nav>
 
@@ -60,7 +60,7 @@
       <el-icon><Box /></el-icon>
     </div>
     <button
-      v-for="item in menuItems"
+      v-for="item in navigationItems"
       :key="item.path"
       type="button"
       class="rail-item"
@@ -70,6 +70,7 @@
       @click="router.push(item.path)"
     >
       <span class="rail-indicator">
+        <NavigationUpdateBadge :count="item.count" floating />
         <el-icon><component :is="item.icon" /></el-icon>
       </span>
       <span class="rail-label">{{ item.short }}</span>
@@ -83,7 +84,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { Box } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
 import { preloadRouteComponent } from '../../router/pageLoaders'
-import { menuItems } from '../navigation'
+import { navigationItems } from '../navigation'
+import NavigationUpdateBadge from './NavigationUpdateBadge.vue'
 import { DASHBOARD_VERSION } from '../../version'
 import ThemeModeSwitch from './ThemeModeSwitch.vue'
 
@@ -319,6 +321,7 @@ function triggerAvatarSpin() {
 
 /* M3 navigation drawer item: 56dp height, full pill indicator */
 .drawer-item {
+  position: relative;
   /* Leave room on both sides for the focus outline inside the scroll container. */
   width: calc(100% - 2 * var(--md-space-2));
   height: 56px;
@@ -447,6 +450,7 @@ function triggerAvatarSpin() {
 }
 
 .rail-indicator {
+  position: relative;
   width: 56px;
   height: 32px;
   border-radius: var(--md-sys-shape-corner-full);

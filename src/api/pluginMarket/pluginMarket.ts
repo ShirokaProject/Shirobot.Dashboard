@@ -1,3 +1,4 @@
+import { pluginMarketSnapshot } from '../../features/plugins/updateCounts'
 import { apiRequest } from '../core/http'
 
 export type MarketSortKey = 'downloads' | 'publishedAt' | 'name'
@@ -76,10 +77,12 @@ export function resolveRepositoryPlugin(repository: string) {
  * @param source '' for the backend's default (official) catalog, otherwise a third-party
  *   `owner/repo` or catalog URL, forwarded as `?source=`.
  */
-export function getPluginMarketPlugins(forceRefresh = false, source = '') {
+export async function getPluginMarketPlugins(forceRefresh = false, source = '') {
   const params = new URLSearchParams()
   if (source) params.set('source', source)
   if (forceRefresh) params.set('refresh', '1')
   const query = params.toString()
-  return apiRequest<PluginMarketResponse>(`/api/v1/plugin-market/plugins${query ? `?${query}` : ''}`)
+  const response = await apiRequest<PluginMarketResponse>(`/api/v1/plugin-market/plugins${query ? `?${query}` : ''}`)
+  if (!source) pluginMarketSnapshot.value = response.plugins
+  return response
 }

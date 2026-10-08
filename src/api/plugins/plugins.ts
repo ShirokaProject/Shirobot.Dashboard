@@ -1,3 +1,4 @@
+import { installedPluginSnapshot } from '../../features/plugins/updateCounts'
 import type { Plugin } from '../../features/plugins/types'
 import { apiRequest } from '../core/http'
 
@@ -129,7 +130,9 @@ function normalizePlugin(plugin: BackendPlugin): Plugin {
 
 export async function getInstalledPlugins() {
   const plugins = await apiRequest<BackendPlugin[]>('/api/v1/plugins/list')
-  return plugins.map(normalizePlugin)
+  const normalized = plugins.map(normalizePlugin)
+  installedPluginSnapshot.value = normalized
+  return normalized
 }
 
 export function setPluginEnabled(pluginId: string, enabled: boolean) {

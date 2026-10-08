@@ -1,3 +1,5 @@
+import { computed } from 'vue'
+import { adapterUpdateCount, hostUpdateCount, pluginUpdateCount } from '../features/plugins/updateCounts'
 import type { Component } from 'vue'
 import { Box, Connection, Document, InfoFilled, Monitor, Setting } from '@element-plus/icons-vue'
 
@@ -50,3 +52,9 @@ export const menuItems: MenuItem[] = [
     icon: InfoFilled
   }
 ]
+
+export const navigationItems = computed(() => menuItems.map(item => ({
+  ...item,
+  count: item.path === '/plugins' ? pluginUpdateCount.value
+    : item.path === '/adapters' ? adapterUpdateCount.value : item.path === '/about' ? hostUpdateCount.value : item.count
+})))
