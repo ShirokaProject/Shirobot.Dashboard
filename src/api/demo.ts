@@ -19,6 +19,7 @@ const demoOverview: OverviewResponse = {
     build_time: '2026-09-28T06:12:00Z'
   },
   bot_version: 'v0.1.0-demo',
+  sdk_abi_version: '1.1.0.0',
   uptime_seconds: 130320,
   plugins_count: 12,
   models_count: 3,

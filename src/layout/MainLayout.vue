@@ -41,6 +41,9 @@ import PageTransition, { type PageTransitionName } from './components/PageTransi
 import TopAppBar from './components/TopAppBar.vue'
 import { menuItems } from './navigation'
 import { consumeDashboardEntrance } from '../auth/signIn'
+import { refreshDashboardMarketplace } from '../features/plugins/dashboardMarketplace'
+
+refreshDashboardMarketplace()
 
 // Right after a login the dashboard assembles itself piece by piece instead of appearing at once
 const entering = ref(false)

@@ -201,6 +201,7 @@ export function useOverviewPage() {
     const facts: Array<{ key: string; icon: RuntimeIcon; label: string; value: string; mono?: boolean }> = []
     if (runtime.mode) facts.push({ key: 'mode', icon: 'deployed_code', label: '运行方式', value: runModeLabel(runtime.mode) })
     if (runtime.version_tag) facts.push({ key: 'tag', icon: 'sell', label: '版本 Tag', value: runtime.version_tag, mono: true })
+    if (overview.value?.sdk_abi_version) facts.push({ key: 'sdk-abi', icon: 'code', label: 'SDK ABI', value: overview.value.sdk_abi_version, mono: true })
     if (runtime.os) facts.push({ key: 'os', icon: 'computer', label: '系统', value: runtime.os })
     if (runtime.arch) facts.push({ key: 'arch', icon: 'memory', label: '架构', value: runtime.arch, mono: true })
     if (runtime.framework) facts.push({ key: 'framework', icon: 'code', label: '运行时', value: runtime.framework })

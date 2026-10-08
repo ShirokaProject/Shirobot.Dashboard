@@ -50,6 +50,7 @@ export function useAboutPage() {
     return [
       { label: '前端面板', value: DASHBOARD_VERSION },
       { label: '主程序', value: backendVersion.value },
+      { label: 'SDK ABI', value: overview.value?.sdk_abi_version },
       { label: '运行时', value: [runtime?.framework, runtime?.os, runtime?.arch].filter(Boolean).join(' · ') },
       { label: '运行方式', value: runtime?.mode ? modeLabels[runtime.mode] ?? runtime.mode : '' },
       { label: '构建时间', value: formatBuildTime(runtime?.build_time) }

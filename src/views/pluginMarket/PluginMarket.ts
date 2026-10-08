@@ -1,5 +1,7 @@
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { getSessionBaseUrl } from '../../auth/session'
+import { dashboardMarketplace } from '../../features/plugins/dashboardMarketplace'
 import { ElMessageBox } from 'element-plus'
 import {
   cancelPluginUpload,
@@ -179,13 +181,7 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
     loadError.value = ''
     try {
       const response = await getPluginMarketPlugins(forceRefresh, activeSource.value.url)
-      market.value = response
-      if (selectedPlugin.value) {
-        selectedPlugin.value = response.plugins.find(plugin => plugin.id === selectedPlugin.value?.id) ?? null
-      }
-      if (activeCategory.value !== '全部' && !response.plugins.some(plugin => plugin.category === activeCategory.value)) {
-        activeCategory.value = '全部'
-      }
+      applyMarketplace(response)
     } catch (error) {
       if (!market.value) market.value = null
       loadError.value = getApiErrorMessage(error, '插件市场加载失败')
@@ -194,6 +190,23 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
       refreshing.value = false
     }
   }
+
+  function applyMarketplace(response: PluginMarketResponse) {
+    market.value = response
+    if (selectedPlugin.value)
+      selectedPlugin.value = response.plugins.find(plugin => plugin.id === selectedPlugin.value?.id) ?? null
+    if (activeCategory.value !== '全部' && !response.plugins.some(plugin => plugin.category === activeCategory.value))
+      activeCategory.value = '全部'
+  }
+
+  function applyDashboardRefresh() {
+    const latest = dashboardMarketplace.value
+    if (latest && latest.baseUrl === getSessionBaseUrl() && latest.source === activeSource.value.url) {
+      applyMarketplace(latest.response)
+      loadError.value = ''
+    }
+  }
+  watch(dashboardMarketplace, applyDashboardRefresh)
 
   function refreshMarketplacePlugins() {
     if (loading.value) return
@@ -406,7 +419,7 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
   }
 
   onMounted(() => {
-    void loadMarketplacePlugins()
+    void loadMarketplacePlugins().then(applyDashboardRefresh)
     resolveAllDirect()
   })
 

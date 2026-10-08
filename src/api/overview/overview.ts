@@ -55,6 +55,8 @@ export interface OverviewRuntime {
 export interface OverviewResponse {
   runtime?: OverviewRuntime
   bot_version: string
+  /** Assembly ABI of the SDK loaded by the host, independent of its release version. */
+  sdk_abi_version?: string
   uptime_seconds: number
   plugins_count: number
   models_count: number
