@@ -28,6 +28,8 @@ export function formatPlatform(value: string): string {
 export interface AdapterStatus {
   id: string
   packageId?: string
+  repository?: string
+  authors?: string[]
   configPath?: string | null
   name: string
   version: string
@@ -73,6 +75,10 @@ export interface AdapterMarketEntry {
   installedVersion: string | null
   health: string
   /** Why the entry isn't installable, when the backend explains it */
+  publishedAt?: string
+  license?: string
+  compatibility?: string
+  deprecated?: boolean
   healthMessage?: string
   asset?: { url: string; name: string; digest?: string; size?: number }
 }
@@ -112,6 +118,8 @@ export function normalizeAdapter(value: unknown): AdapterStatus {
   return {
     id: stringValue(item.id || item.adapter_id),
     packageId: stringValue(item.package_id || item.packageId || item.id || item.adapter_id),
+    repository: stringValue(item.repository || item.repo),
+    authors: Array.isArray(item.authors) ? item.authors.map(author => stringValue(record(author).name || author)).filter(Boolean) : [stringValue(item.author)].filter(Boolean),
     configPath: stringValue(item.config_path || item.configPath) || null,
     name: stringValue(item.name || item.display_name || item.id || item.adapter_id, '未命名适配器'),
     version: stringValue(item.version, '—'),
@@ -231,7 +239,7 @@ export function cancelAdapterUpload(uploadId: string) {
   return apiRequest<unknown>(`/api/v1/adapters/upload/${encodeURIComponent(uploadId)}`, { method: 'DELETE' })
 }
 
-function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
+export function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
   const item = record(value)
   const release = record(item.release)
   const asset = record(item.asset ?? release.asset)
@@ -239,9 +247,13 @@ function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
     id: stringValue(item.id), name: stringValue(item.name || item.id), version: stringValue(item.version || release.version, '—'),
     platform: formatPlatform(stringValue(item.platform || item.category, '未声明')), description: stringValue(item.description), repository: stringValue(item.repository),
     authors: Array.isArray(item.authors) ? item.authors.map(author => stringValue(record(author).name || author)).filter(Boolean) : [stringValue(item.author)].filter(Boolean),
-    downloadCount: typeof (item.downloadCount ?? item.download_count ?? release.downloadCount) === 'number' ? Number(item.downloadCount ?? item.download_count ?? release.downloadCount) : null,
+    downloadCount: typeof (item.downloadCount ?? item.download_count ?? release.downloadCount ?? release.download_count) === 'number' ? Number(item.downloadCount ?? item.download_count ?? release.downloadCount ?? release.download_count) : null,
     installedVersion: stringValue(record(item.installed).version || item.installed_version) || null,
     health: stringValue(record(item.health).status || item.health, 'unknown'),
+    publishedAt: stringValue(item.publishedAt || item.published_at || release.publishedAt || release.published_at),
+    license: stringValue(item.license),
+    compatibility: stringValue(record(item.compatibility).shirobot),
+    deprecated: booleanValue(item.deprecated),
     healthMessage: stringValue(record(item.health).message || item.health_message) || undefined,
     asset: Object.keys(asset).length ? { url: stringValue(asset.url), name: stringValue(asset.name), digest: stringValue(asset.digest) || undefined, size: typeof asset.size === 'number' ? asset.size : undefined } : undefined
   }
@@ -251,7 +263,7 @@ function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
  * @param source '' for the backend's default (official) catalog, otherwise a third-party
  *   `owner/repo` or catalog URL, forwarded as `?source=`.
  */
-export async function getAdapterMarketAdapters(forceRefresh = false, source = '') {
+export async function getAdapterMarketCatalog(forceRefresh = false, source = '') {
   const params = new URLSearchParams()
   if (source) params.set('source', source)
   if (forceRefresh) params.set('refresh', '1')
@@ -260,7 +272,17 @@ export async function getAdapterMarketAdapters(forceRefresh = false, source = ''
   const entries = Array.isArray(response) ? response : record(response).adapters
   const normalized = (Array.isArray(entries) ? entries : []).map(normalizeMarketEntry)
   if (!source) adapterMarketSnapshot.value = normalized
-  return normalized
+  const metadata = record(response)
+  const origin = record(metadata.source)
+  return {
+    adapters: normalized,
+    generatedAt: stringValue(metadata.generatedAt || metadata.generated_at),
+    sourceRepository: stringValue(origin.repository || origin.url)
+  }
+}
+
+export async function getAdapterMarketAdapters(forceRefresh = false, source = '') {
+  return (await getAdapterMarketCatalog(forceRefresh, source)).adapters
 }
 
 /**

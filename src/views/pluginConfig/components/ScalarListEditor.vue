@@ -1,16 +1,16 @@
 <template>
   <div class="list-editor">
-    <el-input
+    <el-input-tag
       :id="inputId"
-      type="textarea"
-      :autosize="{ minRows: 2, maxRows: 12 }"
+      :delimiter="/[,，\r\n]+/"
+      add-tag-on-blur
       :disabled="disabled"
-      :placeholder="placeholder || '每行一项'"
-      :model-value="text"
+      :placeholder="placeholder || '输入后回车，可粘贴多个值'"
+      :model-value="tags"
       @update:model-value="onInput"
     />
     <p v-if="error" class="editor-message error">{{ error }}，修改尚未应用</p>
-    <p v-else class="editor-message">每行一项{{ hint }}</p>
+    <p v-else class="editor-message">回车添加，点击 × 删除；可粘贴逗号或换行分隔的多个值{{ hint }}</p>
   </div>
 </template>
 
@@ -36,20 +36,20 @@ const hint = computed(() => ({
 } as Record<string, string>)[props.itemType] ?? '')
 
 const items = () => Array.isArray(props.modelValue) ? props.modelValue : []
-const format = () => items().map(item => String(item)).join('\n')
+const format = () => items().map(item => String(item))
 
-const text = ref(format())
+const tags = ref(format())
 const error = ref('')
 
 watch(() => props.modelValue, () => {
   if (error.value) return
-  const parsed = parse(text.value)
+  const parsed = parse(tags.value)
   if (parsed.ok && JSON.stringify(parsed.values) === JSON.stringify(items())) return
-  text.value = format()
+  tags.value = format()
 }, { deep: true })
 
-function parse(value: string): { ok: true; values: PluginConfigValue[] } | { ok: false; message: string } {
-  const lines = value.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+function parse(value: string[]): { ok: true; values: PluginConfigValue[] } | { ok: false; message: string } {
+  const lines = value.map(line => line.trim()).filter(Boolean)
   const values: PluginConfigValue[] = []
   for (const [index, line] of lines.entries()) {
     if (props.itemType === 'integer' || props.itemType === 'number') {
@@ -67,8 +67,8 @@ function parse(value: string): { ok: true; values: PluginConfigValue[] } | { ok:
   return { ok: true, values }
 }
 
-function onInput(value: string) {
-  text.value = value
+function onInput(value: string[]) {
+  tags.value = value
   const parsed = parse(value)
   if (!parsed.ok) {
     error.value = parsed.message

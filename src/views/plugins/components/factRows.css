@@ -1,0 +1,40 @@
+.facts > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--md-space-3);
+  padding: var(--md-space-2) 0;
+}
+
+.facts > div + div {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-space-2);
+  color: var(--md-sys-color-outline);
+  font: var(--md-sys-typescale-label-medium);
+}
+
+.facts dt .md-icon,
+.facts dt .github-mark {
+  font-size: 16px;
+}
+
+.facts dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--md-sys-color-on-surface);
+  /* One step above the 12px labels, same size as the mono values */
+  font: 400 13px / 20px var(--md-ref-typeface-plain);
+}
+
+.facts dd.mono,
+.facts dd .mono {
+  font-size: 13px;
+}
+

@@ -39,6 +39,7 @@
         <dt><MdIcon name="settings" />配置</dt>
         <dd class="mono path" :title="adapter.configPath">{{ fileName(adapter.configPath) }}</dd>
       </div>
+      <AdapterMarketFacts :entry="marketEntry" :repository="adapter.repository" />
     </dl>
 
     <footer class="detail-foot button-group">
@@ -53,10 +54,12 @@
 </template>
 
 <script setup lang="ts">
+import AdapterMarketFacts from './AdapterMarketFacts.vue'
 import MdIcon from '../../../components/MdIcon.vue'
-import type { AdapterStatus } from '../../../api'
+import type { AdapterMarketEntry, AdapterStatus } from '../../../api'
 
 defineProps<{
+  marketEntry?: AdapterMarketEntry | null
   adapter: AdapterStatus | null
   /** Display name of the adapter package this instance belongs to */
   packageName: string

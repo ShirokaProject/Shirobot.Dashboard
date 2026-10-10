@@ -203,6 +203,13 @@ const demoConfig: AppConfigResponse = {
     { key: 'owner_list', label: 'Owner 列表', type: 'array', item_type: 'string', description: '所有者账号列表。', group_id: 'permissions', group_label: '权限', group_icon: 'shield', group_description: '定义供插件权限检查使用的账号列表。', group_order: 30, order: 10 },
     { key: 'admin_list', label: 'Admin 列表', type: 'array', item_type: 'string', description: '管理员账号列表。', group_id: 'permissions', group_label: '权限', group_order: 30, order: 20 },
     {
+      key: 'plugin_routes', label: '插件路由', type: 'section', group_id: 'permissions', group_label: '权限', group_order: 30,
+      fields: [{ key: 'default', label: '默认插件路由', type: 'section', fields: [
+        { key: 'mode', label: '默认路由模式', type: 'string', options: ['blacklist', 'whitelist'], description: 'blacklist：除列表中的群外全部允许；whitelist：仅允许列表中的群。', order: 30 },
+        { key: 'groups', label: '默认路由群组', type: 'array', item_type: 'string', description: '黑名单为空时允许所有群，白名单为空时不允许任何群。', order: 40 }
+      ] }]
+    },
+    {
       key: 'api', label: 'HTTP API', type: 'section', group_id: 'api', group_label: 'API', group_icon: 'code', group_description: 'Dashboard 和外部工具访问主程序的 HTTP API。', group_order: 40,
       fields: [
         { key: 'enable', label: '启用 API', type: 'boolean', description: '允许 Dashboard 和外部工具访问主程序。', order: 10 },
@@ -227,6 +234,7 @@ const demoConfig: AppConfigResponse = {
     avalonia_theme: 'Light',
     owner_list: ['1034028486'],
     admin_list: [],
+    plugin_routes: { default: { mode: 'blacklist', groups: [] } },
     api: {
       enable: true,
       listen_urls: ['http://localhost:8080'],
@@ -885,6 +893,13 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   if (method === 'PATCH' && pathname === '/api/v1/config') {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: AppConfigData }
     if (payload.config) mergeConfig(demoConfig.config, payload.config)
+    const defaults = (demoConfig.config.plugin_routes as { default: { mode: string; groups: string[] } }).default
+    demoPluginConfig.routes.default_mode = defaults.mode
+    demoPluginConfig.routes.default_groups = [...defaults.groups]
+    if (demoPluginConfig.routes.mode === 'default') {
+      demoPluginConfig.routes.effective_mode = defaults.mode
+      demoPluginConfig.routes.effective_groups = [...defaults.groups]
+    }
     return { ok: true, msg: '配置更新成功' } as T
   }
 

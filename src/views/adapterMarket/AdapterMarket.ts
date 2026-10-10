@@ -1,6 +1,8 @@
+import { compareVersions } from '../../features/plugins/updates'
+import { formatAdapterDate } from '../../features/adapters/market'
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { cancelAdapterUpload, confirmAdapterUpload, formatPlatform, getAdapterMarketAdapters, getApiErrorMessage, prepareGithubAdapterInstall, resolveRepositoryAdapter } from '../../api'
+import { cancelAdapterUpload, confirmAdapterUpload, formatPlatform, getAdapterMarketCatalog, getApiErrorMessage, prepareGithubAdapterInstall, resolveRepositoryAdapter } from '../../api'
 import type { AdapterInstallPreview, AdapterMarketEntry } from '../../api'
 import {
   addCatalogSource,
@@ -43,12 +45,22 @@ function placeholderFor(repo: DirectRepository, health: string, message: string)
 }
 
 export function isInstallableEntry(entry: AdapterMarketEntry) {
-  return Boolean(entry.repository) && ['available', 'healthy', 'ok'].includes(entry.health.toLowerCase())
+  return !entry.deprecated && (!entry.installedVersion || compareVersions(entry.version, entry.installedVersion) > 0) && Boolean(entry.repository) && ['available', 'healthy', 'ok'].includes(entry.health.toLowerCase())
 }
 
 export function useAdapterMarketPage() {
   const entries = ref<AdapterMarketEntry[]>([])
   const keyword = ref('')
+  const activePlatform = ref('全部')
+  const activeSort = ref<'downloads' | 'publishedAt' | 'name'>('downloads')
+  const generatedAt = ref('')
+  const sourceRepository = ref('')
+  const platforms = computed(() => ['全部', ...new Set(entries.value.map(entry => entry.platform))])
+  const sortOptions = [
+    { label: '下载数量', value: 'downloads' },
+    { label: '发布时间', value: 'publishedAt' },
+    { label: 'A-z', value: 'name' }
+  ]
   const loading = ref(false)
   const error = ref('')
   const message = ref('')
@@ -66,14 +78,23 @@ export function useAdapterMarketPage() {
 
   const filtered = computed(() => {
     const query = keyword.value.trim().toLowerCase()
-    return entries.value.filter(entry => (!query || [entry.id, entry.name, entry.description, entry.repository, entry.platform, ...entry.authors].some(value => value.toLowerCase().includes(query))))
+    return entries.value.filter(entry => (activePlatform.value === '全部' || entry.platform === activePlatform.value) && (!query || [entry.id, entry.name, entry.description, entry.repository, entry.platform, ...entry.authors].some(value => value.toLowerCase().includes(query))))
+      .sort((left, right) => {
+        if (activeSort.value === 'downloads') return (right.downloadCount ?? 0) - (left.downloadCount ?? 0)
+        if (activeSort.value === 'publishedAt') return (right.publishedAt ?? '').localeCompare(left.publishedAt ?? '')
+        return left.name.localeCompare(right.name)
+      })
   })
 
   async function load(forceRefresh = false) {
     loading.value = true
     error.value = ''
     try {
-      entries.value = await getAdapterMarketAdapters(forceRefresh, activeSource.value.url)
+      const catalog = await getAdapterMarketCatalog(forceRefresh, activeSource.value.url)
+      entries.value = catalog.adapters
+      generatedAt.value = formatAdapterDate(catalog.generatedAt)
+      sourceRepository.value = catalog.sourceRepository || activeSource.value.url
+      if (!platforms.value.includes(activePlatform.value)) activePlatform.value = '全部'
     } catch (cause) {
       error.value = getApiErrorMessage(cause, '适配器目录加载失败。')
     } finally {
@@ -197,6 +218,7 @@ export function useAdapterMarketPage() {
   })
 
   return {
+    activePlatform, activeSort, platforms, sortOptions, generatedAt, sourceRepository,
     entries, keyword, filtered, loading, error, message, messageType, busyId,
     preview, replace, installVisible, installBusy, installError,
     sources, activeSource, selectSource, addSource, removeSource,

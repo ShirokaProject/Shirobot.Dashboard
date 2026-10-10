@@ -34,6 +34,7 @@
         <dt><MdIcon name="folder" />程序集</dt>
         <dd class="mono path" :title="pkg.assemblyPath">{{ fileName(pkg.assemblyPath) }}</dd>
       </div>
+      <AdapterMarketFacts :entry="marketEntry" :repository="pkg.repository" />
     </dl>
 
     <p class="footnote">实例和连接配置保存在此适配器的 config.toml 中。</p>
@@ -50,10 +51,12 @@
 </template>
 
 <script setup lang="ts">
+import AdapterMarketFacts from './AdapterMarketFacts.vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { AdapterMarketEntry, AdapterStatus } from '../../../api'
 
 defineProps<{
+  marketEntry?: AdapterMarketEntry | null
   pkg: AdapterStatus
   instanceCount: number
   /** Catalog entry offering a newer version, when there is one */

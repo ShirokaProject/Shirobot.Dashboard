@@ -192,8 +192,9 @@
                 target="_blank"
                 rel="noopener noreferrer"
               ><GitHubIcon /><span>{{ sourceRepo }}</span></a>
-              <small v-else>{{ market.activeSource.value.url || '后端默认目录' }}</small>
+              <small v-else>{{ market.sourceRepository.value || market.activeSource.value.url || '后端默认目录' }}</small>
             </div>
+            <span v-if="market.entries.value.length && market.generatedAt.value" class="list-head-time">更新于 {{ market.generatedAt.value }}</span>
             <button
               type="button"
               class="md-button tonal icon-only compact"
@@ -205,6 +206,22 @@
               <MdIcon name="refresh" :class="{ spinning: market.loading.value }" />
             </button>
           </header>
+
+          <div class="list-filters">
+            <div class="button-group" role="radiogroup" aria-label="适配器平台">
+              <button v-for="platform in market.platforms.value" :key="platform" type="button" role="radio"
+                class="md-button compact toggle" :class="{ selected: market.activePlatform.value === platform }"
+                :aria-checked="market.activePlatform.value === platform" @click="market.activePlatform.value = platform">
+                {{ platform }}
+              </button>
+            </div>
+            <div class="sort-select">
+              <span>排序</span>
+              <el-select v-model="market.activeSort.value" class="sort-control" aria-label="排序方式">
+                <el-option v-for="option in market.sortOptions" :key="option.value" :label="option.label" :value="option.value" />
+              </el-select>
+            </div>
+          </div>
 
           <p v-if="market.error.value" class="list-note">{{ market.error.value }}</p>
 
@@ -220,7 +237,8 @@
                   <strong>{{ entry.name }}</strong>
                   <small>{{ entry.description || entry.platform }}</small>
                 </span>
-                <span v-if="entry.downloadCount !== null" class="row-meta"><MdIcon name="download" />{{ entry.downloadCount }}</span>
+                <span v-if="entry.installedVersion" class="row-status">已安装</span>
+                <span v-else-if="entry.downloadCount !== null" class="row-meta"><MdIcon name="download" />{{ entry.downloadCount }}</span>
               </button>
             </li>
           </ul>
@@ -229,10 +247,6 @@
             <strong>{{ discoverEmptyText }}</strong>
           </div>
 
-          <p v-if="installedInCatalog" class="list-note">
-            另有 {{ installedInCatalog }} 个已安装的适配器，
-            <button type="button" class="inline-link" @click="setTab('installed')">在「已安装」中查看</button>
-          </p>
         </template>
       </div>
 
@@ -240,6 +254,7 @@
         <AdapterDetail
           v-if="tab === 'installed' && installed.selected.value"
           :adapter="installed.selected.value"
+          :market-entry="selectedPackage ? marketEntryFor(selectedPackage) : marketEntryFor(installed.selected.value)"
           :package-name="selectedPackage?.name ?? installed.selected.value.packageId ?? ''"
           :package-enabled="selectedPackage ? packageEnabled(selectedPackage) : true"
           :busy="Boolean(installed.operation.value) || Boolean(market.busyId.value)"
@@ -250,6 +265,7 @@
         <AdapterPackageDetail
           v-else-if="tab === 'installed' && selectedPackage"
           :pkg="selectedPackage"
+          :market-entry="marketEntryFor(selectedPackage)"
           :instance-count="instancesOf(selectedPackage.id).length"
           :update="updateFor(selectedPackage)"
           :busy="Boolean(installed.operation.value) || Boolean(market.busyId.value)"
@@ -262,7 +278,7 @@
         />
         <AdapterMarketDetail
           v-else-if="tab === 'discover'"
-          :entry="selectedEntry"
+          :entry="selectedEntry ? withInstalledVersion(selectedEntry) : null"
           :preparing="Boolean(market.busyId.value)"
           :origin="discoverView === 'direct' ? '直接添加的仓库' : market.activeSource.value.name"
           @install="selectedEntry && market.prepare(selectedEntry)"
@@ -341,6 +357,7 @@ import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
 import SiteIcon from '../../components/SiteIcon.vue'
+import { findAdapterMarketEntry } from '../../features/adapters/market'
 import type { AdapterMarketEntry, AdapterStatus } from '../../api'
 import { CUSTOM_MARKET_SOURCES_ENABLED, githubRepoOf, repoHostLabel, type ParsedRepository, type SourceType } from '../../features/plugins/catalogSources'
 import { isInstallableEntry, useAdapterMarketPage, type DirectAdapterEntry } from '../adapterMarket/AdapterMarket'
@@ -432,14 +449,13 @@ const packageGroups = computed(() => {
     .filter(group => !query || [group.package.name, group.package.id, group.package.platform, ...group.instances.flatMap(item => [item.name, item.id])].some(value => value.toLowerCase().includes(query)))
 })
 
-function compareVersions(left: string, right: string) {
-  return left.replace(/^v/i, '').localeCompare(right.replace(/^v/i, ''), 'en', { numeric: true })
-}
+const marketEntries = computed(() => [...market.entries.value, ...market.directEntries.value.map(item => item.entry)])
+const marketEntryFor = (adapter: AdapterStatus) => findAdapterMarketEntry(adapter, marketEntries.value)
 
 /** Catalog entry offering a newer version of an installed adapter */
 function updateFor(adapter: AdapterStatus): AdapterMarketEntry | null {
-  const entry = market.entries.value.find(item => item.id === (adapter.packageId || adapter.id))
-  return entry && compareVersions(entry.version, adapter.version) > 0 ? entry : null
+  const entry = marketEntryFor(adapter)
+  return entry && isInstallableEntry({ ...entry, installedVersion: adapter.version }) ? entry : null
 }
 
 function adapterTone(adapter: AdapterStatus) {
@@ -475,16 +491,14 @@ const currentOperation = computed(() => {
   return id === installed.selectedId.value ? action ?? '' : ''
 })
 
-// 发现 lists only what isn't installed; updates live in 已安装.
-const installedIds = computed(() => new Set(installed.packages.value.map(adapter => adapter.id)))
-const discoverList = computed(() => market.filtered.value.filter(entry => !installedIds.value.has(entry.id) && !entry.installedVersion))
-const installedInCatalog = computed(() => market.entries.value.filter(entry => installedIds.value.has(entry.id) || entry.installedVersion).length)
-
-const discoverEmptyText = computed(() => {
-  if (!market.entries.value.length) return '目录暂无适配器'
-  if (market.keyword.value.trim()) return '没有匹配的适配器'
-  return '目录里的适配器都已安装'
-})
+// Keep installed entries visible, after the current market sort, as on the plugin page.
+function withInstalledVersion(entry: AdapterMarketEntry): AdapterMarketEntry {
+  const pkg = installed.packages.value.find(item => findAdapterMarketEntry(item, [entry]))
+  return pkg ? { ...entry, installedVersion: pkg.version } : entry
+}
+const discoverList = computed(() => market.filtered.value.map(withInstalledVersion)
+  .sort((a, b) => Number(Boolean(a.installedVersion)) - Number(Boolean(b.installedVersion))))
+const discoverEmptyText = computed(() => market.entries.value.length ? '没有匹配的适配器' : '这个源暂无适配器')
 
 const configOpen = ref(false)
 
@@ -517,23 +531,24 @@ function addCatalog(name: string, url: string) {
   market.addSource(name, url)
 }
 
-const sourceRepo = computed(() => githubRepoOf(market.activeSource.value.url))
+const sourceRepo = computed(() => githubRepoOf(market.sourceRepository.value || market.activeSource.value.url))
 
 const directList = computed(() => {
   const query = market.keyword.value.trim().toLowerCase()
   return market.directEntries.value.filter(item => !query
     || [item.entry.name, item.repo.owner, item.repo.repo, item.repo.domain].some(value => value.toLowerCase().includes(query)))
+    .sort((a, b) => Number(Boolean(withInstalledVersion(a.entry).installedVersion)) - Number(Boolean(withInstalledVersion(b.entry).installedVersion)))
 })
 
 function directTone(item: DirectAdapterEntry) {
   if (item.loading) return 'neutral'
-  if (installedIds.value.has(item.entry.id)) return 'primary'
+  if (withInstalledVersion(item.entry).installedVersion) return 'primary'
   return isInstallableEntry(item.entry) ? 'success' : item.entry.health === 'error' ? 'error' : 'warning'
 }
 
 function directStatus(item: DirectAdapterEntry) {
   if (item.loading) return '识别中'
-  if (installedIds.value.has(item.entry.id)) return '已安装'
+  if (withInstalledVersion(item.entry).installedVersion) return '已安装'
   if (isInstallableEntry(item.entry)) return '可安装'
   return item.entry.health === 'error' ? '无法访问' : '无合规发布'
 }
@@ -556,7 +571,7 @@ const activeDiscoverCount = computed(() => discoverView.value === 'direct' ? dir
 
 const tabs = computed(() => [
   { key: 'installed' as const, label: '已安装', count: installed.packages.value.length },
-  { key: 'discover' as const, label: '发现', count: market.entries.value.length - installedInCatalog.value }
+  { key: 'discover' as const, label: '发现', count: market.entries.value.length }
 ])
 
 const detailHasContent = computed(() => tab.value === 'installed' ? Boolean(installed.selected.value || selectedPackage.value) : Boolean(selectedEntry.value))

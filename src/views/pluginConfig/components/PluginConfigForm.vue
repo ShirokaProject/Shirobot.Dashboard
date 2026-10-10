@@ -79,6 +79,7 @@
           <div><dt>当前生效</dt><dd>{{ modeLabel(routes.effective_mode) }}</dd></div>
           <div><dt>生效群组</dt><dd>{{ routes.effective_groups.length ? routes.effective_groups.join(', ') : '无' }}</dd></div>
           <div><dt>全局默认</dt><dd>{{ modeLabel(routes.default_mode) }}</dd></div>
+          <div><dt>全局默认群组</dt><dd>{{ routes.default_groups.length ? routes.default_groups.join(', ') : '无' }}</dd></div>
           <div><dt>单独配置</dt><dd>{{ routes.configured ? '是' : '否，沿用全局默认' }}</dd></div>
         </dl>
       </section>
