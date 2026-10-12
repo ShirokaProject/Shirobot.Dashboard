@@ -1,6 +1,7 @@
 import { ElMessageBox } from 'element-plus'
 import type { Router } from 'vue-router'
-import { clearDashboardSession } from './session'
+import { forgetRememberedKey } from './backends'
+import { clearDashboardSession, getDashboardSession } from './session'
 
 /** Ask first, then end the session and go back to the login page. Returns whether it logged out. */
 export async function confirmLogout(router: Router) {
@@ -13,6 +14,7 @@ export async function confirmLogout(router: Router) {
   } catch {
     return false
   }
+  forgetRememberedKey(getDashboardSession()?.backendId)
   clearDashboardSession()
   await router.replace('/login')
   return true

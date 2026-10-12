@@ -90,6 +90,19 @@ export function saveBackend(profile: Omit<BackendProfile, 'id' | 'lastUsedAt'> &
   return next
 }
 
+/** The most recently used backend that still has a remembered key, for automatic sign-in. */
+export function findRememberedBackend() {
+  return listBackends().find(profile => profile.token)
+}
+
+/** Drop only the remembered key (a rejected or logged-out one), keeping the backend itself. */
+export function forgetRememberedKey(id: string | undefined) {
+  if (!id) return
+  const profiles = readProfiles()
+  if (!profiles.some(profile => profile.id === id && profile.token)) return
+  writeProfiles(profiles.map(profile => profile.id === id ? { ...profile, token: undefined } : profile))
+}
+
 export function removeBackend(id: string) {
   writeProfiles(readProfiles().filter(profile => profile.id !== id))
 }

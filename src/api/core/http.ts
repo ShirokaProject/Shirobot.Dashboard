@@ -12,6 +12,13 @@ export class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler: (() => void) | undefined
+
+/** Called once the backend rejects the session's key (HTTP 401) on a regular request. */
+export function setUnauthorizedHandler(handler: () => void) {
+  unauthorizedHandler = handler
+}
+
 export function getApiErrorMessage(error: unknown, fallback: string) {
   if (error instanceof ApiError) {
     if (typeof error.body === 'string' && error.body.trim()) return error.body
@@ -77,6 +84,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     } catch (error) {
       body = error instanceof ApiError ? error.body : null
     }
+    if (response.status === 401 && getDashboardSession()?.mode === 'api') unauthorizedHandler?.()
     throw new ApiError(response.statusText || 'API request failed', response.status, body)
   }
 

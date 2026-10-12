@@ -62,6 +62,9 @@ export function useLoginPage() {
     syncCredentials()
   }, { immediate: true })
 
+  // The watch above clears messages on mount; show the expiry notice after it.
+  if (route.query.expired !== undefined) errorMessage.value = '登录密钥已失效，请重新输入。'
+
   function selectBackend(id: string) {
     selectedId.value = id
     adding.value = false

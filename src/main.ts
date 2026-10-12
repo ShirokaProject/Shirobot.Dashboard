@@ -5,8 +5,19 @@ import 'element-plus/dist/index.css'
 import './style.css'
 import App from './App.vue'
 import router from './router'
-import { hasDashboardSession } from './auth/session'
+import { setUnauthorizedHandler } from './api/core/http'
+import { forgetRememberedKey } from './auth/backends'
+import { clearDashboardSession, getDashboardSession, hasDashboardSession } from './auth/session'
 import { preloadDashboardPages } from './router/pageLoaders'
+
+// A key the backend no longer accepts ends the session and returns to the login page.
+setUnauthorizedHandler(() => {
+  const session = getDashboardSession()
+  if (!session || session.mode !== 'api') return
+  forgetRememberedKey(session.backendId)
+  clearDashboardSession()
+  void router.replace({ name: 'Login', query: { expired: '', backend: session.backendId } })
+})
 
 const app = createApp(App)
 app.use(router)

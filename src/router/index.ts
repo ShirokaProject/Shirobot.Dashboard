@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { hasDashboardSession } from '../auth/session'
+import { autoSignIn } from '../auth/signIn'
 import {
   loadAboutPage,
   loadAdaptersPage,
@@ -80,9 +81,12 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(to => {
+router.beforeEach(async to => {
   const isPublicRoute = Boolean(to.meta.public)
-  const hasSession = hasDashboardSession()
+  // Picking another backend (?switch / ?add / ?backend) or landing after an expiry is deliberate: no auto sign-in.
+  const deliberateLogin = to.name === 'Login'
+    && ['switch', 'add', 'backend', 'expired'].some(key => to.query[key] !== undefined)
+  const hasSession = hasDashboardSession() || (!deliberateLogin && await autoSignIn())
 
   if (!isPublicRoute && !hasSession) {
     return { name: 'Login' }

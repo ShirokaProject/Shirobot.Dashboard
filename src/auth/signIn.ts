@@ -1,5 +1,5 @@
 import { verifyApiKey, type ApiKeyCheck } from '../api'
-import { saveBackend, type BackendProfile } from './backends'
+import { findRememberedBackend, forgetRememberedKey, saveBackend, type BackendProfile } from './backends'
 import { saveDashboardSession } from './session'
 
 export type SignInResult = { ok: true; profile: BackendProfile } | { ok: false; message: string }
@@ -32,6 +32,37 @@ export async function signInToBackend(
     baseUrl: saved.baseUrl
   })
   return { ok: true, profile: saved }
+}
+
+let autoSignInTried = false
+
+/**
+ * Start a session from the key remembered on the last-used backend. Tried once per page load;
+ * a rejected key is forgotten so the login page opens empty, while an unreachable backend keeps
+ * it (the login page prefills it for a manual retry).
+ */
+export async function autoSignIn(): Promise<boolean> {
+  if (autoSignInTried) return false
+  autoSignInTried = true
+
+  const profile = findRememberedBackend()
+  if (!profile?.token) return false
+
+  const result = await verifyApiKey(profile.token, profile.baseUrl)
+  if (!result.ok) {
+    if (result.reason === 'unauthorized') forgetRememberedKey(profile.id)
+    return false
+  }
+
+  const saved = saveBackend(profile, true)
+  saveDashboardSession({
+    mode: 'api',
+    token: profile.token,
+    backendId: saved.id,
+    backendName: saved.name,
+    baseUrl: saved.baseUrl
+  })
+  return true
 }
 
 const ENTER_FLAG = 'shirobot.dashboard.enter-animation'
