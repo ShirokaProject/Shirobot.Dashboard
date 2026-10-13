@@ -1,4 +1,5 @@
 import { compareVersions } from '../../features/plugins/updates'
+import { formatContractCompatibility } from '../../features/plugins/formatCompatibility'
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getSessionBaseUrl } from '../../auth/session'
@@ -392,9 +393,7 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
   }
 
   function formatCompatibility(plugin: MarketplacePlugin) {
-    const parts = [plugin.compatibility.shirobot, plugin.compatibility.framework]
-    if (plugin.compatibility.platforms?.length) parts.push(plugin.compatibility.platforms.join(', '))
-    return parts.filter(Boolean).join(' · ') || '—'
+    return formatContractCompatibility(plugin.compatibility)
   }
 
   onMounted(() => {

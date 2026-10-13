@@ -38,6 +38,10 @@ export interface PluginMarketCompatibility {
   shirobot: string
   framework: string
   platforms?: string[]
+  status?: 'verified' | 'unknown'
+  api?: { minimum: string; testedThrough: string } | null
+  abi?: Record<string, string>
+  frameworks?: string[]
 }
 
 export interface MarketplacePlugin {

@@ -1,4 +1,5 @@
 import { adapterMarketSnapshot } from '../../features/plugins/updateCounts'
+import { formatContractCompatibility } from '../../features/plugins/formatCompatibility'
 import { apiRequest } from '../core/http'
 import type { ConfigApplyStatus, PluginConfigMap, PluginConfigSchemaItem } from '../plugins/config'
 
@@ -243,6 +244,8 @@ export function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
   const item = record(value)
   const release = record(item.release)
   const asset = record(item.asset ?? release.asset)
+  const compatibility = record(item.compatibility)
+  const api = record(compatibility.api)
   return {
     id: stringValue(item.id), name: stringValue(item.name || item.id), version: stringValue(item.version || release.version, '—'),
     platform: formatPlatform(stringValue(item.platform || item.category, '未声明')), description: stringValue(item.description), repository: stringValue(item.repository),
@@ -252,7 +255,12 @@ export function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
     health: stringValue(record(item.health).status || item.health, 'unknown'),
     publishedAt: stringValue(item.publishedAt || item.published_at || release.publishedAt || release.published_at),
     license: stringValue(item.license),
-    compatibility: stringValue(record(item.compatibility).shirobot),
+    compatibility: formatContractCompatibility({
+      shirobot: stringValue(compatibility.shirobot), framework: stringValue(compatibility.framework),
+      status: stringValue(compatibility.status),
+      api: api.minimum ? { minimum: stringValue(api.minimum), testedThrough: stringValue(api.testedThrough) } : null,
+      abi: Object.fromEntries(Object.entries(record(compatibility.abi)).map(([name, version]) => [name, stringValue(version)]))
+    }),
     deprecated: booleanValue(item.deprecated),
     healthMessage: stringValue(record(item.health).message || item.health_message) || undefined,
     asset: Object.keys(asset).length ? { url: stringValue(asset.url), name: stringValue(asset.name), digest: stringValue(asset.digest) || undefined, size: typeof asset.size === 'number' ? asset.size : undefined } : undefined
