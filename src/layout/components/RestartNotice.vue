@@ -19,6 +19,7 @@ import { getRestartNotice } from '../../api/system/system'
 import { offerHostRestart } from '../../features/hostPower/pendingRestart'
 import { normalizeRestartNotice } from '../../features/hostPower/restartNotice'
 
+const props = defineProps<{ scope: 'plugin' | 'adapter' }>()
 const notice = ref(normalizeRestartNotice(null))
 const pending = ref(false)
 let supported = true
@@ -35,7 +36,7 @@ async function refresh() {
   fetching = true
   try {
     controller = new AbortController()
-    const result = await getRestartNotice(controller.signal)
+    const result = await getRestartNotice(props.scope, controller.signal)
     if (active) notice.value = normalizeRestartNotice(result)
   } catch (error) {
     // Older hosts have no endpoint. Do not keep polling or display a false warning.

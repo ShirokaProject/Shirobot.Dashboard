@@ -1,5 +1,6 @@
 <template>
   <div class="hub">
+    <RestartNotice scope="adapter" />
     <div v-if="installed.draggingAdapterFile.value" class="plugin-file-drop-hint" role="status">
       <MdIcon name="upload" />
       <strong>松开即可上传适配器</strong>
@@ -351,6 +352,7 @@
 </template>
 
 <script setup lang="ts">
+import RestartNotice from '../../layout/components/RestartNotice.vue'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'

@@ -7,7 +7,6 @@
 
       <main class="md3-content-area">
         <div class="md3-content-frame">
-          <RestartNotice />
           <router-view v-slot="{ Component, route: viewRoute }">
             <PageTransition :component="Component" :transition-key="routeTransitionKey(viewRoute)" :name="transitionName" />
           </router-view>
@@ -41,7 +40,6 @@ import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
 import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
-import RestartNotice from './components/RestartNotice.vue'
 import { menuItems, navigationItems } from './navigation'
 import NavigationUpdateBadge from './components/NavigationUpdateBadge.vue'
 import { getInstalledPlugins } from '../api/plugins/plugins'

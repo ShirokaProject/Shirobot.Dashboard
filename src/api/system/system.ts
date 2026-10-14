@@ -38,6 +38,6 @@ export interface RestartNoticeResponse {
   reasons: string[]
 }
 
-export function getRestartNotice(signal?: AbortSignal) {
-  return apiRequest<RestartNoticeResponse>('/api/v1/restart-notice', { signal })
+export function getRestartNotice(scope: 'plugin' | 'adapter', signal?: AbortSignal) {
+  return apiRequest<RestartNoticeResponse>(`/api/v1/restart-notice?scope=${scope}`, { signal })
 }
