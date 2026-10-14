@@ -540,6 +540,8 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   const method = methodOf(init)
   const pathname = url.pathname
 
+  if (method === 'GET' && pathname === '/api/v1/restart-notice') return { recommended: false, reasons: [] } as T
+
   if (method === 'GET' && pathname === '/api/v1/overview') return clone(demoOverview) as T
   if (method === 'GET' && pathname === '/api/v1/plugins/list') return clone(demoPlugins) as T
   if (method === 'GET' && pathname === '/api/v1/adapter-packages') return clone(demoAdapterPackages) as T

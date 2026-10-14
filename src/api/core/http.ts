@@ -12,6 +12,8 @@ export class ApiError extends Error {
   }
 }
 
+export const HOST_STATE_CHANGED_EVENT = 'shirobot-host-state-changed'
+
 let unauthorizedHandler: (() => void) | undefined
 
 /** Called once the backend rejects the session's key (HTTP 401) on a regular request. */
@@ -68,6 +70,17 @@ async function readResponseBody(response: Response) {
 }
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  try {
+    return await performRequest<T>(path, init)
+  } finally {
+    const method = init?.method?.toUpperCase() ?? 'GET'
+    if (typeof window !== 'undefined' && method !== 'GET' && method !== 'HEAD') {
+      window.dispatchEvent(new Event(HOST_STATE_CHANGED_EVENT))
+    }
+  }
+}
+
+async function performRequest<T>(path: string, init?: RequestInit): Promise<T> {
   // Dev-only: the demo dataset is dropped from production builds.
   // Spelled out (not DEMO_ENABLED) so regular builds drop the demo chunk entirely
   if ((import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true') && isDemoMode()) {

@@ -32,3 +32,12 @@ export async function checkHostUpdate() {
 export function applyHostUpdate() {
   return apiRequest<HostPowerResponse & { restarting: boolean }>('/api/v1/system/update', { method: 'POST' })
 }
+
+export interface RestartNoticeResponse {
+  recommended: boolean
+  reasons: string[]
+}
+
+export function getRestartNotice(signal?: AbortSignal) {
+  return apiRequest<RestartNoticeResponse>('/api/v1/restart-notice', { signal })
+}
