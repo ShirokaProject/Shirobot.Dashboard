@@ -245,7 +245,6 @@ export function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
   const release = record(item.release)
   const asset = record(item.asset ?? release.asset)
   const compatibility = record(item.compatibility)
-  const api = record(compatibility.api)
   return {
     id: stringValue(item.id), name: stringValue(item.name || item.id), version: stringValue(item.version || release.version, '—'),
     platform: formatPlatform(stringValue(item.platform || item.category, '未声明')), description: stringValue(item.description), repository: stringValue(item.repository),
@@ -258,7 +257,6 @@ export function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
     compatibility: formatContractCompatibility({
       shirobot: stringValue(compatibility.shirobot), framework: stringValue(compatibility.framework),
       status: stringValue(compatibility.status),
-      api: api.minimum ? { minimum: stringValue(api.minimum), testedThrough: stringValue(api.testedThrough) } : null,
       abi: Object.fromEntries(Object.entries(record(compatibility.abi)).map(([name, version]) => [name, stringValue(version)]))
     }),
     deprecated: booleanValue(item.deprecated),

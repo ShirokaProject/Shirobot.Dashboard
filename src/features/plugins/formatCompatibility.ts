@@ -7,14 +7,12 @@ export function formatContractCompatibility(value: {
   abi?: Record<string, string>
 }) {
   const parts: string[] = []
-  if (value.status) {
-    if (value.status === 'unknown') parts.push('兼容性未知')
-    if (value.api) parts.push(`API ≥${value.api.minimum}（已测试 ${value.api.testedThrough}）`)
-    for (const [name, version] of Object.entries(value.abi ?? {})) {
-      parts.push(`${name.replace(/^ShiroBot\./, '')} ABI ${version}`)
-    }
-  } else if (value.shirobot && value.shirobot !== 'unknown') {
-    parts.push(`目录声明 ${value.shirobot}`)
+  for (const [name, version] of Object.entries(value.abi ?? {})) {
+    parts.push(`${name.replace(/^ShiroBot\./, '')} ABI ${version}`)
+  }
+  if (!parts.length) {
+    if (value.status) parts.push('ABI 未知')
+    else if (value.shirobot && value.shirobot !== 'unknown') parts.push(`目录声明 ${value.shirobot}`)
   }
   if (value.framework && value.framework !== 'unknown') parts.push(value.framework)
   if (value.platforms?.length) parts.push(value.platforms.join(', '))
