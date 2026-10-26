@@ -621,7 +621,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
   }
 
   const adapterConfigMatch = pathname.match(/^\/api\/v1\/adapters\/([^/]+)\/config$/)
-  if (adapterConfigMatch && method === 'GET') return clone({ adapter_id: decodeURIComponent(adapterConfigMatch[1]), ...demoAdapterConfig }) as T
+  if (adapterConfigMatch && method === 'GET') return clone({ adapter_id: decodeURIComponent(adapterConfigMatch[1]), ...demoAdapterConfig, raw_config: true }) as T
   if (adapterConfigMatch && method === 'PATCH') {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoAdapterConfig.config }
     if (payload.config) demoAdapterConfig.config = { ...demoAdapterConfig.config, ...payload.config }
@@ -929,7 +929,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     return { success: true } as T
   }
 
-  if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return clone(demoPluginConfig) as T
+  if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return { ...clone(demoPluginConfig), raw_config: true } as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[] } }
     if (payload.config) demoPluginConfig.config = { ...demoPluginConfig.config, ...payload.config }

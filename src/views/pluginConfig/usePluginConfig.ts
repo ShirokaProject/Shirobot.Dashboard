@@ -255,6 +255,8 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   const routeGroups = ref<string[]>([])
   // undefined: not reported (adapter, a host older than 1.0.2, or the request failed); null: plugin not loaded
   const listeners = ref<PluginListeners | null | undefined>(undefined)
+  // Only components that have a config get the config.toml text editor.
+  const rawConfigAvailable = ref(false)
   const snapshot = ref('')
 
   const groups = computed<ConfigGroup[]>(() => {
@@ -343,15 +345,18 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
         ])
         assignResponse(response)
         listeners.value = detail?.listeners
+        rawConfigAvailable.value = response.raw_config === true
       } else {
         listeners.value = undefined
         const response = await getAdapterConfig(pluginId.value)
+        rawConfigAvailable.value = response.raw_config === true
         schema.value = response.schema?.length ? response.schema : createFallbackSchema(response.config)
         applyConfig(withSchemaDefaults(response.config, schema.value))
       }
       markClean()
     } catch (error) {
       applyConfig({})
+      rawConfigAvailable.value = false
       schema.value = []
       applyRoutes({ ...emptyRoutes })
       loadError.value = getApiErrorMessage(error, `${noun.value}配置读取失败`)
@@ -407,6 +412,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   return {
     hasRoutes,
     listeners,
+    rawConfigAvailable,
     loading,
     saving,
     loadError,

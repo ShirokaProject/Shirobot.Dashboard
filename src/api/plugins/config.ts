@@ -71,6 +71,8 @@ export interface PluginConfigResponse {
   schema?: PluginConfigSchemaItem[]
   routes: PluginRoutesConfig
   config_apply_status?: ConfigApplyStatus
+  /** Whether config.toml can be edited as text: false for a plugin without config; absent on older hosts */
+  raw_config?: boolean
 }
 
 export interface PluginConfigUpdateRequest {

@@ -89,6 +89,8 @@ export interface AdapterConfigResponse {
   config: PluginConfigMap
   schema?: PluginConfigSchemaItem[]
   apply_status?: ConfigApplyStatus
+  /** Whether config.toml can be edited as text: false for an adapter without config; absent on older hosts */
+  raw_config?: boolean
 }
 
 export interface ModelInfo {

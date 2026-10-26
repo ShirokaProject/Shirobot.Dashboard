@@ -41,7 +41,7 @@
         </div>
         <span v-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
         <span v-else-if="saveMessage && !rawMode" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
-        <button type="button" class="md-button text raw-toggle" @click="toggleRawMode">
+        <button v-if="rawConfigAvailable || rawMode" type="button" class="md-button text raw-toggle" @click="toggleRawMode">
           <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
         </button>
         <div class="button-group">
@@ -100,6 +100,7 @@ const {
   target,
   hasRoutes,
   listeners,
+  rawConfigAvailable,
   loading,
   saving,
   loadError,
