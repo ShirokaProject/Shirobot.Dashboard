@@ -225,6 +225,14 @@ function toField(item: PluginConfigSchemaItem, values: PluginConfigMap): ConfigF
 /** What is being configured. Adapters share the schema/config shape but have no routes. */
 export type ConfigTarget = 'plugin' | 'adapter'
 
+/** What the host reported after saving a config, as shown to the user; empty when it said nothing. */
+export function applyStatusMessage(status?: string | null) {
+  if (status === 'applied') return '配置已保存并应用'
+  if (status === 'pending_start') return '配置已保存，将在组件启动时应用'
+  if (status === 'legacy_saved_only') return '配置已保存；组件未接入统一配置应用接口，宿主无法确认即时生效'
+  return ''
+}
+
 /**
  * Load / edit / save one plugin's (or adapter's) config, plus a plugin's routes. Shared by
  * the config dialog (workspace) and the full config page.
@@ -388,13 +396,6 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
     } finally {
       saving.value = false
     }
-  }
-
-  function applyStatusMessage(status?: string) {
-    if (status === 'applied') return '配置已保存并应用'
-    if (status === 'pending_start') return '配置已保存，将在组件启动时应用'
-    if (status === 'legacy_saved_only') return '配置已保存；组件未接入统一配置应用接口，宿主无法确认即时生效'
-    return ''
   }
 
   function discard() {

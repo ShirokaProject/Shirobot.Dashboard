@@ -40,14 +40,22 @@
           <p>{{ target === 'adapter' ? '适配器配置' : '插件配置' }}<span class="sep">·</span><span class="mono">{{ pluginId }}</span></p>
         </div>
         <span v-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
-        <span v-else-if="saveMessage" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
+        <span v-else-if="saveMessage && !rawMode" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
         <div class="button-group">
-          <button type="button" class="md-button tonal" :disabled="!dirty || saving" @click="discard">放弃修改</button>
-          <button type="button" class="md-button filled" :disabled="!dirty || saving" @click="save">保存</button>
+          <button type="button" class="md-button text" @click="toggleRawMode">
+            <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
+          </button>
+          <button type="button" class="md-button tonal" :disabled="!dirty || busy" @click="discard">放弃修改</button>
+          <button type="button" class="md-button filled" :disabled="!dirty || busy" @click="save">保存</button>
         </div>
       </header>
 
-      <p v-if="loadError" class="page-note error">{{ loadError }}</p>
+      <!-- Raw config.toml: every key in the file, including ones the form does not describe -->
+      <template v-if="rawMode">
+        <p v-if="raw.loading.value && !raw.content.value" class="page-note">正在读取 config.toml…</p>
+        <RawConfigEditor v-else v-model="raw.content.value" :error="raw.error.value" :readonly="raw.saving.value" />
+      </template>
+      <p v-else-if="loadError" class="page-note error">{{ loadError }}</p>
       <p v-else-if="loading" class="page-note">正在读取配置…</p>
       <div v-else class="page-body">
         <ConfigNav
@@ -75,14 +83,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import MdIcon from '../../components/MdIcon.vue'
 import { getAdapters, getInstalledPlugins, type AdapterStatus } from '../../api'
 import type { Plugin } from '../../features/plugins/types'
 import ConfigNav from './components/ConfigNav.vue'
 import PluginConfigForm from './components/PluginConfigForm.vue'
+import RawConfigEditor from './components/RawConfigEditor.vue'
 import { usePluginConfigPage } from './PluginConfig'
-import { ROUTES_VIEW, type ConfigTarget } from './usePluginConfig'
+import { ROUTES_VIEW, applyStatusMessage, type ConfigTarget } from './usePluginConfig'
+import { useRawConfig } from './useRawConfig'
 
 const router = useRouter()
 const {
@@ -99,10 +109,35 @@ const {
   config,
   routes,
   routeGroups,
-  dirty,
-  save,
-  discard
+  dirty: formDirty,
+  load: loadForm,
+  save: saveForm,
+  discard: discardForm
 } = usePluginConfigPage()
+
+// Editing config.toml as text instead of the form; each target starts on the form.
+const raw = useRawConfig(pluginId, target)
+const rawMode = ref(false)
+watch([pluginId, target], () => { rawMode.value = false })
+const dirty = computed(() => rawMode.value ? raw.dirty.value : formDirty.value)
+const busy = computed(() => rawMode.value ? raw.saving.value : saving.value)
+
+async function toggleRawMode() {
+  if (!(await confirmDiscard())) return
+  rawMode.value = !rawMode.value
+  // Leaving the text editor drops discarded form edits and shows what it saved.
+  await (rawMode.value ? raw.load() : loadForm())
+}
+
+async function save() {
+  if (!rawMode.value) return saveForm()
+  const status = await raw.save()
+  if (status !== null) ElMessage.success(applyStatusMessage(status) || '配置已保存')
+}
+
+function discard() {
+  void (rawMode.value ? raw.load() : discardForm())
+}
 
 // ---------- everything configurable ----------
 

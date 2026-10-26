@@ -101,3 +101,27 @@ export function updatePluginConfig(pluginId: string, config: PluginConfigUpdateR
     body: JSON.stringify(config)
   })
 }
+
+/** The component's whole config.toml, including keys its schema does not describe. */
+export interface RawConfigResponse {
+  content: string
+  /** SHA-256 of `content`; send it back so the host can reject a save over a newer file */
+  revision: string
+  apply_status?: ConfigApplyStatus | null
+}
+
+function rawConfigUrl(target: 'plugin' | 'adapter', id: string) {
+  return `/api/v1/${target === 'adapter' ? 'adapters' : 'plugins'}/${encodeURIComponent(id)}/config/raw`
+}
+
+export function getRawConfig(target: 'plugin' | 'adapter', id: string) {
+  return apiRequest<RawConfigResponse>(rawConfigUrl(target, id))
+}
+
+export function saveRawConfig(target: 'plugin' | 'adapter', id: string, content: string, revision: string) {
+  return apiRequest<RawConfigResponse>(rawConfigUrl(target, id), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content, revision })
+  })
+}

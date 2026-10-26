@@ -468,6 +468,8 @@ function methodOf(init?: RequestInit) {
   return (init?.method ?? 'GET').toUpperCase()
 }
 
+const demoRawConfigs = new Map<string, string>()
+
 function demoListeners(pluginId: string): PluginListeners {
   const route = (match: string, extra: { pattern?: string; argument?: string; description?: string } = {}) =>
     ({ match, pattern: extra.pattern ?? null, argument: extra.argument ?? null, description: extra.description ?? null })
@@ -767,6 +769,17 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
     if (marketPlugin) delete marketPlugin.installed
     return { ok: true, message: `${plugin.name} 已卸载。` } as T
+  }
+
+  const rawConfigMatch = pathname.match(/^\/api\/v1\/(plugins|adapters)\/([^/]+)\/config\/raw$/)
+  if (rawConfigMatch) {
+    const key = `${rawConfigMatch[1]}:${decodeURIComponent(rawConfigMatch[2] ?? '')}`
+    if (method === 'PUT') {
+      const payload = JSON.parse(String(init?.body ?? '{}')) as { content?: string }
+      demoRawConfigs.set(key, payload.content ?? '')
+    }
+    const content = demoRawConfigs.get(key) ?? '# 演示模式：这里显示组件的 config.toml\nenabled = true\n\n[advanced]\nretry = 3\n'
+    return { content, revision: String(content.length), apply_status: method === 'PUT' ? 'applied' : null } as T
   }
 
   const pluginDetailMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)$/)

@@ -20,7 +20,12 @@
       </div>
     </template>
 
-    <p v-if="state.loadError.value" class="ws-note error">{{ state.loadError.value }}</p>
+    <!-- Raw config.toml: every key in the file, including ones the form does not describe -->
+    <template v-if="rawMode">
+      <div v-if="raw.loading.value && !raw.content.value" class="ws-note">正在读取 config.toml…</div>
+      <RawConfigEditor v-else v-model="raw.content.value" :error="raw.error.value" :readonly="raw.saving.value" />
+    </template>
+    <p v-else-if="state.loadError.value" class="ws-note error">{{ state.loadError.value }}</p>
     <div v-else-if="state.loading.value" class="ws-note">正在读取配置…</div>
     <!-- Categories on the left as pills; only the chosen one is shown on the right -->
     <div v-else class="ws-body">
@@ -51,7 +56,10 @@
         <button type="button" class="md-button text" @click="openFullPage">
           <MdIcon name="open_in_new" />在完整页面打开
         </button>
-        <span v-if="state.saveMessage.value && !dirty" class="ws-saved" :class="state.saveMessageType.value">
+        <button type="button" class="md-button text" @click="toggleRawMode">
+          <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
+        </button>
+        <span v-if="!rawMode && state.saveMessage.value && !dirty" class="ws-saved" :class="state.saveMessageType.value">
           {{ state.saveMessage.value }}
         </span>
         <span v-else-if="dirty" class="ws-dirty"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
@@ -60,7 +68,9 @@
           <button
             type="button"
             class="md-button filled"
-            :disabled="!dirty || state.saving.value || instanceSaving || Boolean(instanceDirty && idError)"
+            :disabled="rawMode
+              ? !raw.dirty.value || raw.saving.value
+              : !dirty || state.saving.value || instanceSaving || Boolean(instanceDirty && idError)"
             @click="save"
           >保存</button>
         </div>
@@ -75,9 +85,11 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getApiErrorMessage, updateAdapterInstance } from '../../../api'
 import MdIcon from '../../../components/MdIcon.vue'
-import { INSTANCE_VIEW, ROUTES_VIEW, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
+import { INSTANCE_VIEW, ROUTES_VIEW, applyStatusMessage, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
+import { useRawConfig } from '../useRawConfig'
 import ConfigNav from './ConfigNav.vue'
 import PluginConfigForm from './PluginConfigForm.vue'
+import RawConfigEditor from './RawConfigEditor.vue'
 
 const props = withDefaults(defineProps<{ visible: boolean; pluginId: string; pluginName: string; target?: ConfigTarget }>(), { target: 'plugin' })
 const emit = defineEmits<{
@@ -91,6 +103,9 @@ const router = useRouter()
 // Only load while open; reopening the same plugin reloads fresh values.
 const activeId = computed(() => props.visible ? props.pluginId : '')
 const state = usePluginConfig(activeId, () => props.target)
+const raw = useRawConfig(activeId, () => props.target)
+// Editing config.toml as text instead of the form; every opening starts on the form.
+const rawMode = ref(false)
 
 // Current category: a group key or ROUTES_VIEW. Starts on the first group each time.
 const view = ref('')
@@ -101,7 +116,9 @@ watch(() => state.groups.value, groups => {
   view.value = groups[0].key
 })
 watch(() => props.visible, open => {
-  if (open) view.value = state.groups.value[0]?.key ?? ''
+  if (!open) return
+  view.value = state.groups.value[0]?.key ?? ''
+  rawMode.value = false
 })
 // An adapter without config fields still has its instance section to show.
 watch(() => state.loading.value, loading => {
@@ -124,7 +141,7 @@ const idError = computed(() => {
   if (!id) return '实例 ID 不能为空。'
   return /^[A-Za-z0-9._-]{1,64}$/.test(id) ? '' : '实例 ID 最多 64 个字符，只能使用英文字母、数字、点、横线和下划线。'
 })
-const dirty = computed(() => state.dirty.value || instanceDirty.value)
+const dirty = computed(() => rawMode.value ? raw.dirty.value : state.dirty.value || instanceDirty.value)
 
 async function confirmDiscard() {
   if (!dirty.value) return true
@@ -148,7 +165,25 @@ async function requestClose(done?: () => void) {
 
 // Stay open after saving so several changes can be made in one sitting.
 // Config first, under the current ID; then the name / ID, which may restart the instance under a new one.
+async function toggleRawMode() {
+  if (!(await confirmDiscard())) return
+  rawMode.value = !rawMode.value
+  if (rawMode.value) {
+    instanceDraft.value = props.target === 'adapter' ? { id: props.pluginId, name: props.pluginName } : null
+    await raw.load()
+  } else {
+    // Drops discarded form edits and shows what the text editor saved.
+    await state.load()
+  }
+}
+
 async function save() {
+  if (rawMode.value) {
+    const status = await raw.save()
+    if (status === null) return
+    ElMessage.success(applyStatusMessage(status) || '配置已保存')
+    return
+  }
   if (state.dirty.value && !(await state.save())) return
   if (instanceDirty.value) {
     if (idError.value) { view.value = INSTANCE_VIEW; return }
@@ -264,7 +299,7 @@ async function openFullPage() {
   gap: var(--md-space-3);
 }
 
-.ws-foot > .md-button.text {
+.ws-foot > .md-button.text:first-child {
   margin-left: calc(var(--md-space-3) * -1);
 }
 
