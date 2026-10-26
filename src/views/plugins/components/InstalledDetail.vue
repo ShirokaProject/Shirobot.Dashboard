@@ -40,6 +40,17 @@
       :permissions="plugin.permissions"
     />
 
+    <section v-if="listenersLoading || listenerRows.length" class="listeners">
+      <h3>监听</h3>
+      <p v-if="listenersLoading && !listeners" class="muted">加载中…</p>
+      <dl v-else class="facts">
+        <div v-for="(row, index) in listenerRows" :key="index">
+          <dt>{{ row.scope }}</dt>
+          <dd>{{ row.text }}<code v-if="row.code" class="listener-code mono">{{ row.code }}</code></dd>
+        </div>
+      </dl>
+    </section>
+
     <section v-if="actionsLoading || actionsError || extraActions.length" class="actions">
       <h3>插件操作</h3>
       <p v-if="actionsError" class="muted">{{ actionsError }}</p>
@@ -80,7 +91,8 @@
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import MarketFacts from './MarketFacts.vue'
-import type { MarketplacePlugin, PluginActionDefinition } from '../../../api'
+import type { MarketplacePlugin, PluginActionDefinition, PluginListeners } from '../../../api'
+import { formatPluginListeners } from '../../../features/plugins/listeners'
 import type { Plugin, PluginStatus } from '../../../features/plugins/types'
 
 // The pane already offers update / uninstall; hide backend actions that duplicate them.
@@ -95,6 +107,8 @@ const props = defineProps<{
   actions: PluginActionDefinition[]
   actionsLoading: boolean
   actionsError: string
+  listeners?: PluginListeners | null
+  listenersLoading?: boolean
   runningActionId: string
   hostOperation: string
   canUpdate: boolean
@@ -108,6 +122,7 @@ const emit = defineEmits<{
 }>()
 
 const extraActions = computed(() => props.actions.filter(action => !HOST_ACTION_IDS.has(action.id.toLowerCase())))
+const listenerRows = computed(() => props.listeners ? formatPluginListeners(props.listeners) : [])
 </script>
 
 <style scoped src="./detail.css"></style>

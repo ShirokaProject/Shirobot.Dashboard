@@ -4,7 +4,7 @@ import type { LogEntry, LogSourceInfo, LogStreamMessage, RuntimeLogsResponse } f
 import type { OverviewResponse } from './overview/overview'
 import type { PluginMarketResponse } from './pluginMarket/pluginMarket'
 import type { PluginConfigResponse } from './plugins/config'
-import type { BackendPlugin, PluginActionDefinition, PluginUploadParsedResponse, PluginUploadResponse } from './plugins/plugins'
+import type { BackendPlugin, PluginActionDefinition, PluginListeners, PluginUploadParsedResponse, PluginUploadResponse } from './plugins/plugins'
 import type { RuntimeLog } from '../features/logs/types'
 
 const demoOverview: OverviewResponse = {
@@ -199,6 +199,11 @@ const demoConfig: AppConfigResponse = {
     { key: 'disable_console_input', label: '禁用控制台输入', type: 'boolean', description: '关闭交互式控制台输入。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 30 },
     { key: 'github_proxy', label: 'GitHub 代理', type: 'string', description: '下载 GitHub 资源时使用的代理前缀。', group_id: 'updates', group_label: '更新与主题', group_icon: 'download', group_description: '主程序更新来源和主题设置。', group_order: 20, order: 10 },
     { key: 'host_update_repository', label: '宿主更新仓库', type: 'string', description: '格式为 owner/repository。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 20 },
+    { key: 'auto_update_plugins', label: '自动更新插件', type: 'boolean', description: '每天在设定时间自动更新配置了 GitHub 仓库的已加载插件。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 21 },
+    { key: 'auto_update_adapters', label: '自动更新适配器', type: 'boolean', description: '每天在设定时间从适配器市场更新已安装的适配器包。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 22 },
+    { key: 'auto_update_host', label: '自动更新主程序', type: 'boolean', description: '每天在设定时间更新主程序；新版本先试运行，替换后自动重启。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 23 },
+    { key: 'auto_update_time', label: '自动更新时间', type: 'string', description: '自动更新的执行时间，格式 HH:mm，使用宿主所在系统的本地时区。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 24 },
+    { key: 'auto_update_restart_on_pending', label: '热更新失败时自动重启', type: 'boolean', description: '自动更新时插件或适配器无法热替换（新版本已暂存，等待重启）时，自动重启宿主完成更新。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 26 },
     { key: 'avalonia_theme', label: '宿主主题', type: 'string', description: 'Avalonia 宿主主题。', options: ['Light', 'Dark', 'Auto'], group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 30 },
     { key: 'owner_list', label: 'Owner 列表', type: 'array', item_type: 'string', description: '所有者账号列表。', group_id: 'permissions', group_label: '权限', group_icon: 'shield', group_description: '定义供插件权限检查使用的账号列表。', group_order: 30, order: 10 },
     { key: 'admin_list', label: 'Admin 列表', type: 'array', item_type: 'string', description: '管理员账号列表。', group_id: 'permissions', group_label: '权限', group_order: 30, order: 20 },
@@ -231,6 +236,11 @@ const demoConfig: AppConfigResponse = {
     disable_console_input: false,
     github_proxy: 'https://gh-proxy.com/',
     host_update_repository: 'ShirokaProject/ShiroBot',
+    auto_update_plugins: false,
+    auto_update_adapters: false,
+    auto_update_host: false,
+    auto_update_time: '02:00',
+    auto_update_restart_on_pending: true,
     avalonia_theme: 'Light',
     owner_list: ['1034028486'],
     admin_list: [],
@@ -456,6 +466,34 @@ function mergeConfig(target: AppConfigData, patch: AppConfigData) {
 
 function methodOf(init?: RequestInit) {
   return (init?.method ?? 'GET').toUpperCase()
+}
+
+function demoListeners(pluginId: string): PluginListeners {
+  const route = (match: string, extra: { pattern?: string; argument?: string; description?: string } = {}) =>
+    ({ match, pattern: extra.pattern ?? null, argument: extra.argument ?? null, description: extra.description ?? null })
+  const event = (type: string, extra: { platform_kind?: string; filtered?: boolean; description?: string } = {}) =>
+    ({ type, full_type: `ShiroBot.SDK.Models.${type}`, platform_kind: extra.platform_kind ?? null, filtered: extra.filtered ?? false, description: extra.description ?? null })
+  const menu = route('exact', { pattern: '菜单' })
+  switch (pluginId) {
+    case 'echo':
+      return { group: [route('prefix', { pattern: '/echo' }), menu], direct: [menu], group_all_messages: false, direct_all_messages: false, events: [] }
+    case 'ai-chat':
+      return {
+        group: [route('mention'), route('reply'), route('custom', { description: '包含关键词 天气' })],
+        direct: [route('all')],
+        group_all_messages: false,
+        direct_all_messages: false,
+        events: [event('PlatformEvent', { platform_kind: 'poke' })]
+      }
+    default:
+      return {
+        group: [route('prefix', { pattern: '/' + pluginId })],
+        direct: [],
+        group_all_messages: false,
+        direct_all_messages: false,
+        events: [event('MemberJoinedEvent'), event('MemberLeftEvent', { filtered: true })]
+      }
+  }
 }
 
 function createDemoPluginActions(plugin: BackendPlugin): PluginActionDefinition[] {
@@ -729,6 +767,13 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
     if (marketPlugin) delete marketPlugin.installed
     return { ok: true, message: `${plugin.name} 已卸载。` } as T
+  }
+
+  const pluginDetailMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)$/)
+  if (method === 'GET' && pluginDetailMatch && pluginDetailMatch[1] !== 'list') {
+    const plugin = demoPlugins.find(item => item.id === decodeURIComponent(pluginDetailMatch[1] ?? ''))
+    if (!plugin) throw new Error('Demo plugin not found')
+    return { id: plugin.id, name: plugin.name, version: plugin.version, listeners: plugin.status === 'enabled' ? demoListeners(plugin.id) : null } as T
   }
 
   const pluginActionsMatch = pathname.match(/^\/api\/v1\/plugins\/([^/]+)\/actions$/)

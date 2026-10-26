@@ -141,6 +141,45 @@ export function setPluginEnabled(pluginId: string, enabled: boolean) {
   })
 }
 
+export type PluginRouteMatch = 'exact' | 'prefix' | 'mention' | 'mention_all' | 'reply' | 'all' | 'custom'
+
+export interface PluginMessageRoute {
+  match: PluginRouteMatch | string
+  pattern: string | null
+  /** Mentioned user ID or replied message ID the route is limited to */
+  argument: string | null
+  description: string | null
+}
+
+export interface PluginEventRoute {
+  type: string
+  full_type: string | null
+  platform_kind: string | null
+  filtered: boolean
+  description: string | null
+}
+
+/** What a loaded plugin listens to; reported by hosts with SDK ABI 1.3 or newer. */
+export interface PluginListeners {
+  group: PluginMessageRoute[]
+  direct: PluginMessageRoute[]
+  group_all_messages: boolean
+  direct_all_messages: boolean
+  events: PluginEventRoute[]
+}
+
+export interface PluginDetailResponse {
+  id: string
+  name: string
+  version: string
+  /** Null while the plugin is not loaded; absent on older hosts */
+  listeners?: PluginListeners | null
+}
+
+export function getPluginDetail(pluginId: string) {
+  return apiRequest<PluginDetailResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}`)
+}
+
 export function getPluginActions(pluginId: string) {
   return apiRequest<PluginActionsResponse>(`/api/v1/plugins/${encodeURIComponent(pluginId)}/actions`)
 }
