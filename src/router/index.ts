@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { hasDashboardSession } from '../auth/session'
-import { autoSignIn } from '../auth/signIn'
+import { autoSignIn, markDashboardEntrance, signInFromLink } from '../auth/signIn'
 import {
   loadAboutPage,
   loadAdaptersPage,
@@ -82,10 +82,20 @@ const router = createRouter({
 })
 
 router.beforeEach(async to => {
+  // A `?token=` login link from the host: sign in, then replace the entry so the key does not stay
+  // in the address bar, history or bookmarks.
+  if (typeof to.query.token === 'string') {
+    const { token, ...query } = to.query
+    const result = await signInFromLink(token)
+    if (!result.ok) return { name: 'Login', query: { link_failed: '' }, replace: true }
+    markDashboardEntrance()
+    return { path: to.name === 'Login' ? '/' : to.path, query, hash: to.hash, replace: true }
+  }
+
   const isPublicRoute = Boolean(to.meta.public)
   // Picking another backend (?switch / ?add / ?backend) or landing after an expiry is deliberate: no auto sign-in.
   const deliberateLogin = to.name === 'Login'
-    && ['switch', 'add', 'backend', 'expired'].some(key => to.query[key] !== undefined)
+    && ['switch', 'add', 'backend', 'expired', 'link_failed'].some(key => to.query[key] !== undefined)
   const hasSession = hasDashboardSession() || (!deliberateLogin && await autoSignIn())
 
   if (!isPublicRoute && !hasSession) {

@@ -1,5 +1,5 @@
 import { verifyApiKey, type ApiKeyCheck } from '../api'
-import { findRememberedBackend, forgetRememberedKey, saveBackend, type BackendProfile } from './backends'
+import { DEFAULT_BASE_URL, describeBaseUrl, findRememberedBackend, forgetRememberedKey, listBackends, saveBackend, type BackendProfile } from './backends'
 import { saveDashboardSession } from './session'
 
 export type SignInResult = { ok: true; profile: BackendProfile } | { ok: false; message: string }
@@ -32,6 +32,19 @@ export async function signInToBackend(
     baseUrl: saved.baseUrl
   })
   return { ok: true, profile: saved }
+}
+
+/**
+ * Sign in to this Dashboard's own backend with the key from a `?token=` link the host prints.
+ * Reuses that backend's saved profile; the key is only remembered if one already was.
+ */
+export function signInFromLink(token: string) {
+  const existing = listBackends().find(profile => profile.baseUrl === DEFAULT_BASE_URL)
+  return signInToBackend(
+    { id: existing?.id, name: existing?.name ?? describeBaseUrl(DEFAULT_BASE_URL), baseUrl: DEFAULT_BASE_URL },
+    token,
+    Boolean(existing?.token)
+  )
 }
 
 let autoSignInTried = false
