@@ -12,7 +12,7 @@
       <span>{{ group.label }}</span>
       <small>{{ group.fields.length }}</small>
     </button>
-    <hr v-if="groups.length && (showRoutes || showInstance)" />
+    <hr v-if="groups.length && (showRoutes || showInstance || showListeners)" />
     <button
       v-if="showInstance"
       type="button"
@@ -35,14 +35,28 @@
       <span>路由</span>
       <MdIcon name="link" />
     </button>
+    <button
+      v-if="showListeners"
+      type="button"
+      class="nav-pill"
+      :class="{ selected: view === LISTENERS_VIEW }"
+      :aria-current="view === LISTENERS_VIEW ? 'true' : undefined"
+      @click="emit('update:view', LISTENERS_VIEW)"
+    >
+      <span>监听</span>
+      <MdIcon name="hearing" />
+    </button>
   </nav>
 </template>
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
-import { INSTANCE_VIEW, ROUTES_VIEW, type ConfigGroup } from '../usePluginConfig'
+import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, type ConfigGroup } from '../usePluginConfig'
 
-withDefaults(defineProps<{ groups: ConfigGroup[]; view: string; showRoutes?: boolean; showInstance?: boolean }>(), { showRoutes: true, showInstance: false })
+withDefaults(
+  defineProps<{ groups: ConfigGroup[]; view: string; showRoutes?: boolean; showInstance?: boolean; showListeners?: boolean }>(),
+  { showRoutes: true, showInstance: false, showListeners: false }
+)
 const emit = defineEmits<{ 'update:view': [view: string] }>()
 </script>
 

@@ -50,7 +50,13 @@
       <p v-if="loadError" class="page-note error">{{ loadError }}</p>
       <p v-else-if="loading" class="page-note">正在读取配置…</p>
       <div v-else class="page-body">
-        <ConfigNav v-model:view="view" class="page-nav" :groups="groups" :show-routes="hasRoutes" />
+        <ConfigNav
+          v-model:view="view"
+          class="page-nav"
+          :groups="groups"
+          :show-routes="hasRoutes"
+          :show-listeners="hasRoutes && listeners !== undefined"
+        />
         <div class="page-main">
           <PluginConfigForm
             v-model:route-groups="routeGroups"
@@ -58,6 +64,7 @@
             :groups="groups"
             :config="config"
             :routes="routes"
+            :listeners="listeners"
           />
         </div>
       </div>
@@ -82,6 +89,7 @@ const {
   pluginId,
   target,
   hasRoutes,
+  listeners,
   loading,
   saving,
   loadError,

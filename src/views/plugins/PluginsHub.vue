@@ -245,8 +245,6 @@
           :actions="installed.pluginActions.value"
           :actions-loading="installed.pluginActionsLoading.value"
           :actions-error="installed.pluginActionsError.value"
-          :listeners="installed.pluginListeners.value"
-          :listeners-loading="installed.pluginListenersLoading.value"
           :running-action-id="installed.runningPluginActionId.value"
           :host-operation="market.preparingPluginId.value ? 'update' : installed.hostOperation.value"
           :can-update="Boolean(installedMarketPlugin && market.canInstallPlugin(installedMarketPlugin))"

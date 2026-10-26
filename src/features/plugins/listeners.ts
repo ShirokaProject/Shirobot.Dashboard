@@ -67,3 +67,13 @@ export function formatPluginListeners(listeners: PluginListeners): ListenerRow[]
   }
   return rows
 }
+
+const SCOPE_ORDER: ListenerRow['scope'][] = ['群聊和私聊', '群聊', '私聊', '事件']
+
+/** Rows of {@link formatPluginListeners} grouped by scope, for one card per scope. */
+export function groupPluginListeners(listeners: PluginListeners) {
+  const rows = formatPluginListeners(listeners)
+  return SCOPE_ORDER
+    .map(scope => ({ scope, rows: rows.filter(row => row.scope === scope) }))
+    .filter(section => section.rows.length)
+}

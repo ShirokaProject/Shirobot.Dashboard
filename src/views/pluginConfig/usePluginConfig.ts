@@ -4,6 +4,7 @@ import {
   getAdapterConfig,
   getApiErrorMessage,
   getPluginConfig,
+  getPluginDetail,
   updateAdapterConfig,
   updatePluginConfig,
   type PluginConfigMap,
@@ -11,6 +12,7 @@ import {
   type PluginConfigSchemaItem,
   type PluginConfigUpdateResponse,
   type PluginConfigValue,
+  type PluginListeners,
   type PluginRoutesConfig
 } from '../../api'
 import { normalizeIdTags } from '../../features/idTags'
@@ -51,6 +53,7 @@ const DEFAULT_GROUP = '常规'
 
 /** Navigator key for the routes view, alongside the config group keys. */
 export const ROUTES_VIEW = '__routes__'
+export const LISTENERS_VIEW = '__listeners__'
 /** Navigator key for an adapter instance's name / ID. */
 export const INSTANCE_VIEW = '__instance__'
 
@@ -242,6 +245,8 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   const config: PluginConfigMap = reactive({})
   const routes = reactive<PluginRoutesConfig>({ ...emptyRoutes })
   const routeGroups = ref<string[]>([])
+  // undefined: not reported (adapter, a host older than 1.0.2, or the request failed); null: plugin not loaded
+  const listeners = ref<PluginListeners | null | undefined>(undefined)
   const snapshot = ref('')
 
   const groups = computed<ConfigGroup[]>(() => {
@@ -323,8 +328,15 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
     snapshot.value = ''
     try {
       if (hasRoutes.value) {
-        assignResponse(await getPluginConfig(pluginId.value))
+        // Listeners are informational: a failure must not block editing the config.
+        const [response, detail] = await Promise.all([
+          getPluginConfig(pluginId.value),
+          getPluginDetail(pluginId.value).catch(() => null)
+        ])
+        assignResponse(response)
+        listeners.value = detail?.listeners
       } else {
+        listeners.value = undefined
         const response = await getAdapterConfig(pluginId.value)
         schema.value = response.schema?.length ? response.schema : createFallbackSchema(response.config)
         applyConfig(withSchemaDefaults(response.config, schema.value))
@@ -393,6 +405,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
 
   return {
     hasRoutes,
+    listeners,
     loading,
     saving,
     loadError,

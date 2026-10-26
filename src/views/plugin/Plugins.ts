@@ -3,8 +3,8 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { packageFileError, usePackageFileDrop } from '../../features/packages/fileDrop'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import { cancelPluginUpload, confirmPluginUpload, deleteInstalledPlugin, getApiErrorMessage, getInstalledPlugins, getPluginActions, getPluginDetail, runPluginAction, setPluginEnabled, updateInstalledPlugin, uploadPluginPackage } from '../../api'
-import type { PluginActionDefinition, PluginListeners, PluginUploadParsedResponse } from '../../api'
+import { cancelPluginUpload, confirmPluginUpload, deleteInstalledPlugin, getApiErrorMessage, getInstalledPlugins, getPluginActions, runPluginAction, setPluginEnabled, updateInstalledPlugin, uploadPluginPackage } from '../../api'
+import type { PluginActionDefinition, PluginUploadParsedResponse } from '../../api'
 import type { Plugin, PluginStatus } from '../../features/plugins/types'
 
 export type PluginStatusFilter = {
@@ -34,9 +34,6 @@ export function usePluginsPage() {
   const pluginActions = ref<PluginActionDefinition[]>([])
   const pluginActionsLoading = ref(false)
   const pluginActionsError = ref('')
-  // undefined: not reported (plugin not loaded, or a host older than SDK ABI 1.3)
-  const pluginListeners = ref<PluginListeners | null | undefined>(undefined)
-  const pluginListenersLoading = ref(false)
   const runningPluginActionId = ref('')
   const hostOperation = ref<'update' | 'delete' | ''>('')
 
@@ -44,7 +41,6 @@ export function usePluginsPage() {
   const selectedPlugin = ref<Plugin | null>(null)
   const toggleLockedPluginIds = ref(new Set<string>())
   let pluginActionsRequestId = 0
-  let pluginListenersRequestId = 0
 
   const enabledCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'enabled').length)
   const disabledCount = computed(() => installedPlugins.value.filter(plugin => plugin.status === 'disabled').length)
@@ -150,23 +146,6 @@ export function usePluginsPage() {
       }
     } finally {
       if (requestId === pluginActionsRequestId) pluginActionsLoading.value = false
-    }
-  }
-
-  async function loadPluginListeners(plugin: Plugin | null | undefined) {
-    const requestId = ++pluginListenersRequestId
-    pluginListeners.value = undefined
-    pluginListenersLoading.value = false
-    if (!plugin || plugin.status !== 'enabled') return
-
-    pluginListenersLoading.value = true
-    try {
-      const detail = await getPluginDetail(plugin.id)
-      if (requestId === pluginListenersRequestId) pluginListeners.value = detail.listeners ?? undefined
-    } catch {
-      // Listeners are informational; the rest of the pane stays usable without them.
-    } finally {
-      if (requestId === pluginListenersRequestId) pluginListenersLoading.value = false
     }
   }
 
@@ -394,7 +373,6 @@ export function usePluginsPage() {
     () => selectedPlugin.value ? `${selectedPlugin.value.id}:${selectedPlugin.value.status}` : '',
     () => {
       void loadPluginActions(selectedPlugin.value)
-      void loadPluginListeners(selectedPlugin.value)
     }
   )
 
@@ -421,8 +399,6 @@ export function usePluginsPage() {
     pluginActions,
     pluginActionsLoading,
     pluginActionsError,
-    pluginListeners,
-    pluginListenersLoading,
     runningPluginActionId,
     hostOperation,
     statusText,

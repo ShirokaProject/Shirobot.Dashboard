@@ -16,6 +16,28 @@
       <p v-if="instanceError" class="instance-error">{{ instanceError }}</p>
     </section>
 
+    <!-- What the plugin registered; read-only, reported by the running plugin -->
+    <template v-else-if="view === LISTENERS_VIEW">
+      <div v-if="!listeners" class="form-empty">
+        <MdIcon name="hearing" />
+        <strong>插件未运行</strong>
+        <span>启用插件后可查看它注册的命令和事件。</span>
+      </div>
+      <div v-else-if="!listenerSections.length" class="form-empty">
+        <MdIcon name="hearing" />
+        <strong>这个插件没有注册监听</strong>
+      </div>
+      <section v-for="section in listenerSections" v-else :key="section.scope" class="group">
+        <h3 class="group-title">{{ section.scope }}<span>{{ section.rows.length }} 项</span></h3>
+        <div class="group-card">
+          <div v-for="(row, index) in section.rows" :key="index" class="listener-row">
+            <span>{{ row.text }}</span>
+            <code v-if="row.code" class="listener-code">{{ row.code }}</code>
+          </div>
+        </div>
+      </section>
+    </template>
+
     <template v-else-if="view !== ROUTES_VIEW">
       <div v-if="!groups.length" class="form-empty">
         <MdIcon name="settings" />
@@ -90,8 +112,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
-import type { PluginConfigMap, PluginConfigValue, PluginRoutesConfig } from '../../../api'
-import { INSTANCE_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
+import type { PluginConfigMap, PluginConfigValue, PluginListeners, PluginRoutesConfig } from '../../../api'
+import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
+import { groupPluginListeners } from '../../../features/plugins/listeners'
 import ConfigFieldRow from './ConfigFieldRow.vue'
 import { ID_TAG_DELIMITER, normalizeIdTags } from '../../../features/idTags'
 
@@ -105,7 +128,11 @@ const props = defineProps<{
   /** Adapter instance name / ID drafts, shown under INSTANCE_VIEW */
   instance?: { id: string; name: string } | null
   instanceError?: string
+  /** Shown under LISTENERS_VIEW; null when the plugin is not loaded */
+  listeners?: PluginListeners | null
 }>()
+
+const listenerSections = computed(() => props.listeners ? groupPluginListeners(props.listeners) : [])
 
 const instanceFields = computed<ConfigField[]>(() => [
   { item: { key: 'name', label: '名称', type: 'string', placeholder: props.instance?.id }, label: '名称', description: '在列表和日志中显示，留空则使用实例 ID。', enabled: true, enumOptions: null },
@@ -239,6 +266,25 @@ function modeLabel(mode: string) {
   padding: var(--md-space-3) 0;
 }
 
+.listener-row {
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--md-space-2);
+  padding: var(--md-space-2) 0;
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.listener-code {
+  padding: 1px var(--md-space-2);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--app-card);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant);
+  font: 400 13px / 20px var(--font-mono);
+}
+
 .effective {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -278,5 +324,9 @@ function modeLabel(mode: string) {
 .form-empty strong {
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-title-small);
+}
+
+.form-empty > span {
+  font: var(--md-sys-typescale-body-small);
 }
 </style>

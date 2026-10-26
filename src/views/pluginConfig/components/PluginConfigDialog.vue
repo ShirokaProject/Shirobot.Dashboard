@@ -30,6 +30,7 @@
         :groups="state.groups.value"
         :show-routes="state.hasRoutes.value"
         :show-instance="target === 'adapter'"
+        :show-listeners="state.hasRoutes.value && state.listeners.value !== undefined"
       />
       <div class="ws-content">
         <PluginConfigForm
@@ -40,6 +41,7 @@
           :groups="state.groups.value"
           :config="state.config"
           :routes="state.routes"
+          :listeners="state.listeners.value"
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { formatPluginListeners } from '../src/features/plugins/listeners.ts'
+import { formatPluginListeners, groupPluginListeners } from '../src/features/plugins/listeners.ts'
 
 const empty = { group: [], direct: [], group_all_messages: false, direct_all_messages: false, events: [] }
 const route = (match, extra = {}) => ({ match, pattern: null, argument: null, description: null, ...extra })
@@ -44,4 +44,16 @@ test('events use readable names, platform kinds and skip the implied message sub
     ['事件', '平台事件 poke'],
     ['事件', 'CustomVendorEvent（仅图片）']
   ])
+})
+
+test('listeners group into one section per scope, shared commands first', () => {
+  const menu = route('exact', { pattern: '菜单' })
+  const sections = groupPluginListeners({
+    ...empty,
+    group: [route('mention'), menu],
+    direct: [menu],
+    events: [{ type: 'MemberJoinedEvent', full_type: null, platform_kind: null, filtered: false, description: null }]
+  })
+  assert.deepEqual(sections.map(section => [section.scope, section.rows.length]), [['群聊和私聊', 1], ['群聊', 1], ['事件', 1]])
+  assert.deepEqual(groupPluginListeners(empty), [])
 })
