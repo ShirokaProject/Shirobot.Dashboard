@@ -199,6 +199,23 @@
   top: var(--md-space-5);
 }
 
+/* Same insets as the form body; the editor takes the remaining height */
+.page-raw {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--md-space-5) var(--md-space-6) var(--md-space-6);
+}
+
+.page-raw > .raw-editor {
+  flex: 1;
+}
+
+.raw-toggle .md-icon {
+  font-size: 18px;
+}
+
 .page-main {
   min-width: 0;
   /* Fields stay a readable width on wide screens; the card itself fills the row */

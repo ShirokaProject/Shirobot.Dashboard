@@ -41,20 +41,20 @@
         </div>
         <span v-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
         <span v-else-if="saveMessage && !rawMode" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
+        <button type="button" class="md-button text raw-toggle" @click="toggleRawMode">
+          <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
+        </button>
         <div class="button-group">
-          <button type="button" class="md-button text" @click="toggleRawMode">
-            <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
-          </button>
           <button type="button" class="md-button tonal" :disabled="!dirty || busy" @click="discard">放弃修改</button>
           <button type="button" class="md-button filled" :disabled="!dirty || busy" @click="save">保存</button>
         </div>
       </header>
 
       <!-- Raw config.toml: every key in the file, including ones the form does not describe -->
-      <template v-if="rawMode">
+      <div v-if="rawMode" class="page-raw">
         <p v-if="raw.loading.value && !raw.content.value" class="page-note">正在读取 config.toml…</p>
         <RawConfigEditor v-else v-model="raw.content.value" :error="raw.error.value" :readonly="raw.saving.value" />
-      </template>
+      </div>
       <p v-else-if="loadError" class="page-note error">{{ loadError }}</p>
       <p v-else-if="loading" class="page-note">正在读取配置…</p>
       <div v-else class="page-body">

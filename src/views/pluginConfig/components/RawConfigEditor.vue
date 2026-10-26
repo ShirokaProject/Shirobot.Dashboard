@@ -1,7 +1,7 @@
 <template>
   <div class="raw-editor">
     <p class="raw-hint">
-      直接编辑 config.toml，包括表单中没有的字段。保存时校验 TOML 格式，校验通过后立即应用。
+      直接编辑 config.toml，包括表单中没有的字段。保存时校验 TOML 格式，通过后立即应用。
     </p>
     <textarea
       ref="textarea"
@@ -10,7 +10,6 @@
       spellcheck="false"
       autocapitalize="off"
       autocomplete="off"
-      wrap="off"
       aria-label="config.toml"
       :readonly="readonly"
       @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
@@ -61,8 +60,9 @@ function indent() {
 }
 
 .raw-text {
+  flex: 1;
   min-height: 360px;
-  height: min(60vh, 640px);
+  height: min(70vh, 760px);
   padding: var(--md-space-4);
   border: 0;
   border-radius: var(--md-sys-shape-corner-large);
