@@ -162,7 +162,7 @@
           <div><dt>作者</dt><dd>{{ formatAuthors(selectedPlugin) }}</dd></div>
           <div><dt>版本</dt><dd>{{ selectedPlugin.release.version ? `v${selectedPlugin.release.version}` : '—' }}</dd></div>
           <div><dt>下载量</dt><dd>{{ selectedPlugin.release.downloadCount?.toLocaleString() ?? '—' }}</dd></div>
-          <div><dt>许可证</dt><dd>{{ selectedPlugin.license || '—' }}</dd></div>
+          <div><dt>许可证</dt><dd>{{ formatLicense(selectedPlugin.license) || '—' }}</dd></div>
           <div><dt>兼容性</dt><dd>{{ formatCompatibility(selectedPlugin) }}</dd></div>
           <div><dt>资源</dt><dd>{{ selectedPlugin.release.asset ? `${selectedPlugin.release.asset.name} · ${formatSize(selectedPlugin.release.asset.size)}` : '—' }}</dd></div>
           <div class="wide"><dt>仓库</dt><dd><code>{{ selectedPlugin.repository }}</code></dd></div>
@@ -209,6 +209,7 @@
 import MdIcon from '../../components/MdIcon.vue'
 import PluginUploadDialog from '../plugin/components/PluginUploadDialog.vue'
 import { usePluginMarketPage } from './PluginMarket'
+import { formatLicense } from '../../features/plugins/formatCompatibility'
 
 const {
   keyword,

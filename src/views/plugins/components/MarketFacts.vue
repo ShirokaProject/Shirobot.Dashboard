@@ -7,7 +7,7 @@
       <!-- Rows without a value are omitted rather than shown as dashes -->
       <div v-if="plugin.release.downloadCount !== null"><dt><MdIcon name="download" />下载</dt><dd>{{ plugin.release.downloadCount.toLocaleString() }} 次</dd></div>
       <div v-if="plugin.release.publishedAt"><dt><MdIcon name="calendar_today" />发布</dt><dd>{{ publishedAt }}</dd></div>
-      <div v-if="plugin.license"><dt><MdIcon name="balance" />许可证</dt><dd>{{ plugin.license }}</dd></div>
+      <div v-if="plugin.license"><dt><MdIcon name="balance" />许可证</dt><dd>{{ formatLicense(plugin.license) }}</dd></div>
       <div v-if="compatibility !== '—'"><dt><MdIcon name="extension" />兼容要求</dt><dd class="mono" title="新版目录从发布 DLL 静态提取 API 和 ABI 要求，不代表运行测试；实际加载仍由宿主检查。">{{ compatibility }}</dd></div>
       <RepositoryFact :repository="plugin.repository" />
     </template>
@@ -18,6 +18,7 @@
 import MdIcon from '../../../components/MdIcon.vue'
 import RepositoryFact from './RepositoryFact.vue'
 import type { MarketplacePlugin } from '../../../api'
+import { formatLicense } from '../../../features/plugins/formatCompatibility'
 
 defineProps<{
   plugin: MarketplacePlugin | null

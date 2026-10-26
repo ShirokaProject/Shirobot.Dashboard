@@ -18,3 +18,14 @@ export function formatContractCompatibility(value: {
   if (value.platforms?.length) parts.push(value.platforms.join(', '))
   return parts.join(' · ') || '—'
 }
+
+/**
+ * SPDX placeholders from GitHub's license detection read as Chinese: NOASSERTION means a license file
+ * exists but was not recognized, NONE that there is none.
+ */
+export function formatLicense(license?: string | null) {
+  const value = license?.trim() ?? ''
+  if (/^noassertion$/i.test(value)) return '未识别'
+  if (/^none$/i.test(value)) return '无'
+  return value
+}

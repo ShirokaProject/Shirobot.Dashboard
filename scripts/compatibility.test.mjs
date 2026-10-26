@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { formatContractCompatibility } from '../src/features/plugins/formatCompatibility.ts'
+import { formatContractCompatibility, formatLicense } from '../src/features/plugins/formatCompatibility.ts'
 
 test('ABI requirements ignore legacy API and directory declarations', () => {
   const result = formatContractCompatibility({ shirobot: '>=0.9.8', framework: 'net10.0', status: 'verified', api: { minimum: '1.0', testedThrough: '1.0' }, abi: { 'ShiroBot.SDK': '1.2.0.0' } })
@@ -15,4 +15,11 @@ test('unknown metadata does not claim old host compatibility', () => {
 
 test('ABI is displayed even when legacy metadata status was unknown', () => {
   assert.equal(formatContractCompatibility({ status: 'unknown', api: { minimum: '99.0', testedThrough: '99.0' }, abi: { 'ShiroBot.SDK': '1.2.0.0' }, framework: 'net10.0' }), 'SDK ABI 1.2.0.0 · net10.0')
+})
+
+test('SPDX placeholders from license detection read as Chinese', () => {
+  assert.equal(formatLicense('NOASSERTION'), '未识别')
+  assert.equal(formatLicense('NONE'), '无')
+  assert.equal(formatLicense(' GPL-3.0-only '), 'GPL-3.0-only')
+  assert.equal(formatLicense(undefined), '')
 })
