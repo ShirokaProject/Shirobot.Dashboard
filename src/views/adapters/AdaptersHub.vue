@@ -318,12 +318,11 @@
       @confirm="confirmMarketInstall"
     />
 
-    <!-- Same frame as the install dialog: 24px padding that suits its large corners, blurred backdrop -->
+    <!-- The install dialog's frame (24px padding for its large corners), over a plain backdrop -->
     <el-dialog
       v-model="installed.instanceVisible.value"
       title="添加适配器实例"
       class="plugin-upload-dialog"
-      modal-class="plugin-upload-overlay"
       append-to-body
       align-center
       :close-on-click-modal="false"
@@ -333,7 +332,7 @@
         <el-form-item label="实例 ID">
           <el-input v-model="installed.instanceId.value" placeholder="例如：qq-work" maxlength="64" />
           <p v-if="instanceIdError" class="field-error">{{ instanceIdError }}</p>
-          <p class="field-hint">实例的唯一标识，创建后用于日志、控制台命令（<code>adapter start qq-work</code>）和权限列表（Owner 写作 <code>qq-work:123456</code>）。只能使用英文字母、数字、点、横线和下划线。</p>
+          <p class="field-hint">用于确定唯一的账号的场景，只能使用英文字母、数字、点、横线和下划线。</p>
         </el-form-item>
         <el-form-item label="显示名称">
           <el-input v-model="installed.instanceName.value" placeholder="例如：工作群机器人" maxlength="100" />
@@ -637,10 +636,12 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
   gap: var(--md-space-1);
 }
 
+/* Quieter than the field labels: smaller and in the outline tone */
 .field-hint {
   margin: 0;
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-outline);
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .field-error {
@@ -649,9 +650,6 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
   font: var(--md-sys-typescale-body-small);
 }
 
-.field-hint code {
-  font: 400 12px / 18px var(--font-mono);
-}
 </style>
 <style scoped>
 .row-icon.restart { color: var(--md-sys-color-warning); }
