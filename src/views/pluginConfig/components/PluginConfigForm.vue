@@ -110,7 +110,6 @@
                 :model-value="routes.priority"
                 :step="1"
                 :step-strictly="true"
-                controls-position="right"
                 @update:model-value="setPriority"
               />
               <button
@@ -310,7 +309,7 @@ function modeLabel(mode: string) {
 }
 
 .priority-controls .number-input {
-  width: 128px;
+  width: 168px;
 }
 
 .route-groups {

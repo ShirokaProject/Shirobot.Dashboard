@@ -60,7 +60,8 @@ function parse(value: string[]): { ok: true; values: PluginConfigValue[] } | { o
     } else if (props.itemType === 'boolean') {
       if (!/^(true|false)$/i.test(line)) return { ok: false, message: `第 ${index + 1} 项「${line}」不是 true 或 false` }
       values.push(line.toLowerCase() === 'true')
-    } else {
+    } else if (!values.includes(line)) {
+      // Repeated text entries (IDs, keywords) mean nothing twice; number and boolean lists may repeat on purpose.
       values.push(line)
     }
   }
@@ -75,6 +76,8 @@ function onInput(value: string[]) {
     return
   }
   error.value = ''
+  // Show the cleaned list, so a dropped blank or repeat does not linger as a tag.
+  tags.value = parsed.values.map(String)
   emit('update:modelValue', parsed.values)
 }
 </script>
