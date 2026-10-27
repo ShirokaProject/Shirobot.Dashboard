@@ -3,28 +3,9 @@ import { formatContractCompatibility } from '../../features/plugins/formatCompat
 import { apiRequest } from '../core/http'
 import type { ConfigApplyStatus, PluginConfigMap, PluginConfigSchemaItem } from '../plugins/config'
 
-const PLATFORM_LABELS: Record<string, string> = {
-  qq: 'QQ',
-  tg: 'Telegram',
-  telegram: 'Telegram',
-  wechat: '微信',
-  wx: '微信',
-  discord: 'Discord',
-  kook: 'KOOK',
-  onebot: 'OneBot',
-  github: 'GitHub',
-  slack: 'Slack',
-  line: 'LINE',
-  dingtalk: '钉钉',
-  feishu: '飞书',
-  lark: '飞书',
-}
+import { formatAdapterPlatform, modelsFromAbi } from '../../features/adapters/platform'
 
-/** Platform ids arrive lowercase ("qq", "telegram"); show them with their proper brand casing. */
-export function formatPlatform(value: string): string {
-  const key = value.trim().toLowerCase()
-  return PLATFORM_LABELS[key] ?? (key ? key.charAt(0).toUpperCase() + key.slice(1) : value)
-}
+export { formatAdapterPlatform, formatPlatform, modelsFromAbi } from '../../features/adapters/platform'
 
 export interface AdapterStatus {
   id: string
@@ -126,7 +107,8 @@ export function normalizeAdapter(value: unknown): AdapterStatus {
     configPath: stringValue(item.config_path || item.configPath) || null,
     name: stringValue(item.name || item.display_name || item.id || item.adapter_id, '未命名适配器'),
     version: stringValue(item.version, '—'),
-    platform: formatPlatform(stringValue(item.platform || item.platform_id, '未声明')),
+    platform: formatAdapterPlatform(stringValue(item.platform || item.platform_id),
+      Array.isArray(item.models) ? item.models.filter((model): model is string => typeof model === 'string') : []),
     enabled: booleanValue(item.enabled, booleanValue(item.loaded ?? item.running ?? item.is_loaded)),
     loaded: booleanValue(item.loaded ?? item.running ?? item.is_loaded),
     assemblyPath: stringValue(item.assemblyPath || item.assembly_path || item.path) || null,
@@ -249,7 +231,8 @@ export function normalizeMarketEntry(value: unknown): AdapterMarketEntry {
   const compatibility = record(item.compatibility)
   return {
     id: stringValue(item.id), name: stringValue(item.name || item.id), version: stringValue(item.version || release.version, '—'),
-    platform: formatPlatform(stringValue(item.platform || item.category, '未声明')), description: stringValue(item.description), repository: stringValue(item.repository),
+    platform: formatAdapterPlatform(stringValue(item.platform || item.category), modelsFromAbi(record(compatibility.abi))),
+    description: stringValue(item.description), repository: stringValue(item.repository),
     authors: Array.isArray(item.authors) ? item.authors.map(author => stringValue(record(author).name || author)).filter(Boolean) : [stringValue(item.author)].filter(Boolean),
     downloadCount: typeof (item.downloadCount ?? item.download_count ?? release.downloadCount ?? release.download_count) === 'number' ? Number(item.downloadCount ?? item.download_count ?? release.downloadCount ?? release.download_count) : null,
     installedVersion: stringValue(record(item.installed).version || item.installed_version) || null,
