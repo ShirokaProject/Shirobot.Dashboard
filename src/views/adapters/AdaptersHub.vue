@@ -318,16 +318,32 @@
       @confirm="confirmMarketInstall"
     />
 
-    <el-dialog v-model="installed.instanceVisible.value" title="添加适配器实例" width="min(480px, 92vw)" :close-on-click-modal="false">
-      <p>复用已安装的适配器文件，每个实例独立配置、启动和停止。新实例先保持停用。</p>
-      <el-form label-position="top" @submit.prevent="installed.createInstance">
-        <el-form-item label="实例 ID"><el-input v-model="installed.instanceId.value" placeholder="例如：qq-work" maxlength="64" /></el-form-item>
-        <el-form-item label="显示名称"><el-input v-model="installed.instanceName.value" placeholder="例如：工作群机器人（可选）" maxlength="100" /></el-form-item>
+    <!-- Same frame as the install dialog: 24px padding that suits its large corners, blurred backdrop -->
+    <el-dialog
+      v-model="installed.instanceVisible.value"
+      title="添加适配器实例"
+      class="plugin-upload-dialog"
+      modal-class="plugin-upload-overlay"
+      append-to-body
+      align-center
+      :close-on-click-modal="false"
+    >
+      <p class="instance-intro">同一个适配器可以运行多个实例，例如同时登录两个 QQ 号。每个实例有自己的配置，可单独启动和停止；新实例创建后先停用，填好配置再启动。</p>
+      <el-form label-position="top" class="instance-form" @submit.prevent="createInstance">
+        <el-form-item label="实例 ID">
+          <el-input v-model="installed.instanceId.value" placeholder="例如：qq-work" maxlength="64" />
+          <p v-if="instanceIdError" class="field-error">{{ instanceIdError }}</p>
+          <p class="field-hint">实例的唯一标识，创建后用于日志、控制台命令（<code>adapter start qq-work</code>）和权限列表（Owner 写作 <code>qq-work:123456</code>）。只能使用英文字母、数字、点、横线和下划线。</p>
+        </el-form-item>
+        <el-form-item label="显示名称">
+          <el-input v-model="installed.instanceName.value" placeholder="例如：工作群机器人" maxlength="100" />
+          <p class="field-hint">可选，在 Dashboard 和日志中代替实例 ID 显示。</p>
+        </el-form-item>
       </el-form>
       <el-alert v-if="installed.instanceError.value" :title="installed.instanceError.value" type="error" :closable="false" show-icon />
       <template #footer>
         <el-button :disabled="Boolean(installed.operation.value)" @click="installed.instanceVisible.value = false">取消</el-button>
-        <el-button type="primary" :loading="Boolean(installed.operation.value)" :disabled="!installed.instanceId.value.trim()" @click="installed.createInstance">创建实例</el-button>
+        <el-button type="primary" :loading="Boolean(installed.operation.value)" :disabled="!installed.instanceId.value.trim() || Boolean(instanceIdError)" @click="createInstance">创建实例</el-button>
       </template>
     </el-dialog>
 
@@ -391,6 +407,18 @@ function setTab(next: HubTab) {
 }
 
 // One search box: the installed list filters locally, the catalog uses the market's keyword.
+// The host's rule (AdapterPackageManager.ValidateInstanceId), checked as you type rather than after submitting.
+const instanceIdError = computed(() => {
+  const id = installed.instanceId.value.trim()
+  // Name what is wrong, since the hint below already states the rule.
+  const invalid = [...new Set(id.replace(/[A-Za-z0-9._-]/g, ''))].map(character => character === ' ' ? '空格' : character)
+  return invalid.length ? `不能包含：${invalid.join(' ')}` : ''
+})
+
+function createInstance() {
+  if (!instanceIdError.value) void installed.createInstance()
+}
+
 const installedKeyword = ref('')
 const keyword = computed({
   get: () => tab.value === 'installed' ? installedKeyword.value : market.keyword.value,
@@ -595,6 +623,36 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
 </script>
 
 <style scoped src="../plugins/PluginsHub.css"></style>
+<style scoped src="../plugin/components/PluginUploadDialog.css"></style>
+<style scoped>
+.instance-intro {
+  margin: 0 0 var(--md-space-4);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.instance-form :deep(.el-form-item__content) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--md-space-1);
+}
+
+.field-hint {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.field-error {
+  margin: 0;
+  color: var(--md-sys-color-error);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.field-hint code {
+  font: 400 12px / 18px var(--font-mono);
+}
+</style>
 <style scoped>
 .row-icon.restart { color: var(--md-sys-color-warning); }
 </style>
