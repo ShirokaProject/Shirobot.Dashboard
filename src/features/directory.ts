@@ -41,8 +41,8 @@ export function directoryOptions(kind: DirectoryKind, entries: readonly Director
 }
 
 /**
- * What a search shows: nothing until something is typed (a full friend list buries the form), then the best
- * few matches, names starting with the query first, then numbers starting with it, then anything containing it.
+ * Matches for a search, best first: names starting with the query, then numbers starting with it, then anything
+ * containing it. Nothing for an empty query.
  */
 export function searchDirectory(options: readonly DirectoryOption[], query: string, limit = 8): DirectoryOption[] {
   const text = query.trim().toLowerCase()

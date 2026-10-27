@@ -22,7 +22,7 @@
         <span class="option-id">{{ option.id }}<template v-if="option.instances"> · {{ option.instances }}</template></span>
       </el-option>
       <template #empty>
-        <p class="dropdown-hint">{{ query ? '没有匹配，回车直接添加' : kind === 'users' ? '输入昵称或账号搜索好友，也可直接输入 实例ID:用户ID' : '输入群名或群号搜索' }}</p>
+        <p class="dropdown-hint">{{ query ? '没有匹配，回车直接添加' : kind === 'users' ? '没有可选的好友，可直接输入 实例ID:用户ID' : '没有可选的群，可直接输入群号' }}</p>
       </template>
     </el-select>
     <p v-if="error || unavailable.length" class="picker-note">
@@ -53,12 +53,15 @@ const error = ref('')
 const query = ref('')
 
 const options = computed(() => directoryOptions(props.kind, listing.value.entries))
-// Before typing, the menu shows only what is chosen (to remove it); Element Plus also keeps the labels of
-// options it has rendered, so chosen tags keep their name and number after a search hides them.
+// Before typing: the chosen first, then everything else to browse; the compact rows scroll within about six.
+// A search shows every match, best first. Element Plus keeps the labels of options it has rendered, so chosen
+// tags keep their name and number while a search hides them.
 const shown = computed<DirectoryOption[]>(() => {
-  if (query.value.trim()) return searchDirectory(options.value, query.value)
+  if (query.value.trim()) return searchDirectory(options.value, query.value, Number.POSITIVE_INFINITY)
   const byValue = new Map(options.value.map(option => [option.value, option]))
-  return props.modelValue.map(value => byValue.get(value) ?? { value, name: value, id: '', instances: '', label: value })
+  const chosen = props.modelValue.map(value => byValue.get(value) ?? { value, name: value, id: '', instances: '', label: value })
+  const chosenValues = new Set(props.modelValue)
+  return [...chosen, ...options.value.filter(option => !chosenValues.has(option.value))]
 })
 // Typed text becomes its own option only when nothing matches, so Enter takes the first match rather than the
 // half-typed name; with no match, Enter adds the text as typed (an ID the adapters cannot list).
