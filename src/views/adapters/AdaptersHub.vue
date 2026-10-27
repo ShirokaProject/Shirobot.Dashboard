@@ -636,9 +636,10 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
   gap: var(--md-space-1);
 }
 
-/* Quieter than the field labels: smaller and in the outline tone */
+/* Quieter than the field labels: smaller and in the outline tone, starting where the input's text does */
 .field-hint {
   margin: 0;
+  padding-inline: var(--md-space-4);
   color: var(--md-sys-color-outline);
   font-size: 12px;
   line-height: 18px;
@@ -646,6 +647,7 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
 
 .field-error {
   margin: 0;
+  padding-inline: var(--md-space-4);
   color: var(--md-sys-color-error);
   font: var(--md-sys-typescale-body-small);
 }
