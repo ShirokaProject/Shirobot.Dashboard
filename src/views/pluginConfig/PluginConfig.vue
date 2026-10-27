@@ -40,7 +40,10 @@
           <p>{{ target === 'adapter' ? '适配器配置' : '插件配置' }}<span class="sep">·</span><span class="mono">{{ pluginId }}</span></p>
         </div>
         <span v-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
-        <span v-else-if="saveMessage && !rawMode" class="head-state" :class="saveMessageType">{{ saveMessage }}</span>
+        <!-- A failure's reason is in the toast; repeating it here would crowd the title. -->
+        <span v-else-if="saveMessage && !rawMode" class="head-state" :class="saveMessageType" :title="saveMessage">
+          <span v-if="saveMessageType === 'error'" class="status-dot error" aria-hidden="true"></span>{{ saveMessageType === 'error' ? '保存失败' : saveMessage }}
+        </span>
         <button v-if="rawConfigAvailable || rawMode" type="button" class="md-button text raw-toggle" @click="toggleRawMode">
           <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
         </button>

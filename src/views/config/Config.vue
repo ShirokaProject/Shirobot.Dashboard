@@ -27,7 +27,8 @@
           <h2>{{ currentGroup?.label ?? '主程序配置' }}</h2>
           <p>{{ currentGroup?.description ?? '配置字段由主程序 Schema 描述。' }}</p>
         </div>
-        <span v-if="saveError" class="head-state error">{{ saveError }}</span>
+        <!-- The reason is in the toast; repeating it here would crowd the title. -->
+        <span v-if="saveError" class="head-state error" :title="saveError"><span class="status-dot error" aria-hidden="true"></span>保存失败</span>
         <span v-else-if="dirty" class="head-state"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
         <div class="button-group">
           <button type="button" class="md-button tonal" :disabled="!dirty || saving || loading || !!loadError" @click="discard">放弃修改</button>

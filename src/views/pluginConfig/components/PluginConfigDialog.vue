@@ -51,8 +51,8 @@
         <button type="button" class="md-button text" @click="openFullPage">
           <MdIcon name="open_in_new" />在完整页面打开
         </button>
-        <span v-if="state.saveMessage.value && !dirty" class="ws-saved" :class="state.saveMessageType.value">
-          {{ state.saveMessage.value }}
+        <span v-if="state.saveMessage.value && !dirty" class="ws-saved" :class="state.saveMessageType.value" :title="state.saveMessage.value">
+          {{ state.saveMessageType.value === 'error' ? '保存失败' : state.saveMessage.value }}
         </span>
         <span v-else-if="dirty" class="ws-dirty"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
         <div class="button-group">

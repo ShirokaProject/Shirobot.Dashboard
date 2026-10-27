@@ -168,8 +168,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--md-space-2);
+  /* A long status ellipsizes instead of squeezing the title */
+  max-width: 40%;
+  overflow: hidden;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .head-state.error {
