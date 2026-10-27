@@ -30,6 +30,16 @@
         @update:model-value="emit('update:modelValue', $event)"
       />
 
+      <DirectoryPicker
+        v-else-if="editor === 'directory'"
+        :kind="field.item.type === 'users' ? 'users' : 'groups'"
+        :input-id="inputId"
+        :model-value="Array.isArray(modelValue) ? modelValue.map(String) : []"
+        :placeholder="field.item.placeholder"
+        :disabled="isDisabled"
+        @update:model-value="emit('update:modelValue', $event)"
+      />
+
       <ScalarListEditor
         v-else-if="editor === 'scalarList'"
         :input-id="inputId"
@@ -135,6 +145,7 @@ import type { PluginConfigMap, PluginConfigValue } from '../../../api'
 import { createConfigField, isConfigObject, isFieldVisible, type ConfigField } from '../usePluginConfig'
 import JsonValueEditor from './JsonValueEditor.vue'
 import ScalarListEditor from './ScalarListEditor.vue'
+import DirectoryPicker from '../../../components/DirectoryPicker.vue'
 import SectionListEditor from './SectionListEditor.vue'
 
 const props = defineProps<{
@@ -160,6 +171,9 @@ const isDisabled = computed(() => props.disabled || !props.field.enabled)
 const editor = computed(() => {
   const item = props.field.item
   const value = props.modelValue
+  // "users" (instanceId:userId) and "groups" lists pick from what the adapters can see.
+  if ((item.type === 'users' || item.type === 'groups') && (value === undefined || value === null || Array.isArray(value)))
+    return 'directory'
   if (item.type === 'section' && item.fields?.length && (value === undefined || value === null || isConfigObject(value)))
     return 'section'
   if (item.type === 'array' && item.item_type === 'section' && item.item_fields?.length) return 'sectionList'

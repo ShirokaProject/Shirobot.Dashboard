@@ -205,9 +205,9 @@ const demoConfig: AppConfigResponse = {
     { key: 'auto_update_time', label: '自动更新时间', type: 'string', description: '自动更新的执行时间，格式 HH:mm，使用宿主所在系统的本地时区。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 24 },
     { key: 'auto_update_restart_on_pending', label: '热更新失败时自动重启', type: 'boolean', description: '自动更新时插件或适配器无法热替换（新版本已暂存，等待重启）时，自动重启宿主完成更新。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 26 },
     { key: 'avalonia_theme', label: '宿主主题', type: 'string', description: 'Avalonia 宿主主题。', options: ['Light', 'Dark', 'Auto'], group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 30 },
-    { key: 'owner_list', label: 'Owner 列表', type: 'array', item_type: 'string', description: '所有者账号列表。', group_id: 'permissions', group_label: '权限', group_icon: 'shield', group_description: '定义供插件权限检查使用的账号列表。', group_order: 30, order: 10 },
+    { key: 'owner_list', label: 'Owner 列表', type: 'users', item_type: 'string', description: '所有者账号列表。', group_id: 'permissions', group_label: '权限', group_icon: 'shield', group_description: '定义供插件权限检查使用的账号列表。', group_order: 30, order: 10 },
     { key: 'owner_notifications', label: '推送 Owner 通知', type: 'boolean', description: '私聊推送重要信息给 Owner：自动更新结果、更新失败、需要重启或手动操作等；待确认的更新可直接回复消息确认或取消。', group_id: 'permissions', group_label: '权限', group_order: 30, order: 15 },
-    { key: 'admin_list', label: 'Admin 列表', type: 'array', item_type: 'string', description: '管理员账号列表。', group_id: 'permissions', group_label: '权限', group_order: 30, order: 20 },
+    { key: 'admin_list', label: 'Admin 列表', type: 'users', item_type: 'string', description: '管理员账号列表。', group_id: 'permissions', group_label: '权限', group_order: 30, order: 20 },
     {
       key: 'plugin_routes', label: '插件路由', type: 'section', group_id: 'permissions', group_label: '权限', group_order: 30,
       fields: [{ key: 'default', label: '默认插件路由', type: 'section', fields: [
@@ -243,7 +243,7 @@ const demoConfig: AppConfigResponse = {
     auto_update_time: '02:00',
     auto_update_restart_on_pending: true,
     avalonia_theme: 'Light',
-    owner_list: ['1034028486'],
+    owner_list: ['milky-main:1034028486'],
     owner_notifications: true,
     admin_list: [],
     plugin_routes: { default: { mode: 'blacklist', groups: [] } },
@@ -951,6 +951,22 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     return { success: true } as T
   }
 
+  if (method === 'GET' && pathname === '/api/v1/directory/users') return {
+    entries: [
+      { instance: 'milky-main', instance_name: 'QQ 主号', id: '1034028486', name: '小白' },
+      { instance: 'milky-main', instance_name: 'QQ 主号', id: '730188102', name: 'Shiroka' },
+      { instance: 'tg', instance_name: 'Telegram', id: '5521039', name: 'shiro_dev' }
+    ],
+    unavailable: [{ instance: 'qq-official', instance_name: 'QQ 官方', reason: '不支持读取好友列表' }]
+  } as T
+  if (method === 'GET' && pathname === '/api/v1/directory/groups') return {
+    entries: [
+      { instance: 'milky-main', instance_name: 'QQ 主号', id: '1034028486', name: 'ShiroBot 交流群' },
+      { instance: 'milky-main', instance_name: 'QQ 主号', id: '913449089', name: '测试群' },
+      { instance: 'milky-alt', instance_name: 'QQ 小号', id: '913449089', name: '测试群' }
+    ],
+    unavailable: []
+  } as T
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return { ...clone(demoPluginConfig), raw_config: true } as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[]; priority?: number | null } }

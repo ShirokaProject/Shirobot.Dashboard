@@ -86,11 +86,10 @@
 
           <div v-if="routes.mode !== 'default'" class="route-groups">
             <label for="route-groups"><strong>{{ routes.mode === 'whitelist' ? '只在这些群组生效' : '在这些群组不生效' }}</strong></label>
-            <el-input-tag
-              id="route-groups"
+            <DirectoryPicker
+              kind="groups"
+              input-id="route-groups"
               :model-value="routeGroups"
-              :delimiter="ID_TAG_DELIMITER"
-              placeholder="输入群组 ID 后回车，可粘贴多个"
               @update:model-value="emit('update:routeGroups', normalizeIdTags($event))"
             />
           </div>
@@ -143,7 +142,8 @@ import type { PluginConfigMap, PluginConfigValue, PluginListeners, PluginRoutesC
 import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
 import { groupPluginListeners } from '../../../features/plugins/listeners'
 import ConfigFieldRow from './ConfigFieldRow.vue'
-import { ID_TAG_DELIMITER, normalizeIdTags } from '../../../features/idTags'
+import { normalizeIdTags } from '../../../features/idTags'
+import DirectoryPicker from '../../../components/DirectoryPicker.vue'
 
 const props = defineProps<{
   /** A group key, or ROUTES_VIEW */
