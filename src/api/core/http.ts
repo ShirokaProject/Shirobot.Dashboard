@@ -1,16 +1,7 @@
 import { getDashboardSession, getSessionBaseUrl, isDemoMode } from '../../auth/session'
+import { ApiError } from './errors'
 
-export class ApiError extends Error {
-  readonly status: number
-  readonly body?: unknown
-
-  constructor(message: string, status: number, body?: unknown) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-    this.body = body
-  }
-}
+export { ApiError, getApiErrorMessage } from './errors'
 
 export const HOST_STATE_CHANGED_EVENT = 'shirobot-host-state-changed'
 
@@ -19,19 +10,6 @@ let unauthorizedHandler: (() => void) | undefined
 /** Called once the backend rejects the session's key (HTTP 401) on a regular request. */
 export function setUnauthorizedHandler(handler: () => void) {
   unauthorizedHandler = handler
-}
-
-export function getApiErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof ApiError) {
-    if (typeof error.body === 'string' && error.body.trim()) return error.body
-    if (error.body && typeof error.body === 'object' && 'message' in error.body) {
-      const message = (error.body as { message?: unknown }).message
-      if (typeof message === 'string' && message.trim()) return message
-    }
-  }
-
-  if (error instanceof Error && error.message.trim()) return error.message
-  return fallback
 }
 
 /** Resolve an API path against a backend origin ('' = same origin); defaults to the session's backend. */

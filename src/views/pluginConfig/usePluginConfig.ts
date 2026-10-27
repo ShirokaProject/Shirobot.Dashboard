@@ -15,6 +15,7 @@ import {
   type PluginListeners,
   type PluginRoutesConfig
 } from '../../api'
+import { toastError } from '../../features/toast'
 import { normalizeIdTags } from '../../features/idTags'
 
 export interface EnumOption {
@@ -404,6 +405,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       }
       saveMessageType.value = 'error'
       saveMessage.value = getApiErrorMessage(error, `${noun.value}配置保存失败`)
+      toastError(saveMessage.value)
       return false
     } finally {
       saving.value = false

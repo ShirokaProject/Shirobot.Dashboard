@@ -2,6 +2,7 @@ import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfigData } from '../../api'
 import type { ConfigField, ConfigGroup } from '../pluginConfig/usePluginConfig'
 import type { PluginConfigSchemaItem } from '../../api/plugins/config'
+import { toastError } from '../../features/toast'
 
 export interface HostConfigField extends ConfigField {
   path: string
@@ -222,6 +223,7 @@ export function useConfigPage() {
       return false
     } catch (error) {
       saveError.value = getApiErrorMessage(error, '配置保存失败')
+      toastError(saveError.value)
       return false
     } finally {
       saving.value = false

@@ -1,5 +1,6 @@
 import { computed, ref, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
 import { ApiError, getApiErrorMessage, getRawConfig, saveRawConfig } from '../../api'
+import { toastError } from '../../features/toast'
 import type { ConfigTarget } from './usePluginConfig'
 
 /** Load / edit / save a component's config.toml as text. Loads on demand, when raw mode is opened. */
@@ -49,6 +50,7 @@ export function useRawConfig(id: Ref<string>, target: MaybeRefOrGetter<ConfigTar
         revision.value = body.revision
       }
       error.value = getApiErrorMessage(cause, 'config.toml 保存失败')
+      toastError(error.value)
       return null
     } finally {
       saving.value = false
