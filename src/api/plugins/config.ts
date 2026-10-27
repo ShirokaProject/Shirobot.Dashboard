@@ -63,6 +63,12 @@ export interface PluginRoutesConfig {
   effective_groups: string[]
   default_mode: 'blacklist' | 'whitelist' | string
   default_groups: string[]
+  /** Dispatch priority in effect: smaller runs first. Absent on hosts without priorities. */
+  priority?: number
+  /** Whether the owner overrides the plugin's declared priority */
+  priority_configured?: boolean
+  /** The priority from the plugin's attribute, 2 when it declares none */
+  declared_priority?: number
 }
 
 export interface PluginConfigResponse {
@@ -80,6 +86,8 @@ export interface PluginConfigUpdateRequest {
   routes?: {
     mode: string
     groups: string[]
+    /** An override, or null to use the plugin's declared priority */
+    priority?: number | null
   }
 }
 

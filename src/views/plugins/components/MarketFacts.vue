@@ -2,6 +2,7 @@
   <dl class="facts">
     <div v-if="version"><dt>版本</dt><dd class="mono">v{{ version }}</dd></div>
     <div v-if="status"><dt>状态</dt><dd>{{ status }}</dd></div>
+    <div v-if="priority !== undefined"><dt>优先级</dt><dd class="mono" title="数字越小越先收到消息，可在插件配置的路由中修改。">{{ priority }}</dd></div>
     <div v-if="permissions?.length"><dt>权限</dt><dd>{{ permissions.join(' · ') }}</dd></div>
     <template v-if="plugin">
       <!-- Rows without a value are omitted rather than shown as dashes -->
@@ -26,6 +27,7 @@ defineProps<{
   compatibility: string
   version?: string
   status?: string
+  priority?: number
   permissions?: string[]
 }>()
 </script>

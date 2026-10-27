@@ -37,6 +37,7 @@
       :compatibility="compatibility"
       :version="plugin.version"
       :status="statusText(plugin.status)"
+      :priority="plugin.priority"
       :permissions="plugin.permissions"
     />
 

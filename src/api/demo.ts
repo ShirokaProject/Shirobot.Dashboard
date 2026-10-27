@@ -288,7 +288,10 @@ const demoPluginConfig: PluginConfigResponse = {
     effective_mode: 'blacklist',
     effective_groups: [],
     default_mode: 'blacklist',
-    default_groups: []
+    default_groups: [],
+    priority: 2,
+    priority_configured: false,
+    declared_priority: 2
   }
 }
 
@@ -931,7 +934,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return { ...clone(demoPluginConfig), raw_config: true } as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
-    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[] } }
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[]; priority?: number | null } }
     if (payload.config) demoPluginConfig.config = { ...demoPluginConfig.config, ...payload.config }
     if (payload.routes) {
       demoPluginConfig.routes = {
@@ -940,7 +943,11 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
         mode: payload.routes.mode ?? demoPluginConfig.routes.mode,
         groups: payload.routes.groups ?? demoPluginConfig.routes.groups,
         effective_mode: payload.routes.mode === 'default' ? demoPluginConfig.routes.default_mode : payload.routes.mode ?? demoPluginConfig.routes.effective_mode,
-        effective_groups: payload.routes.mode === 'default' ? demoPluginConfig.routes.default_groups : payload.routes.groups ?? demoPluginConfig.routes.effective_groups
+        effective_groups: payload.routes.mode === 'default' ? demoPluginConfig.routes.default_groups : payload.routes.groups ?? demoPluginConfig.routes.effective_groups,
+        ...(payload.routes.priority === undefined ? {} : {
+          priority: payload.routes.priority ?? demoPluginConfig.routes.declared_priority,
+          priority_configured: payload.routes.priority !== null
+        })
       }
     }
     return clone({

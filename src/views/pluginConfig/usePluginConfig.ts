@@ -300,7 +300,9 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       .sort((left, right) => left.order - right.order)
   })
 
-  const currentState = () => JSON.stringify({ config, mode: routes.mode, groups: routeGroups.value })
+  const currentState = () => JSON.stringify({
+    config, mode: routes.mode, groups: routeGroups.value, priority: routes.priority_configured ? routes.priority : null
+  })
   const dirty = computed(() => Boolean(snapshot.value) && currentState() !== snapshot.value)
 
   function markClean() {
@@ -372,7 +374,12 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       if (hasRoutes.value) {
         const response = await updatePluginConfig(pluginId.value, {
           config: { ...config },
-          routes: { mode: routes.mode, groups: routeGroups.value }
+          routes: {
+            mode: routes.mode,
+            groups: routeGroups.value,
+            // Hosts without priorities do not report one; leave the field out for them.
+            ...(routes.declared_priority === undefined ? {} : { priority: routes.priority_configured ? routes.priority : null })
+          }
         })
         if (response) assignUpdateResponse(response)
         else await load()

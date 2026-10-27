@@ -104,6 +104,7 @@ export interface BackendPlugin {
   latestVersion?: string
   hasUpdate?: boolean
   errorMessage?: string
+  priority?: number
   permissions?: string[]
   history?: Array<{ version: string; date: string }>
 }
@@ -123,6 +124,7 @@ function normalizePlugin(plugin: BackendPlugin): Plugin {
     category: plugin.category || 'Other',
     description: plugin.description || '',
     errorMessage: plugin.errorMessage,
+    priority: plugin.priority ?? undefined,
     permissions: plugin.permissions ?? [],
     history: plugin.history ?? [{ version: plugin.version, date: '-' }]
   }

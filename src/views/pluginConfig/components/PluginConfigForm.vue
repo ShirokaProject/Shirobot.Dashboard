@@ -96,6 +96,33 @@
           </div>
         </div>
 
+        <div v-if="routes.declared_priority !== undefined" class="group-card priority-card">
+          <div class="route-row">
+            <div>
+              <strong>优先级</strong>
+              <p>数字越小越先收到消息；被处理的消息不再交给数字更大的插件。插件声明为 {{ routes.declared_priority }}。</p>
+            </div>
+            <div class="priority-controls">
+              <el-input-number
+                id="route-priority"
+                class="number-input"
+                aria-label="优先级"
+                :model-value="routes.priority"
+                :step="1"
+                :step-strictly="true"
+                controls-position="right"
+                @update:model-value="setPriority"
+              />
+              <button
+                type="button"
+                class="md-button compact text"
+                :disabled="!routes.priority_configured"
+                @click="resetPriority"
+              >恢复插件默认</button>
+            </div>
+          </div>
+        </div>
+
         <!-- What actually applies right now, merged in from the old side panel -->
         <dl class="effective">
           <div><dt>当前生效</dt><dd>{{ modeLabel(routes.effective_mode) }}</dd></div>
@@ -103,6 +130,7 @@
           <div><dt>全局默认</dt><dd>{{ modeLabel(routes.default_mode) }}</dd></div>
           <div><dt>全局默认群组</dt><dd>{{ routes.default_groups.length ? routes.default_groups.join(', ') : '无' }}</dd></div>
           <div><dt>单独配置</dt><dd>{{ routes.configured ? '是' : '否，沿用全局默认' }}</dd></div>
+          <div v-if="routes.declared_priority !== undefined"><dt>优先级来源</dt><dd>{{ routes.priority_configured ? '单独设置' : '插件声明' }}</dd></div>
         </dl>
       </section>
     </template>
@@ -164,6 +192,18 @@ function setValue(group: ConfigGroup, key: string, value: PluginConfigValue) {
   }
   if (!isConfigObject(target[group.parentKey])) target[group.parentKey] = {}
   ;(target[group.parentKey] as PluginConfigMap)[key] = value
+}
+
+function setPriority(value: number | null | undefined) {
+  // Clearing the field means the plugin's own priority again.
+  if (typeof value !== 'number') return resetPriority()
+  props.routes.priority = value
+  props.routes.priority_configured = true
+}
+
+function resetPriority() {
+  props.routes.priority = props.routes.declared_priority
+  props.routes.priority_configured = false
 }
 
 const routeModes = [
@@ -257,6 +297,20 @@ function modeLabel(mode: string) {
   margin: 2px 0 0;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-small);
+}
+
+.priority-card {
+  margin-top: var(--md-space-3);
+}
+
+.priority-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-2);
+}
+
+.priority-controls .number-input {
+  width: 128px;
 }
 
 .route-groups {
