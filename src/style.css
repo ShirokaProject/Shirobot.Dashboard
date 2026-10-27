@@ -717,3 +717,32 @@ textarea {
     font-size: 16px !important;
   }
 }
+
+/* Plugin action details: a centred dialog wide enough for reports, scrolling instead of growing past the screen */
+.action-details-box {
+  width: min(560px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.action-details-box .action-details {
+  text-align: left;
+}
+
+.action-details-box .action-details-summary {
+  margin: 0 0 var(--md-space-3);
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.action-details-box .action-details-text {
+  max-height: 50vh;
+  margin: 0;
+  overflow: auto;
+  padding: var(--md-space-3) var(--md-space-4);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--app-inset);
+  color: var(--md-sys-color-on-surface);
+  font: 400 13px / 20px var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

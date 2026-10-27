@@ -1,5 +1,5 @@
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, h, nextTick, onMounted, ref, watch } from 'vue'
 import { packageFileError, usePackageFileDrop } from '../../features/packages/fileDrop'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
@@ -200,6 +200,23 @@ export function usePluginsPage() {
     return ['danger', 'destructive', 'error'].includes(action.tone.toLowerCase())
   }
 
+  async function showActionDetails(title: string, summary: string, details: string, ok: boolean) {
+    const body = h('div', { class: 'action-details' }, [
+      summary ? h('p', { class: 'action-details-summary' }, summary) : null,
+      h('pre', { class: 'action-details-text' }, details.trimEnd())
+    ])
+    try {
+      await ElMessageBox.alert(body, title, {
+        type: ok ? 'success' : 'error',
+        confirmButtonText: '知道了',
+        customClass: 'action-details-box',
+        center: true
+      })
+    } catch {
+      // Closed with Esc or the close button.
+    }
+  }
+
   async function executePluginAction(plugin: Plugin, action: PluginActionDefinition) {
     if (hostOperation.value || runningPluginActionId.value) return
 
@@ -223,8 +240,13 @@ export function usePluginsPage() {
     actionMessage.value = ''
     try {
       const response = await runPluginAction(plugin.id, action.id)
-      actionMessage.value = response.message
-      actionMessageType.value = response.ok ? 'success' : 'error'
+      if (response.details?.trim()) {
+        // Details are meant to be read, not glimpsed in a toast; the summary stays the dialog's first line.
+        void showActionDetails(response.title || action.label, response.message, response.details, response.ok)
+      } else {
+        actionMessage.value = response.message
+        actionMessageType.value = response.ok ? 'success' : 'error'
+      }
       if (response.refresh) {
         await loadInstalledPlugins(plugin.id)
         await loadPluginActions(selectedPlugin.value)

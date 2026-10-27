@@ -81,6 +81,10 @@ export interface PluginActionResponse {
   ok: boolean
   message: string
   refresh: boolean
+  /** Heading for details; the action's label unless the plugin set one. Absent on older hosts. */
+  title?: string
+  /** Longer text the plugin wants read, shown in a centred dialog instead of a toast */
+  details?: string | null
 }
 
 export interface GithubPluginInstallRequest {

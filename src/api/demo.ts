@@ -527,6 +527,15 @@ function createDemoPluginActions(plugin: BackendPlugin): PluginActionDefinition[
   }
 
   actions.push({
+    id: 'report',
+    label: '生成报告',
+    description: '演示：结果在居中对话框中显示。',
+    tone: 'neutral',
+    requires_confirmation: false,
+    confirmation_text: ''
+  })
+
+  actions.push({
     id: 'uninstall',
     label: '卸载插件',
     description: '移除插件文件和当前加载实例。',
@@ -817,6 +826,16 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
       demoPlugins.splice(demoPlugins.indexOf(plugin), 1)
       const marketPlugin = demoMarketplace.plugins.find(item => item.id === plugin.id)
       if (marketPlugin) delete marketPlugin.installed
+    }
+
+    if (actionId === 'report') {
+      return {
+        ok: true,
+        message: '报告已生成。',
+        refresh: false,
+        title: `${plugin.name} 运行报告`,
+        details: `处理消息：1,284 条\n命令命中：312 次\n平均耗时：48 ms\n\n最近错误：无`
+      } as T
     }
 
     return { ok: true, message: `${plugin.name}：${actionId} 已完成。`, refresh: true } as T
