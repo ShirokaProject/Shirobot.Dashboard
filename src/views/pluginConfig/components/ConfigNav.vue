@@ -10,7 +10,8 @@
       @click="emit('update:view', group.key)"
     >
       <span>{{ group.label }}</span>
-      <small>{{ group.fields.length }}</small>
+      <MdIcon v-if="group.dashboardTab" :name="group.dashboardTab.icon || 'open_in_new'" />
+      <small v-else>{{ group.fields.length }}</small>
     </button>
     <hr v-if="groups.length && (showRoutes || showInstance || showListeners)" />
     <button

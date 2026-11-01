@@ -38,6 +38,10 @@
       </section>
     </template>
 
+    <template v-else-if="dashboardTab">
+      <PluginTabPanel :tab="dashboardTab" />
+    </template>
+
     <template v-else-if="view !== ROUTES_VIEW">
       <div v-if="!groups.length" class="form-empty">
         <MdIcon name="settings" />
@@ -116,6 +120,7 @@ import type { PluginConfigMap, PluginConfigValue, PluginListeners, PluginRoutesC
 import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
 import { groupPluginListeners } from '../../../features/plugins/listeners'
 import ConfigFieldRow from './ConfigFieldRow.vue'
+import PluginTabPanel from './PluginTabPanel.vue'
 import { ID_TAG_DELIMITER, normalizeIdTags } from '../../../features/idTags'
 
 const props = defineProps<{
@@ -142,6 +147,11 @@ const instanceFields = computed<ConfigField[]>(() => [
 const visibleGroups = computed(() => {
   const match = props.groups.find(group => group.key === props.view)
   return match ? [match] : props.groups.slice(0, 1)
+})
+
+const dashboardTab = computed(() => {
+  const group = props.groups.find(item => item.key === props.view)
+  return group?.dashboardTab ?? null
 })
 
 const emit = defineEmits<{

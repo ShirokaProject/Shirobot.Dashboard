@@ -12,6 +12,7 @@ import {
   type PluginConfigSchemaItem,
   type PluginConfigUpdateResponse,
   type PluginConfigValue,
+  type PluginDashboardTab,
   type PluginListeners,
   type PluginRoutesConfig
 } from '../../api'
@@ -41,6 +42,8 @@ export interface ConfigGroup {
   /** Set when the group is a top-level `section`: its fields live in `config[parentKey]`. */
   parentKey?: string
   description?: string
+  /** Set for a plugin-declared tab rendered by a common dashboard renderer. */
+  dashboardTab?: PluginDashboardTab
 }
 
 const SCALAR_TYPES = new Set(['string', 'text', 'password', 'number', 'integer', 'boolean', 'select'])
@@ -255,6 +258,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   const routeGroups = ref<string[]>([])
   // undefined: not reported (adapter, a host older than 1.0.2, or the request failed); null: plugin not loaded
   const listeners = ref<PluginListeners | null | undefined>(undefined)
+  const dashboardTabs = ref<PluginDashboardTab[]>([])
   // Only components that have a config get the config.toml text editor.
   const rawConfigAvailable = ref(false)
   const snapshot = ref('')
@@ -328,8 +332,18 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
     }
     const plain: ConfigGroup[] = [...byGroup.entries()]
       .map(([key, group]) => ({ key, label: group.label, order: group.order, fields: group.fields.sort(byOrder) }))
+    const custom: ConfigGroup[] = dashboardTabs.value
+      .filter(tab => tab.id && tab.label)
+      .map(tab => ({
+        key: `dashboard:${tab.id}`,
+        label: tab.label,
+        order: tab.order ?? Number.MAX_SAFE_INTEGER,
+        fields: [],
+        description: tab.description ?? '',
+        dashboardTab: tab
+      }))
     // Stable sort: explicit category order first, then plain groups before section categories.
-    return [...plain, ...sections.map(({ section: _section, ...group }) => group)]
+    return [...plain, ...sections.map(({ section: _section, ...group }) => group), ...custom]
       .sort((left, right) => left.order - right.order)
   })
 
@@ -369,6 +383,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
     loadError.value = ''
     saveMessage.value = ''
     snapshot.value = ''
+    dashboardTabs.value = []
     try {
       if (hasRoutes.value) {
         // Listeners are informational: a failure must not block editing the config.
@@ -378,6 +393,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
         ])
         assignResponse(response)
         listeners.value = detail?.listeners
+        dashboardTabs.value = detail?.dashboard_tabs ?? []
         rawConfigAvailable.value = response.raw_config === true
       } else {
         listeners.value = undefined
@@ -391,6 +407,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       applyConfig({})
       rawConfigAvailable.value = false
       schema.value = []
+      dashboardTabs.value = []
       applyRoutes({ ...emptyRoutes })
       loadError.value = getApiErrorMessage(error, `${noun.value}配置读取失败`)
     } finally {
@@ -445,6 +462,7 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   return {
     hasRoutes,
     listeners,
+    dashboardTabs,
     rawConfigAvailable,
     loading,
     saving,

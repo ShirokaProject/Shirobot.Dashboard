@@ -168,12 +168,77 @@ export interface PluginListeners {
   events: PluginEventRoute[]
 }
 
+export interface PluginDashboardTabSource {
+  path: string
+  method?: string
+}
+
+export interface PluginDashboardTabFields {
+  image?: string | null
+  title?: string | null
+  description?: string | null
+  tags?: string | null
+  meta?: string | null
+}
+
+export interface PluginDashboardTabColumn {
+  key: string
+  label: string
+  type?: string
+}
+
+export interface PluginDashboardTabFilterOption {
+  value: string
+  label: string
+}
+
+export interface PluginDashboardTabFilter {
+  key: string
+  label: string
+  type?: string
+  options?: PluginDashboardTabFilterOption[] | null
+}
+
+export interface PluginDashboardTabPagination {
+  page_param?: string
+  page_size_param?: string
+  page_size?: number
+}
+
+export interface PluginDashboardTabAction {
+  id: string
+  label: string
+  path: string
+  method?: string
+  confirm?: string | null
+  tone?: string
+}
+
+/** A plugin-declared tab rendered by a common dashboard renderer. */
+export interface PluginDashboardTab {
+  contract_version?: number
+  id: string
+  label: string
+  kind: string
+  icon?: string | null
+  description?: string | null
+  order?: number | null
+  source?: PluginDashboardTabSource | null
+  fields?: PluginDashboardTabFields | null
+  columns?: PluginDashboardTabColumn[] | null
+  filters?: PluginDashboardTabFilter[] | null
+  pagination?: PluginDashboardTabPagination | null
+  actions?: PluginDashboardTabAction[] | null
+}
+
 export interface PluginDetailResponse {
   id: string
   name: string
   version: string
   /** Null while the plugin is not loaded; absent on older hosts */
   listeners?: PluginListeners | null
+  /** Absent on older hosts, or when the plugin declares no custom tabs */
+  dashboard_tabs?: PluginDashboardTab[] | null
 }
 
 export function getPluginDetail(pluginId: string) {
