@@ -270,18 +270,51 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
       if (item.type === 'section' && item.fields?.length) {
         const values = isConfigObject(config[item.key]) ? config[item.key] as PluginConfigMap : {}
         const { label } = splitGroup(item)
-        sections.push({
-          key: `section:${item.key}`,
-          label,
-          description: item.description ?? '',
-          order: item.group_order ?? Number.MAX_SAFE_INTEGER,
-          parentKey: item.key,
-          section: true,
-          fields: item.fields
-            .filter(child => conditionsPass(child, 'visible', values))
-            .map(child => createConfigField(child, values))
-            .sort(byOrder)
-        })
+        const children = item.fields.filter(child => conditionsPass(child, 'visible', values))
+        const hasChildGroups = children.some(child => Boolean(child.group_id || child.group || child.group_label))
+        // A section with grouped children becomes several tabs, driven entirely by the
+        // plugin's schema. Sections without groups keep their original single tab.
+        if (!hasChildGroups) {
+          sections.push({
+            key: `section:${item.key}`,
+            label,
+            description: item.description ?? '',
+            order: item.group_order ?? Number.MAX_SAFE_INTEGER,
+            parentKey: item.key,
+            section: true,
+            fields: children.map(child => createConfigField(child, values)).sort(byOrder)
+          })
+          continue
+        }
+        const bySectionGroup = new Map<string, { label: string; order: number; description: string; fields: ConfigField[] }>()
+        for (const child of children) {
+          const { group, groupLabel } = splitGroup(child)
+          const key = group || 'default'
+          const groupDescription = child.group_description?.trim() || ''
+          const existing = bySectionGroup.get(key)
+          if (existing) {
+            if (!existing.description && groupDescription) existing.description = groupDescription
+            existing.fields.push(createConfigField(child, values))
+          } else {
+            bySectionGroup.set(key, {
+              label: groupLabel || label,
+              order: child.group_order ?? item.group_order ?? Number.MAX_SAFE_INTEGER,
+              description: groupDescription,
+              fields: [createConfigField(child, values)]
+            })
+          }
+        }
+        for (const [groupKey, group] of bySectionGroup) {
+          sections.push({
+            key: `section:${item.key}:${groupKey}`,
+            label: group.label,
+            description: group.description,
+            order: group.order,
+            parentKey: item.key,
+            section: true,
+            fields: group.fields.sort(byOrder)
+          })
+        }
         continue
       }
       const field = toField(item, config)
