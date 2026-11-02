@@ -15,7 +15,7 @@
           @click="activeSource = source.key"
         >
           <span class="source-text">
-            <strong>{{ source.label }}</strong>
+            <strong :title="source.label">{{ source.label }}</strong>
             <small v-if="source.description">{{ source.description }}</small>
           </span>
           <span class="source-count">
@@ -91,9 +91,9 @@
               v-if="activeSource === 'ALL'"
               type="button"
               class="source"
-              :title="`只看 ${log.source}`"
+              :title="`只看 ${sourceLabel(log.source)}（${log.source}）`"
               @click="activeSource = log.source"
-            >{{ log.source === 'system' ? 'System' : log.source }}</button>
+            >{{ sourceLabel(log.source) }}</button>
             <span class="message"><template v-for="(part, index) in highlight(log.message)" :key="index"><mark v-if="part.hit">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
           </div>
 
@@ -124,6 +124,7 @@ const {
   activeLevel,
   activeSource,
   activeSourceLabel,
+  sourceLabel,
   sourceGroups,
   allSources,
   autoRefresh,

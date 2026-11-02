@@ -94,6 +94,11 @@ export function useLogsPage() {
 
   const runtimeLogs = ref<RuntimeLog[]>([])
   const logSources = ref<LogSourceInfo[]>([])
+  const adapterSources = computed(() => new Map(logSources.value
+    .filter(source => source.kind === 'adapter').map(source => [source.source, source])))
+  function sourceLabel(source: string) {
+    return source === 'system' ? 'System' : adapterSources.value.get(source)?.plugin_name || source
+  }
   const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
   let socket: WebSocket | null = null
   let stopDemoStream: (() => void) | null = null
@@ -105,7 +110,8 @@ export function useLogsPage() {
   // Everything except the level filter, so the level counts describe what's on screen.
   const scopedLogs = computed(() => runtimeLogs.value.filter(log => {
     const matchSource = activeSource.value === 'ALL' || log.source === activeSource.value
-    const matchKeyword = !normalizedKeyword.value || [log.message, log.source]
+    const adapter = adapterSources.value.get(log.source)
+    const matchKeyword = !normalizedKeyword.value || [log.message, log.source, sourceLabel(log.source), adapter?.description ?? '']
       .some(value => value.toLowerCase().includes(normalizedKeyword.value))
     return matchSource && matchKeyword
   }))
@@ -328,6 +334,7 @@ export function useLogsPage() {
     activeLevel,
     activeSource,
     activeSourceLabel,
+    sourceLabel,
     sourceGroups,
     allSources,
     autoRefresh,
