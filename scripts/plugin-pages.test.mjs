@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import test, { before, after } from 'node:test'
 import { createServer } from 'vite'
+import { createSSRApp, effectScope, nextTick, ref } from 'vue'
+import { renderToString } from 'vue/server-renderer'
 
 let server, pages, http
 const originalFetch = globalThis.fetch
@@ -65,4 +67,58 @@ test('binary requests report authentication failure through the shared session h
   response = json({ message: 'invalid key' }, 401)
   await assert.rejects(pages.getPluginPageImage('Meme', 'library', 'id'), error => error.status === 401)
   assert.equal(unauthorized, 1)
+})
+
+const examplePage = { id: 'library', title: '表情库', kind: 'gallery', page_size: 24, columns: [], filters: [], actions: [] }
+async function settled(predicate) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise(resolve => setImmediate(resolve))
+    if (predicate()) return
+  }
+  assert.ok(predicate(), 'Async navigation did not settle')
+}
+test('config navigation renders configuration, plugin pages and routes as three separated sections', async () => {
+  const { default: ConfigNav } = await server.ssrLoadModule('/src/views/pluginConfig/components/ConfigNav.vue')
+  const { pluginPageView } = await server.ssrLoadModule('/src/views/pluginPages/usePluginPages.ts')
+  const html = await renderToString(createSSRApp(ConfigNav, {
+    groups: [{ key: 'meme', label: '表情库设置', fields: [] }], pages: [examplePage],
+    view: pluginPageView('library'), showRoutes: true, showListeners: true
+  }))
+  assert.equal([...html.matchAll(/<hr/g)].length, 2)
+  assert.ok(html.indexOf('aria-label="配置分组"') < html.indexOf('aria-label="插件页面"'))
+  assert.ok(html.indexOf('aria-label="插件页面"') < html.indexOf('aria-label="路由与监听"'))
+  assert.ok(html.includes('aria-current="true"'))
+})
+test('page navigation ignores stale plugin responses and cancels on scope disposal', async () => {
+  const { usePluginPages } = await server.ssrLoadModule('/src/views/pluginPages/usePluginPages.ts')
+  requests = []
+  let resolveOld
+  response = () => new Promise(resolve => { resolveOld = resolve })
+  const id = ref('old'), enabled = ref(true), scope = effectScope()
+  const navigation = scope.run(() => usePluginPages(id, enabled))
+  await nextTick()
+  const oldSignal = requests[0].init.signal
+  response = json({ pages: [examplePage] }); id.value = 'new'
+  await settled(() => !navigation.loading.value && navigation.pages.value.length === 1)
+  assert.equal(oldSignal.aborted, true)
+  resolveOld(json({ pages: [{ ...examplePage, id: 'stale' }] })())
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(navigation.pages.value[0].id, 'library')
+  requests = []; response = () => new Promise(() => {})
+  void navigation.load(); await nextTick()
+  scope.stop()
+  assert.equal(requests[0].init.signal.aborted, true)
+})
+test('older hosts and adapter targets do not break the configuration workspace', async () => {
+  const { usePluginPages } = await server.ssrLoadModule('/src/views/pluginPages/usePluginPages.ts')
+  response = json({ error: 'not_found' }, 404)
+  const scope = effectScope(), enabled = ref(true)
+  const navigation = scope.run(() => usePluginPages('plugin', enabled))
+  await settled(() => !navigation.loading.value)
+  assert.deepEqual([...navigation.pages.value], [])
+  assert.equal(navigation.error.value, '')
+  requests = []; enabled.value = false; await nextTick()
+  await navigation.load()
+  assert.equal(requests.length, 0)
+  scope.stop()
 })

@@ -28,12 +28,17 @@
         v-model:view="view"
         class="ws-nav"
         :groups="state.groups.value"
+        :pages="pageNavigation.pages.value"
+        :pages-loading="pageNavigation.loading.value"
+        :pages-error="pageNavigation.error.value"
+        @retry-pages="pageNavigation.load"
         :show-routes="state.hasRoutes.value"
         :show-instance="target === 'adapter'"
         :show-listeners="state.hasRoutes.value && state.listeners.value !== undefined"
       />
       <div class="ws-content">
-        <PluginConfigForm
+        <PluginPagePanel v-if="activePage" :key="`${pluginId}:${activePage.id}`" :plugin-id="pluginId" :definition="activePage" />
+        <PluginConfigForm v-else
           v-model:instance="instanceDraft"
           :instance-error="instanceDirty ? idError : ''"
           v-model:route-groups="state.routeGroups.value"
@@ -58,6 +63,7 @@
         <div class="button-group">
           <button type="button" class="md-button tonal" @click="requestClose()">{{ dirty ? '取消' : '关闭' }}</button>
           <button
+            v-if="!activePage"
             type="button"
             class="md-button filled"
             :disabled="!dirty || state.saving.value || instanceSaving || Boolean(instanceDirty && idError)"
@@ -75,9 +81,11 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getApiErrorMessage, updateAdapterInstance } from '../../../api'
 import MdIcon from '../../../components/MdIcon.vue'
-import { INSTANCE_VIEW, ROUTES_VIEW, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
+import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
 import ConfigNav from './ConfigNav.vue'
 import PluginConfigForm from './PluginConfigForm.vue'
+import PluginPagePanel from '../../pluginPages/PluginPagePanel.vue'
+import { usePluginPages, selectedPluginPage, pluginPageView } from '../../pluginPages/usePluginPages'
 
 const props = withDefaults(defineProps<{ visible: boolean; pluginId: string; pluginName: string; target?: ConfigTarget }>(), { target: 'plugin' })
 const emit = defineEmits<{
@@ -94,14 +102,20 @@ const state = usePluginConfig(activeId, () => props.target)
 
 // Current category: a group key or ROUTES_VIEW. Starts on the first group each time.
 const view = ref('')
+const pageNavigation = usePluginPages(activeId, () => props.visible && props.target === 'plugin')
+const activePage = computed(() => selectedPluginPage(pageNavigation.pages.value, view.value))
 watch(() => state.groups.value, groups => {
   // Still loading: leave the choice for when the groups arrive.
   if (!groups.length) return
-  if (view.value === ROUTES_VIEW || view.value === INSTANCE_VIEW || groups.some(group => group.key === view.value)) return
+  if (activePage.value || view.value === ROUTES_VIEW || view.value === LISTENERS_VIEW || view.value === INSTANCE_VIEW || groups.some(group => group.key === view.value)) return
   view.value = groups[0].key
 })
-watch(() => props.visible, open => {
-  if (open) view.value = state.groups.value[0]?.key ?? ''
+watch(() => [props.visible, props.pluginId, props.target], () => {
+  view.value = ''
+})
+watch([state.loading, pageNavigation.loading, pageNavigation.pages], () => {
+  if (!props.visible || state.loading.value || pageNavigation.loading.value || view.value) return
+  view.value = state.groups.value[0]?.key ?? (pageNavigation.pages.value[0] ? pluginPageView(pageNavigation.pages.value[0].id) : '')
 })
 // An adapter without config fields still has its instance section to show.
 watch(() => state.loading.value, loading => {
@@ -169,7 +183,8 @@ async function openFullPage() {
   if (!(await confirmDiscard())) return
   emit('update:visible', false)
   const base = props.target === 'adapter' ? 'adapters' : 'plugins'
-  void router.push(`/${base}/${encodeURIComponent(props.pluginId)}/config`)
+  void router.push({ path: `/${base}/${encodeURIComponent(props.pluginId)}/config`,
+    query: activePage.value ? { page: activePage.value.id } : {} })
 }
 </script>
 

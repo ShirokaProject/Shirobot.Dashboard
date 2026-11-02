@@ -1,17 +1,7 @@
 <template>
-  <el-dialog :model-value="visible" :title="`${pluginName} · 页面`" width="min(1120px, 95vw)" append-to-body
-    @update:model-value="emit('update:visible', $event)">
-    <div class="plugin-pages">
-      <p v-if="error" role="alert" class="page-error">{{ error }}</p>
-      <p v-if="loadingPages" role="status">正在读取页面…</p>
-      <p v-else-if="!pages.length && !error">这个插件没有提供独立页面。</p>
-      <template v-else-if="pages.length">
-        <nav class="page-tabs" aria-label="插件页面">
-          <button v-for="entry in pages" :key="entry.id" type="button" class="md-button toggle"
-            :class="{ selected: selectedId === entry.id }" :aria-pressed="selectedId === entry.id" :disabled="Boolean(running)"
-            @click="selectPage(entry.id)"><MdIcon :name="entry.icon || 'dashboard'" />{{ entry.title }}</button>
-        </nav>
-        <template v-if="selected">
+  <section class="plugin-pages">
+    <h3 class="page-title">{{ selected.title }}</h3>
+    <p v-if="error" role="alert" class="page-error">{{ error }}</p>
           <p v-if="selected.description">{{ selected.description }}</p>
           <form class="page-filters" @submit.prevent="page = 1; void loadData()">
             <label v-for="filter in selected.filters" :key="filter.key">
@@ -57,30 +47,22 @@
               <button type="button" class="md-button text" :disabled="!data.has_more || Boolean(running)" @click="page++; void loadData()">下一页</button>
             </footer>
           </template>
-        </template>
-      </template>
-    </div>
-    <template #footer><button type="button" class="md-button tonal" @click="emit('update:visible', false)">关闭</button></template>
-  </el-dialog>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MdIcon from '../../components/MdIcon.vue'
-import { getApiErrorMessage, getPluginPages, getPluginPageData, getPluginPageImage, runPluginPageAction,
+import { getApiErrorMessage, getPluginPageData, getPluginPageImage, runPluginPageAction,
   type PluginPage, type PluginPageData, type PluginPageItem } from '../../api'
 
-const props = defineProps<{ visible: boolean; pluginId: string; pluginName: string }>()
-const emit = defineEmits<{ 'update:visible': [value: boolean] }>()
-const pages = ref<PluginPage[]>([])
-const selectedId = ref('')
-const selected = computed(() => pages.value.find(entry => entry.id === selectedId.value))
+const props = defineProps<{ pluginId: string; definition: PluginPage }>()
+const selected = computed(() => props.definition)
 const filters = ref<Record<string, string>>({})
 const data = ref<PluginPageData | null>(null)
 const page = ref(1)
 const loading = ref(false)
-const loadingPages = ref(false)
 const error = ref('')
 const running = ref('')
 const images = ref<Record<string, string>>({})
@@ -95,30 +77,16 @@ function clearImages() {
 }
 function stop() {
   lifetime.abort(); request?.abort(); actionRequest?.abort(); clearImages()
-  loading.value = false; loadingPages.value = false; running.value = ''
+  loading.value = false; running.value = ''
 }
-watch(() => [props.visible, props.pluginId], async () => {
-  stop(); pages.value = []; selectedId.value = ''; data.value = null; error.value = ''
-  if (!props.visible || !props.pluginId) return
-  lifetime = new AbortController()
-  const signal = lifetime.signal
-  loadingPages.value = true
-  try {
-    const result = await getPluginPages(props.pluginId, signal)
-    if (signal.aborted) return
-    pages.value = result.pages ?? []
-    if (pages.value[0]) selectPage(pages.value[0].id)
-  } catch (cause) {
-    if (!signal.aborted) error.value = getApiErrorMessage(cause, '无法读取插件页面，请确认宿主支持此功能。')
-  } finally { if (!signal.aborted) loadingPages.value = false }
+watch(() => [props.pluginId, props.definition.id], () => {
+  stop(); lifetime = new AbortController(); page.value = 1; filters.value = {}; error.value = ''
+  void loadData()
 }, { immediate: true })
 
-function selectPage(id: string) {
-  selectedId.value = id; page.value = 1; filters.value = {}; void loadData()
-}
 async function loadData() {
   request?.abort(); clearImages(); data.value = null
-  if (!selected.value || !props.visible) return
+  if (!selected.value) return
   const controller = request = new AbortController()
   const pluginId = props.pluginId, pageId = selected.value.id
   loading.value = true; error.value = ''
@@ -150,7 +118,7 @@ function itemActions(item: PluginPageItem) {
   return selected.value?.actions.filter(action => item.actions.some(id => id.toLowerCase() === action.id.toLowerCase())) ?? []
 }
 async function execute(item: PluginPageItem, action: PluginPage['actions'][number]) {
-  if (running.value || !selected.value || !props.visible) return
+  if (running.value || !selected.value) return
   const pluginId = props.pluginId, pageId = selected.value.id, signal = lifetime.signal
   running.value = `${item.id}:${action.id}`
   try {
@@ -158,7 +126,7 @@ async function execute(item: PluginPageItem, action: PluginPage['actions'][numbe
       try { await ElMessageBox.confirm(action.confirm, action.label, { type: action.tone === 'danger' ? 'warning' : 'info' }) }
       catch { return }
     }
-    if (signal.aborted || !props.visible) return
+    if (signal.aborted) return
     const controller = actionRequest = new AbortController()
     const result = await runPluginPageAction(pluginId, pageId, action.id, item.id, controller.signal)
     if (signal.aborted) return
@@ -174,8 +142,8 @@ onBeforeUnmount(stop)
 
 <style scoped>
 .plugin-pages { min-height: 160px; }
-.page-tabs, .page-filters, .page-pager { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.page-tabs { margin-bottom: 16px; }
+.page-title { margin: 0 0 var(--md-space-3); font: var(--md-sys-typescale-title-medium); font-weight: 700; }
+.page-filters, .page-pager { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .page-filters { margin: 20px 0; align-items: end; }
 .page-filters label { display: grid; gap: 6px; flex: 1; min-width: 130px; }
 .page-filters input, .page-filters select { font: inherit; color: inherit; background: var(--md-sys-color-surface); padding: 9px 12px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 10px; }

@@ -1,5 +1,7 @@
 <template>
   <nav class="config-nav" aria-label="配置分类">
+    <section v-if="groups.length" class="nav-section" aria-label="配置分组">
+      <span class="nav-section-label">配置</span>
     <button
       v-for="group in groups"
       :key="group.key"
@@ -12,7 +14,19 @@
       <span>{{ group.label }}</span>
       <small>{{ group.fields.length }}</small>
     </button>
-    <hr v-if="groups.length && (showRoutes || showInstance || showListeners)" />
+    </section>
+    <hr v-if="groups.length && (pages.length || pagesLoading || pagesError)" />
+    <section v-if="pages.length || pagesLoading || pagesError" class="nav-section" aria-label="插件页面">
+      <span class="nav-section-label">插件页面</span>
+      <span v-if="pagesLoading" class="nav-note" role="status">加载中…</span>
+      <template v-else-if="pagesError"><span class="nav-note error" role="alert">{{ pagesError }}</span><button type="button" class="md-button text compact" @click="emit('retry-pages')">重试</button></template>
+      <button v-for="page in pages" :key="page.id" type="button" class="nav-pill"
+        :class="{ selected: view === pluginPageView(page.id) }" :aria-current="view === pluginPageView(page.id) ? 'true' : undefined"
+        @click="emit('update:view', pluginPageView(page.id))"><span>{{ page.title }}</span><MdIcon :name="page.icon || 'dashboard'" /></button>
+    </section>
+    <hr v-if="(groups.length || pages.length || pagesLoading || pagesError) && (showRoutes || showInstance || showListeners)" />
+    <section v-if="showRoutes || showInstance || showListeners" class="nav-section" aria-label="路由与监听">
+      <span class="nav-section-label">{{ showInstance ? '实例与路由' : '路由与监听' }}</span>
     <button
       v-if="showInstance"
       type="button"
@@ -46,18 +60,21 @@
       <span>监听</span>
       <MdIcon name="hearing" />
     </button>
+    </section>
   </nav>
 </template>
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
+import type { PluginPage } from '../../../api'
+import { pluginPageView } from '../../pluginPages/usePluginPages'
 import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, type ConfigGroup } from '../usePluginConfig'
 
 withDefaults(
-  defineProps<{ groups: ConfigGroup[]; view: string; showRoutes?: boolean; showInstance?: boolean; showListeners?: boolean }>(),
-  { showRoutes: true, showInstance: false, showListeners: false }
+  defineProps<{ groups: ConfigGroup[]; view: string; showRoutes?: boolean; showInstance?: boolean; showListeners?: boolean; pages?: PluginPage[]; pagesLoading?: boolean; pagesError?: string }>(),
+  { showRoutes: true, showInstance: false, showListeners: false, pages: () => [], pagesLoading: false, pagesError: '' }
 )
-const emit = defineEmits<{ 'update:view': [view: string] }>()
+const emit = defineEmits<{ 'update:view': [view: string]; 'retry-pages': [] }>()
 </script>
 
 <style scoped>
@@ -66,6 +83,10 @@ const emit = defineEmits<{ 'update:view': [view: string] }>()
   flex-direction: column;
   gap: 2px;
 }
+
+.nav-section { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nav-section-label, .nav-note { padding: var(--md-space-2) var(--md-space-4); color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-label-small); }
+.nav-note.error { color: var(--md-sys-color-error); }
 
 .nav-pill {
   min-height: 44px;

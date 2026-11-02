@@ -249,7 +249,6 @@
           :host-operation="market.preparingPluginId.value ? 'update' : installed.hostOperation.value"
           :can-update="Boolean(installedMarketPlugin && market.canInstallPlugin(installedMarketPlugin))"
           @open-config="openConfig"
-          @open-pages="plugin => { pagesPlugin = plugin; pagesOpen = true }"
           @action="installed.executePluginAction"
           @update="preparePluginUpdate"
           @delete="installed.deletePlugin"
@@ -314,8 +313,6 @@
       :plugin-name="configPlugin?.name ?? ''"
     />
 
-    <PluginPagesDialog v-model:visible="pagesOpen" :plugin-id="pagesPlugin?.id ?? ''" :plugin-name="pagesPlugin?.name ?? ''" />
-
     <AddSourceDialog
       v-if="CUSTOM_MARKET_SOURCES_ENABLED"
       v-model:visible="addSourceOpen"
@@ -349,12 +346,8 @@ import { usePluginMarketPage, type DirectEntry } from '../pluginMarket/PluginMar
 import PluginConfigDialog from '../pluginConfig/components/PluginConfigDialog.vue'
 import AddSourceDialog from './components/AddSourceDialog.vue'
 import InstalledDetail from './components/InstalledDetail.vue'
-import PluginPagesDialog from '../pluginPages/PluginPagesDialog.vue'
 import MarketDetail from './components/MarketDetail.vue'
 import SourceRail from './components/SourceRail.vue'
-
-const pagesOpen = ref(false)
-const pagesPlugin = ref<Plugin | null>(null)
 
 type HubTab = 'installed' | 'discover'
 
