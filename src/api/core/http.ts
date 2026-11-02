@@ -66,6 +66,17 @@ async function performRequest<T>(path: string, init?: RequestInit): Promise<T> {
     return getDemoApiResponse<T>(path, init)
   }
 
+  const response = await authenticatedResponse(path, init)
+
+  return await readResponseBody(response) as T
+}
+
+/** Binary data uses the same session backend and Bearer authentication as JSON requests. */
+export async function apiBlobRequest(path: string, init?: RequestInit): Promise<Blob> {
+  return (await authenticatedResponse(path, init)).blob()
+}
+
+async function authenticatedResponse(path: string, init?: RequestInit) {
   const response = await fetch(buildApiUrl(path), buildRequestInit(init))
 
   if (!response.ok) {
@@ -79,5 +90,5 @@ async function performRequest<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(response.statusText || 'API request failed', response.status, body)
   }
 
-  return await readResponseBody(response) as T
+  return response
 }

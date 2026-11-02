@@ -62,6 +62,9 @@
     </section>
 
     <footer class="detail-foot button-group">
+      <button type="button" class="md-button tonal" :disabled="Boolean(hostOperation) || plugin.status !== 'enabled'" @click="emit('openPages', plugin)">
+        <MdIcon name="dashboard" />页面
+      </button>
       <button type="button" class="md-button tonal" :disabled="Boolean(hostOperation)" @click="emit('openConfig', plugin)">
         <MdIcon name="settings" />配置
       </button>
@@ -102,6 +105,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  openPages: [plugin: Plugin]
   openConfig: [plugin: Plugin]
   action: [plugin: Plugin, action: PluginActionDefinition]
   update: [plugin: Plugin]
