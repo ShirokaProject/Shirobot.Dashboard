@@ -6,6 +6,7 @@ export interface PluginPage {
   columns: Array<{ key: string; label: string }>
   filters: Array<{ key: string; label: string; type: string; options: Array<{ value: string; label: string }> }>
   actions: Array<{ id: string; label: string; confirm?: string; tone: string }>
+  upload?: { label: string; content_types: string[]; max_bytes: number; description?: string } | null
 }
 export interface PluginPageItem {
   id: string; title: string; description?: string; image?: string; tags: string[]; meta?: string
@@ -37,4 +38,9 @@ export function runPluginPageAction(pluginId: string, pageId: string, actionId: 
 }
 export function getPluginPageImage(pluginId: string, pageId: string, fileId: string, signal?: AbortSignal) {
   return apiBlobRequest(`${pluginPagePath(pluginId, pageId)}/files?${new URLSearchParams({ id: fileId })}`, { signal })
+}
+
+export function uploadPluginPageFile(pluginId: string, pageId: string, file: File, signal?: AbortSignal) {
+  return apiRequest<PluginActionResponse>(`${pluginPagePath(pluginId, pageId)}/upload?${new URLSearchParams({ name: file.name })}`,
+    { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file, signal })
 }

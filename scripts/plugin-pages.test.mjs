@@ -122,3 +122,27 @@ test('older hosts and adapter targets do not break the configuration workspace',
   assert.equal(requests.length, 0)
   scope.stop()
 })
+
+test('uploads send original file bytes to the authenticated page endpoint', async () => {
+  requests = []; response = json({ ok: true, message: '已上传', refresh: true })
+  const file = new File([new Uint8Array([1, 2, 3])], '猫 & dog.png', { type: 'image/png' })
+  const controller = new AbortController()
+  const result = await pages.uploadPluginPageFile('Meme', 'library', file, controller.signal)
+  assert.equal(requests[0].init.method, 'POST')
+  assert.equal(requests[0].init.headers.get('Authorization'), 'Bearer test-key')
+  assert.equal(requests[0].init.headers.get('Content-Type'), 'image/png')
+  assert.equal(requests[0].init.body, file)
+  assert.equal(requests[0].init.signal, controller.signal)
+  assert.equal(new URL(requests[0].url).searchParams.get('name'), '猫 & dog.png')
+  assert.equal(result.refresh, true)
+})
+test('the configuration page panel renders upload controls only for declared uploads', async () => {
+  const { default: Panel } = await server.ssrLoadModule('/src/views/pluginPages/PluginPagePanel.vue')
+  response = json({ items: [], metrics: [], has_more: false })
+  const upload = { label: '上传图片', content_types: ['image/png', 'image/gif'], max_bytes: 5000000 }
+  const html = await renderToString(createSSRApp(Panel, { pluginId: 'Meme', definition: { ...examplePage, upload } }))
+  assert.ok(html.includes('type="file"') && html.includes('multiple'))
+  assert.ok(html.includes('accept="image/png,image/gif"') && html.includes('上传图片'))
+  const readOnly = await renderToString(createSSRApp(Panel, { pluginId: 'Meme', definition: examplePage }))
+  assert.ok(!readOnly.includes('type="file"'))
+})

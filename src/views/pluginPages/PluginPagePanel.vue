@@ -2,17 +2,24 @@
   <section class="plugin-pages">
     <h3 class="page-title">{{ selected.title }}</h3>
     <p v-if="error" role="alert" class="page-error">{{ error }}</p>
+    <div v-if="selected.upload" class="page-upload">
+      <input ref="fileInput" type="file" hidden multiple :accept="selected.upload.content_types.join(',')" :disabled="busy" @change="uploadImages" />
+      <button type="button" class="md-button tonal" :disabled="busy" @click="fileInput?.click()"><MdIcon name="upload" />{{ selected.upload.label }}</button>
+      <button v-if="uploading" type="button" class="md-button text" @click="cancelUpload">取消上传</button>
+      <span v-if="uploading" role="status" aria-live="polite">{{ uploading }}</span>
+      <small v-else>{{ selected.upload.description }} 单文件上限 {{ (selected.upload.max_bytes / 1000000).toFixed(1) }} MB。</small>
+    </div>
           <p v-if="selected.description">{{ selected.description }}</p>
           <form class="page-filters" @submit.prevent="page = 1; void loadData()">
             <label v-for="filter in selected.filters" :key="filter.key">
               <span>{{ filter.label }}</span>
-              <select v-if="filter.type === 'select'" v-model="filters[filter.key]" :disabled="Boolean(running)">
+              <select v-if="filter.type === 'select'" v-model="filters[filter.key]" :disabled="busy">
                 <option value="">全部</option>
                 <option v-for="option in filter.options" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
-              <input v-else v-model="filters[filter.key]" type="search" :disabled="Boolean(running)" />
+              <input v-else v-model="filters[filter.key]" type="search" :disabled="busy" />
             </label>
-            <button type="submit" class="md-button tonal" :disabled="loading || Boolean(running)"><MdIcon name="refresh" />刷新</button>
+            <button type="submit" class="md-button tonal" :disabled="loading || busy"><MdIcon name="refresh" />刷新</button>
           </form>
           <p v-if="loading" role="status">正在加载…</p>
           <template v-else-if="data">
@@ -25,7 +32,7 @@
                 <table><thead><tr><th>条目</th><th v-for="column in selected.columns" :key="column.key">{{ column.label }}</th><th>操作</th></tr></thead>
                   <tbody><tr v-for="item in data.items" :key="item.id"><td>{{ item.title }}</td><td v-for="column in selected.columns" :key="column.key">{{ item.values[column.key] }}</td>
                     <td><button v-for="action in itemActions(item)" :key="action.id" type="button" class="md-button text compact"
-                      :class="{ danger: action.tone === 'danger' }" :disabled="Boolean(running)" @click="execute(item, action)">{{ action.label }}</button></td>
+                      :class="{ danger: action.tone === 'danger' }" :disabled="busy" @click="execute(item, action)">{{ action.label }}</button></td>
                   </tr></tbody></table>
               </div>
               <div v-else :class="['page-items', selected.kind]">
@@ -35,16 +42,16 @@
                   <div class="item-body"><strong>{{ item.title }}</strong><p v-if="item.description">{{ item.description }}</p>
                     <p v-if="item.tags.length" class="item-tags">{{ item.tags.join(' · ') }}</p><small>{{ item.meta }}</small>
                     <div class="button-group"><button v-for="action in itemActions(item)" :key="action.id" type="button" class="md-button text compact"
-                      :class="{ danger: action.tone === 'danger' }" :disabled="Boolean(running)" @click="execute(item, action)">{{ running === `${item.id}:${action.id}` ? '执行中…' : action.label }}</button></div>
+                      :class="{ danger: action.tone === 'danger' }" :disabled="busy" @click="execute(item, action)">{{ running === `${item.id}:${action.id}` ? '执行中…' : action.label }}</button></div>
                   </div>
                 </article>
               </div>
             </template>
             <p v-else>当前 Dashboard 不支持这种页面类型：{{ selected.kind }}</p>
             <footer v-if="selected.page_size > 0 && selected.kind !== 'stats'" class="page-pager">
-              <button type="button" class="md-button text" :disabled="page <= 1 || Boolean(running)" @click="page--; void loadData()">上一页</button>
+              <button type="button" class="md-button text" :disabled="page <= 1 || busy" @click="page--; void loadData()">上一页</button>
               <span>第 {{ page }} 页<span v-if="data.total != null"> · 共 {{ data.total }} 条</span></span>
-              <button type="button" class="md-button text" :disabled="!data.has_more || Boolean(running)" @click="page++; void loadData()">下一页</button>
+              <button type="button" class="md-button text" :disabled="!data.has_more || busy" @click="page++; void loadData()">下一页</button>
             </footer>
           </template>
   </section>
@@ -54,7 +61,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MdIcon from '../../components/MdIcon.vue'
-import { getApiErrorMessage, getPluginPageData, getPluginPageImage, runPluginPageAction,
+import { getApiErrorMessage, getPluginPageData, getPluginPageImage, runPluginPageAction, uploadPluginPageFile,
   type PluginPage, type PluginPageData, type PluginPageItem } from '../../api'
 
 const props = defineProps<{ pluginId: string; definition: PluginPage }>()
@@ -65,19 +72,23 @@ const page = ref(1)
 const loading = ref(false)
 const error = ref('')
 const running = ref('')
+const uploading = ref('')
+const fileInput = ref<HTMLInputElement | null>(null)
+const busy = computed(() => Boolean(running.value || uploading.value))
 const images = ref<Record<string, string>>({})
 const imageErrors = ref<Record<string, boolean>>({})
 let lifetime = new AbortController()
 let request: AbortController | undefined
 let actionRequest: AbortController | undefined
+let uploadRequest: AbortController | undefined
 
 function clearImages() {
   Object.values(images.value).forEach(url => URL.revokeObjectURL(url))
   images.value = {}; imageErrors.value = {}
 }
 function stop() {
-  lifetime.abort(); request?.abort(); actionRequest?.abort(); clearImages()
-  loading.value = false; running.value = ''
+  lifetime.abort(); request?.abort(); actionRequest?.abort(); uploadRequest?.abort(); clearImages()
+  loading.value = false; running.value = ''; uploading.value = ''
 }
 watch(() => [props.pluginId, props.definition.id], () => {
   stop(); lifetime = new AbortController(); page.value = 1; filters.value = {}; error.value = ''
@@ -118,7 +129,7 @@ function itemActions(item: PluginPageItem) {
   return selected.value?.actions.filter(action => item.actions.some(id => id.toLowerCase() === action.id.toLowerCase())) ?? []
 }
 async function execute(item: PluginPageItem, action: PluginPage['actions'][number]) {
-  if (running.value || !selected.value) return
+  if (busy.value || !selected.value) return
   const pluginId = props.pluginId, pageId = selected.value.id, signal = lifetime.signal
   running.value = `${item.id}:${action.id}`
   try {
@@ -137,6 +148,43 @@ async function execute(item: PluginPageItem, action: PluginPage['actions'][numbe
     if (!signal.aborted) ElMessage.error(getApiErrorMessage(cause, '操作失败。'))
   } finally { if (!signal.aborted) running.value = '' }
 }
+function cancelUpload() { uploadRequest?.abort() }
+async function uploadImages(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  input.value = ''
+  const descriptor = selected.value.upload
+  if (!files.length || !descriptor || busy.value) return
+  const controller = uploadRequest = new AbortController()
+  const signal = lifetime.signal, pluginId = props.pluginId, pageId = selected.value.id
+  let succeeded = 0
+  const failures: string[] = []
+  try {
+    for (const [index, file] of files.entries()) {
+      if (controller.signal.aborted || signal.aborted) break
+      uploading.value = `正在上传并处理 ${index + 1}/${files.length}：${file.name}`
+      if (file.size === 0 || file.size > descriptor.max_bytes) {
+        failures.push(`${file.name}：文件为空或超过大小上限`); continue
+      }
+      try {
+        const result = await uploadPluginPageFile(pluginId, pageId, file, controller.signal)
+        if (signal.aborted) return
+        if (result.ok) succeeded++
+        else failures.push(`${file.name}：${result.message}`)
+      } catch (cause) {
+        if (controller.signal.aborted || signal.aborted) break
+        failures.push(`${file.name}：${getApiErrorMessage(cause, '上传失败')}`)
+      }
+    }
+    if (signal.aborted) return
+    if (succeeded || controller.signal.aborted) {
+      page.value = 1; filters.value = {}; await loadData()
+    }
+    if (signal.aborted) return
+    const summary = `${controller.signal.aborted ? '已取消上传；' : ''}已处理 ${succeeded} 张图片${failures.length ? `，${failures.length} 张失败：${failures.slice(0, 2).join('；')}` : ''}`
+    ElMessage({ message: summary, type: failures.length || controller.signal.aborted ? 'warning' : 'success', duration: failures.length ? 8000 : 3000 })
+  } finally { if (!signal.aborted) uploading.value = '' }
+}
 onBeforeUnmount(stop)
 </script>
 
@@ -144,6 +192,8 @@ onBeforeUnmount(stop)
 .plugin-pages { min-height: 160px; }
 .page-title { margin: 0 0 var(--md-space-3); font: var(--md-sys-typescale-title-medium); font-weight: 700; }
 .page-filters, .page-pager { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.page-upload { display: flex; align-items: center; flex-wrap: wrap; gap: var(--md-space-3); margin: var(--md-space-3) 0; }
+.page-upload small { color: var(--md-sys-color-on-surface-variant); }
 .page-filters { margin: 20px 0; align-items: end; }
 .page-filters label { display: grid; gap: 6px; flex: 1; min-width: 130px; }
 .page-filters input, .page-filters select { font: inherit; color: inherit; background: var(--md-sys-color-surface); padding: 9px 12px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 10px; }
