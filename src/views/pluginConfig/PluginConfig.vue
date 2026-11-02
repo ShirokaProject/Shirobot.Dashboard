@@ -44,10 +44,10 @@
         <span v-else-if="saveMessage && !rawMode" class="head-state" :class="saveMessageType" :title="saveMessage">
           <span v-if="saveMessageType === 'error'" class="status-dot error" aria-hidden="true"></span>{{ saveMessageType === 'error' ? '保存失败' : saveMessage }}
         </span>
-        <button v-if="rawConfigAvailable || rawMode" type="button" class="md-button text raw-toggle" @click="toggleRawMode">
+        <button v-if="!activePage && (rawConfigAvailable || rawMode)" type="button" class="md-button text raw-toggle" @click="toggleRawMode">
           <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
         </button>
-        <div class="button-group">
+        <div v-if="!activePage" class="button-group">
           <button type="button" class="md-button tonal" :disabled="!dirty || busy" @click="discard">放弃修改</button>
           <button type="button" class="md-button filled" :disabled="!dirty || busy" @click="save">保存</button>
         </div>
@@ -65,11 +65,16 @@
           v-model:view="view"
           class="page-nav"
           :groups="groups"
+          :pages="pageNavigation.pages.value"
+          :pages-loading="pageNavigation.loading.value"
+          :pages-error="pageNavigation.error.value"
+          @retry-pages="pageNavigation.load"
           :show-routes="hasRoutes"
           :show-listeners="hasRoutes && listeners !== undefined"
         />
         <div class="page-main">
-          <PluginConfigForm
+          <PluginPagePanel v-if="activePage" :key="`${pluginId}:${activePage.id}`" :plugin-id="pluginId" :definition="activePage" />
+          <PluginConfigForm v-else
             v-model:route-groups="routeGroups"
             :view="view"
             :groups="groups"
@@ -85,7 +90,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MdIcon from '../../components/MdIcon.vue'
 import { getAdapters, getInstalledPlugins, type AdapterStatus } from '../../api'
@@ -93,11 +98,14 @@ import type { Plugin } from '../../features/plugins/types'
 import ConfigNav from './components/ConfigNav.vue'
 import PluginConfigForm from './components/PluginConfigForm.vue'
 import RawConfigEditor from './components/RawConfigEditor.vue'
+import PluginPagePanel from '../pluginPages/PluginPagePanel.vue'
+import { usePluginPages, selectedPluginPage, pluginPageView } from '../pluginPages/usePluginPages'
 import { usePluginConfigPage } from './PluginConfig'
-import { ROUTES_VIEW, applyStatusMessage, type ConfigTarget } from './usePluginConfig'
+import { LISTENERS_VIEW, ROUTES_VIEW, applyStatusMessage, type ConfigTarget } from './usePluginConfig'
 import { useRawConfig } from './useRawConfig'
 
 const router = useRouter()
+const route = useRoute()
 const {
   pluginId,
   target,
@@ -214,13 +222,26 @@ async function switchTo(kind: ConfigTarget, id: string) {
 
 // Current category: a group key or ROUTES_VIEW; reset per target, first group once loaded.
 const view = ref('')
-watch([pluginId, target], () => { view.value = '' })
+const pageNavigation = usePluginPages(pluginId, () => target.value === 'plugin')
+const activePage = computed(() => selectedPluginPage(pageNavigation.pages.value, view.value))
+let pendingPage = typeof route.query.page === 'string' ? route.query.page : ''
+watch([pluginId, target, () => route.query.page], () => {
+  view.value = ''
+  pendingPage = typeof route.query.page === 'string' ? route.query.page : ''
+})
 watch(groups, list => {
   // Still loading: leave the choice for when the groups arrive.
   if (!list.length) return
-  if ((view.value === ROUTES_VIEW && hasRoutes.value) || list.some(group => group.key === view.value)) return
+  if (activePage.value || view.value === LISTENERS_VIEW || (view.value === ROUTES_VIEW && hasRoutes.value) || list.some(group => group.key === view.value)) return
   view.value = list[0].key
 }, { immediate: true })
+
+watch([pageNavigation.pages, pageNavigation.loading, loading, () => route.query.page], () => {
+  if (loading.value || pageNavigation.loading.value) return
+  const requested = pageNavigation.pages.value.find(page => page.id === pendingPage)
+  if (requested) { view.value = pluginPageView(requested.id); pendingPage = '' }
+  else if (!view.value && pageNavigation.pages.value[0]) view.value = pluginPageView(pageNavigation.pages.value[0].id)
+})
 
 function goBack() {
   void router.push(target.value === 'adapter' ? '/adapters' : '/plugins')

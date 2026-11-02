@@ -9,3 +9,5 @@ export * from './pluginMarket/pluginMarket'
 export * from './logs/logs'
 export * from './system/system'
 export * from './directory/directory'
+
+export * from './plugins/pages'
