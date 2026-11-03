@@ -36,8 +36,11 @@ before(async () => {
   secret = createHttpServer((_, response) => { secretHits++; response.setHeader('Access-Control-Allow-Origin', '*'); response.end('secret') })
   await new Promise(resolve => secret.listen(0, '127.0.0.1', resolve))
   profile = mkdtempSync(join(tmpdir(), 'shirobot-web-sandbox-'))
+  // Linux CI（例如 Ubuntu 24.04 的 GitHub Actions）不允许 Chrome 的进程沙箱，不加参数会直接退出。
+  // 这里只关进程沙箱；被测的是 iframe sandbox 和 CSP，属于浏览器内部的页面隔离，不受影响。
+  const linux = process.platform === 'linux' ? ['--no-sandbox', '--disable-dev-shm-usage'] : []
   browser = spawn(browserPath, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
-    '--no-first-run', '--no-default-browser-check', '--disable-gpu', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] })
+    '--no-first-run', '--no-default-browser-check', '--disable-gpu', ...linux, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] })
   devtools = await new Promise((resolve, reject) => {
     let output = ''
     const timer = setTimeout(() => reject(new Error('Browser did not start: ' + output)), 20000)
