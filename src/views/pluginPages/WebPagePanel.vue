@@ -10,10 +10,10 @@
 </template>
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
-import { callPluginWebPage, getPluginWebAsset, getPluginWebPage, type PluginPage } from '../../api/plugins/pages'
+import { getPluginWebPage, type PluginPage } from '../../api/plugins/pages'
 import { getApiErrorMessage } from '../../api/core/http'
-import { validWebBridgeMessage, webPageDocument } from './webBridge'
-import { serveWebRequest } from './webRequest'
+import { webPageDocument } from './webBridge'
+import { createWebBridgeHost } from './webBridgeHost'
 
 const props = defineProps<{ pluginId: string; definition: PluginPage }>()
 const frame = ref<HTMLIFrameElement>(), document = ref(''), loading = ref(false), error = ref(''), revision = ref(0)
@@ -24,7 +24,7 @@ async function load() {
   const request = controller = new AbortController()
   try {
     const result = await getPluginWebPage(props.pluginId, props.definition.id, request.signal)
-    if (!request.signal.aborted) document.value = webPageDocument(result.html, nonce)
+    if (!request.signal.aborted) document.value = webPageDocument(result.html, nonce, props.definition.strict_dom === true)
   } catch (cause) { if (!request.signal.aborted) error.value = getApiErrorMessage(cause, '网页加载失败。') }
   finally { if (controller === request) loading.value = false }
 }
@@ -35,50 +35,12 @@ function connect(event: Event) {
   if (++loads !== 1) { close(); document.value = ''; error.value = '页面发生导航，请刷新后重试。'; return }
   const { port1, port2 } = new MessageChannel()
   port = port1
-  const request = controller, pluginId = props.pluginId, pageId = props.definition.id
-  const inFlight = new Set<number>()
-  const transfers = new Map<number, AbortController>()
-  const expectedNonce = nonce
-  let authenticated = false
-  port1.onmessage = async ({ data }: MessageEvent<unknown>) => {
-    if (!authenticated) {
-      if (data && typeof data === 'object' && 'type' in data && data.type === 'ready' && 'nonce' in data && data.nonce === expectedNonce)
-        authenticated = true
-      else port1.close()
-      return
-    }
-    if (!validWebBridgeMessage(data) || request.signal.aborted) return
-    if (data.op === 'cancel') { transfers.get(data.id)?.abort(); return }
-    if (inFlight.has(data.id) || transfers.has(data.id)) return
-    const respond = (message: object, transfer: Transferable[] = []) => {
-      if (!request.signal.aborted) port1.postMessage({ id: data.id, ...message }, transfer)
-    }
-    if (inFlight.size + transfers.size >= 32) { respond({ ok: false, error: '同时进行的网页请求过多。' }); return }
-    if (data.op === 'request') {
-      const transfer = new AbortController()
-      const abort = () => transfer.abort()
-      request.signal.addEventListener('abort', abort, { once: true }); transfers.set(data.id, transfer)
-      try {
-        await serveWebRequest(pluginId, pageId, data, transfer, respond,
-          () => { transfers.delete(data.id); request.signal.removeEventListener('abort', abort) })
-      } catch (cause) { respond({ ok: false, error: getApiErrorMessage(cause, '网页请求失败。') }) }
-      return
-    }
-    inFlight.add(data.id)
-    try {
-      if (data.op === 'call') {
-        const json = JSON.stringify(data.arguments ?? null)
-        if (new TextEncoder().encode(json).length > 900000) throw new Error('网页请求超过大小限制。')
-        const result = await callPluginWebPage(pluginId, pageId, data.action!, data.arguments ?? null, request.signal)
-        respond({ ok: true, value: result.value })
-      } else {
-        const asset = await getPluginWebAsset(pluginId, pageId, data.path!, request.signal)
-        const bytes = await asset.arrayBuffer()
-        respond({ ok: true, value: { bytes, contentType: asset.type } }, [bytes])
-      }
-    } catch (cause) { respond({ ok: false, error: getApiErrorMessage(cause, '网页操作失败。') }) }
-    finally { inFlight.delete(data.id) }
-  }
+  const handle = createWebBridgeHost({
+    pluginId: props.pluginId, pageId: props.definition.id, title: props.definition.title,
+    confirmations: props.definition.confirmations, nonce, signal: controller.signal,
+    post: (message, transfer = []) => port1.postMessage(message, transfer), close: () => port1.close()
+  })
+  port1.onmessage = ({ data }: MessageEvent<unknown>) => void handle(data)
   port1.start()
   target.contentWindow.postMessage({ type: 'shirobot-web-init' }, '*', [port2])
 }

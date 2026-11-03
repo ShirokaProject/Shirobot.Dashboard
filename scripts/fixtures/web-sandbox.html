@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>web sandbox harness</title>
+<!-- plugin-web-sandbox.browser.test.mjs 用真实的桥接代码在浏览器里打开一个沙箱页面，检查页面能做什么、不能做什么。 -->
+<iframe id="frame" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+<script type="module">
+import { webPageDocument } from '/src/views/pluginPages/webBridge.ts'
+import { createWebBridgeHost } from '/src/views/pluginPages/webBridgeHost.ts'
+
+const params = new URLSearchParams(location.search)
+const nonce = 'nonce-' + crypto.randomUUID()
+window.__nonce = nonce
+window.__calls = []
+// 模拟插件网页：尝试读 nonce、写 HTML、联网、访问父页面和存储，再调用一个需要确认的操作，最后报告结果。
+const page = `<script>
+(async () => {
+  const r = {};
+  r.otherScripts = [...document.scripts].filter(s => s !== document.currentScript).map(s => s.textContent).join('');
+  r.bridge = typeof window.ShiroBotDashboard;
+  const div = document.createElement('div');
+  try { div.innerHTML = '<b>x</b>'; r.innerHtml = 'allowed'; } catch (e) { r.innerHtml = e.name; }
+  try { await fetch(${JSON.stringify(params.get('secret'))}); r.fetch = 'allowed'; } catch { r.fetch = 'blocked'; }
+  try { void parent.document.title; r.parent = 'allowed'; } catch { r.parent = 'blocked'; }
+  try { localStorage.setItem('x', '1'); r.storage = 'allowed'; } catch { r.storage = 'blocked'; }
+  r.origin = location.origin;
+  r.clear = await window.ShiroBotDashboard.call('clear').then(() => 'done', e => e.message);
+  await window.ShiroBotDashboard.call('report', r);
+})();
+<\/script>`
+
+const frame = document.getElementById('frame')
+const controller = new AbortController()
+frame.addEventListener('load', () => {
+  const { port1, port2 } = new MessageChannel()
+  const handle = createWebBridgeHost({
+    pluginId: 'probe', pageId: 'web', title: '测试页', nonce, signal: controller.signal,
+    confirmations: { clear: '清空全部数据？' },
+    post: (message, transfer = []) => port1.postMessage(message, transfer), close: () => port1.close(),
+    // confirm 用浏览器真实的对话框；只替换发往宿主的调用。
+    services: { call: async (plugin, pageId, action, args) => {
+      window.__calls.push(action)
+      if (action === 'report') window.__results = args
+      return { value: 'done' }
+    } }
+  })
+  port1.onmessage = ({ data }) => void handle(data)
+  port1.start()
+  frame.contentWindow.postMessage({ type: 'shirobot-web-init' }, '*', [port2])
+}, { once: true })
+frame.srcdoc = webPageDocument(page, nonce, params.get('strict') === '1')
+</script>

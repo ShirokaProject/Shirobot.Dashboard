@@ -1,6 +1,9 @@
 /** Runs inside the opaque-origin sandbox. It receives a page-scoped MessagePort, never credentials. */
 export const WEB_BOOTSTRAP = String.raw`
 (() => {
+  // Remove this script before page scripts run, so they cannot read the session nonce and
+  // hand it to a document the frame navigates to.
+  try { document.currentScript?.remove(); } catch {}
   let port, sequence = 0;
   const pending = new Map(), urls = new Set();
   let connected;
@@ -85,11 +88,34 @@ export const WEB_BOOTSTRAP = String.raw`
 
 export function webBootstrap(nonce: string) { return WEB_BOOTSTRAP.replace('/*SESSION*/', JSON.stringify(nonce).replaceAll('<', '\\u003c')) }
 
-export function webPageDocument(html: string, nonce: string) {
-  const policy = "default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline' blob:; img-src blob: data:; font-src blob: data:; media-src blob: data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+export function webPageDocument(html: string, nonce: string, strictDom = false) {
+  let policy = "default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline' blob:; img-src blob: data:; font-src blob: data:; media-src blob: data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+  // Trusted Types: strings can no longer become HTML or script through innerHTML, document.write or script.src.
+  if (strictDom) policy += "; require-trusted-types-for 'script'; trusted-types 'none'"
   // Parse only inside the sandbox, with the policy already in force. DOMParser in the
   // privileged parent can initiate subresource requests before a policy is inserted.
   return `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><script>${webBootstrap(nonce)}</script>\n${html}`
+}
+
+/**
+ * The confirmation text the page declared for this operation, or null. Keys are a call action name, or an
+ * upper-case HTTP method and a page path prefix ("DELETE /memes" matches /memes and /memes/…). Paths are
+ * compared decoded and case-insensitively, the same way the plugin sees them.
+ */
+export function webPageConfirmation(confirmations: Record<string, string> | null | undefined, data: WebBridgeMessage) {
+  if (!confirmations) return null
+  if (data.op === 'call') return Object.hasOwn(confirmations, data.action!) ? confirmations[data.action!]! : null
+  if (data.op !== 'request' || !data.path) return null
+  const method = (data.method || 'GET').toUpperCase()
+  let path: string
+  try { path = decodeURIComponent(data.path.split('?')[0]!).toLowerCase() } catch { return null }
+  for (const [key, message] of Object.entries(confirmations)) {
+    const space = key.indexOf(' ')
+    if (space < 0 || key.slice(0, space) !== method) continue
+    const prefix = key.slice(space + 1).toLowerCase().replace(/\/+$/, '')
+    if (path === prefix || path.startsWith(prefix + '/') || prefix === '') return message
+  }
+  return null
 }
 
 export interface WebBridgeMessage { id: number; op: 'call' | 'asset' | 'request' | 'cancel'; action?: string; arguments?: unknown; path?: string

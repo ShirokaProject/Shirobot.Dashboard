@@ -65,7 +65,7 @@ test('iframe policy preserves opaque origin and denies network and form submissi
   assert.ok(source.includes('sandbox="allow-scripts"'))
   assert.ok(!source.includes('allow-same-origin'))
   assert.ok(source.includes("++loads !== 1"))
-  assert.ok(source.includes('data.nonce === expectedNonce'))
+  assert.ok(source.includes('createWebBridgeHost('))
   assert.ok(source.includes('target !== frame.value'))
   const policy = await readFile(new URL('../src/views/pluginPages/webBridge.ts', import.meta.url), 'utf8')
   assert.ok(policy.includes("connect-src 'none'"))
@@ -160,4 +160,82 @@ test('AbortSignal cancels a pending HTTP request before headers', async () => {
   await assert.rejects(response, error => error.name === 'AbortError')
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(messages.at(-1).op, 'cancel')
+})
+
+test('declared operations are confirmed outside the sandbox, matching paths the way the plugin sees them', async () => {
+  const confirmations = { delete: '删除这个表情？', 'DELETE /memes': '删除表情？', 'POST /library/clear': '清空表情库？' }
+  const confirm = data => bridge.webPageConfirmation(confirmations, { id: 1, ...data })
+  assert.equal(confirm({ op: 'call', action: 'delete' }), '删除这个表情？')
+  assert.equal(confirm({ op: 'call', action: 'preview' }), null)
+  assert.equal(confirm({ op: 'call', action: 'toString' }), null)
+  assert.equal(confirm({ op: 'request', method: 'delete', path: '/memes' }), '删除表情？')
+  assert.equal(confirm({ op: 'request', method: 'DELETE', path: '/MEMES/42?force=1' }), '删除表情？')
+  assert.equal(confirm({ op: 'request', method: 'DELETE', path: '/%6Demes/42' }), '删除表情？')
+  assert.equal(confirm({ op: 'request', method: 'DELETE', path: '/memes-archive' }), null)
+  assert.equal(confirm({ op: 'request', method: 'GET', path: '/memes' }), null)
+  assert.equal(confirm({ op: 'request', method: 'POST', path: '/library/clear/' }), '清空表情库？')
+  assert.equal(bridge.webPageConfirmation(null, { id: 1, op: 'call', action: 'delete' }), null)
+})
+
+test('the parent bridge authenticates the document and asks the user before declared operations', async () => {
+  const host = await server.ssrLoadModule('/src/views/pluginPages/webBridgeHost.ts')
+  const posted = [], calls = [], requests = [], prompts = []
+  let closed = false, answer = false
+  const controller = new AbortController()
+  const handle = host.createWebBridgeHost({
+    pluginId: 'meme', pageId: 'library', title: '表情库', nonce: 'n-1', signal: controller.signal,
+    confirmations: { clear: '清空全部表情？', 'DELETE /memes': '删除表情？' },
+    post: message => posted.push(message), close: () => { closed = true },
+    services: {
+      confirm: text => { prompts.push(text); return answer },
+      call: async (plugin, page, action, args) => { calls.push({ plugin, page, action, args }); return { value: 'ok' } },
+      request: async (plugin, page, data, transfer, respond, done) => { requests.push(data); respond({ ok: true, value: {} }); done() },
+      asset: async () => { throw new Error('unused') }
+    }
+  })
+  // Before the document proves the nonce nothing is served; a wrong nonce closes the channel.
+  const wrong = host.createWebBridgeHost({ pluginId: 'meme', pageId: 'library', title: 't', nonce: 'n-1', signal: controller.signal,
+    post: message => posted.push(message), close: () => { closed = true }, services: { call: async () => { calls.push('leak'); return { value: 1 } } } })
+  await wrong({ type: 'ready', nonce: 'guessed' })
+  await wrong({ id: 1, op: 'call', action: 'preview' })
+  assert.ok(closed); assert.equal(calls.length, 0); assert.equal(posted.length, 0)
+
+  await handle({ type: 'ready', nonce: 'n-1' })
+  await handle({ id: 1, op: 'call', action: 'preview', arguments: { text: 'x' } })
+  assert.equal(prompts.length, 0); assert.equal(calls.at(-1).action, 'preview'); assert.deepEqual(posted.at(-1), { id: 1, ok: true, value: 'ok' })
+
+  answer = false
+  await handle({ id: 2, op: 'call', action: 'clear' })
+  assert.ok(prompts.at(-1).includes('表情库') && prompts.at(-1).includes('清空全部表情？'))
+  assert.equal(calls.length, 1, 'A declined operation must not reach the host.')
+  assert.deepEqual(posted.at(-1), { id: 2, ok: false, error: '已取消。' })
+
+  answer = true
+  await handle({ id: 3, op: 'call', action: 'clear' })
+  assert.equal(calls.at(-1).action, 'clear'); assert.deepEqual(posted.at(-1), { id: 3, ok: true, value: 'ok' })
+
+  answer = false
+  await handle({ id: 4, op: 'request', method: 'DELETE', path: '/Memes/7' })
+  assert.equal(requests.length, 0); assert.deepEqual(posted.at(-1), { id: 4, ok: false, error: '已取消。' })
+  answer = true
+  await handle({ id: 5, op: 'request', method: 'DELETE', path: '/Memes/7' })
+  assert.equal(requests.at(-1).path, '/Memes/7')
+  const asked = prompts.length
+  await handle({ id: 6, op: 'request', method: 'GET', path: '/memes' })
+  assert.equal(prompts.length, asked, 'Undeclared operations must not prompt.')
+
+  controller.abort()
+  await handle({ id: 7, op: 'call', action: 'clear' })
+  assert.equal(prompts.length, asked); assert.equal(calls.length, 2, 'Nothing is served after the page closes.')
+})
+
+test('the bootstrap removes itself so page scripts cannot read the nonce, and strict pages enforce Trusted Types', () => {
+  let removed = false
+  const window = { addEventListener() {}, removeEventListener() {} }
+  vm.runInNewContext(bridge.webBootstrap('nonce'), { window, parent: {}, Blob, URL, document: { currentScript: { remove() { removed = true } } } })
+  assert.ok(removed)
+  assert.ok(!bridge.webPageDocument('<p>x</p>', 'nonce').includes('require-trusted-types-for'))
+  const strict = bridge.webPageDocument('<p>x</p>', 'nonce', true)
+  assert.ok(strict.includes("require-trusted-types-for 'script'") && strict.includes("trusted-types 'none'"))
+  assert.ok(strict.indexOf('trusted-types') < strict.indexOf('<p>x</p>'))
 })

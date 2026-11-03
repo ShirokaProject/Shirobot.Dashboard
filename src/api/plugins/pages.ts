@@ -4,6 +4,10 @@ import type { PluginActionResponse } from './plugins'
 /** Component pages have no kind; custom sandbox pages use 'web'. Other kinds are legacy layouts. */
 export interface PluginPage {
   id: string; title: string; icon?: string; description?: string; kind?: string
+  /** Web pages: operations the Dashboard confirms before forwarding, keyed by action or "METHOD /path". */
+  confirmations?: Record<string, string> | null
+  /** Web pages: enforce Trusted Types inside the sandbox. */
+  strict_dom?: boolean | null
 }
 export interface LegacyPluginPage extends PluginPage {
   kind: string; page_size: number
