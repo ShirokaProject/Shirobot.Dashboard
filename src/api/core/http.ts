@@ -92,3 +92,8 @@ async function authenticatedResponse(path: string, init?: RequestInit) {
 
   return response
 }
+
+/** Scoped plugin HTTP responses preserve business error statuses instead of treating them as session failures. */
+export async function apiPluginResponse(path: string, init?: RequestInit): Promise<Response> {
+  return fetch(buildApiUrl(path), buildRequestInit({ ...init, credentials: 'omit', redirect: 'error' }))
+}

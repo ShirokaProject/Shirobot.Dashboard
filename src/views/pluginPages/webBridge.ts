@@ -18,19 +18,60 @@ export const WEB_BOOTSTRAP = String.raw`
     };
     port.start(); port.postMessage({ type: 'ready', nonce: /*SESSION*/ }); connected();
   });
-  async function request(op, payload) {
+  async function rpc(op, payload, signal) {
     if (pending.size >= 32) throw new Error('同时进行的网页请求过多。');
+    if (signal?.aborted) throw new DOMException('请求已取消', 'AbortError');
     const id = ++sequence;
     return new Promise((resolve, reject) => {
-      pending.set(id, { resolve, reject });
-      ready.then(() => port.postMessage({ id, op, ...payload }));
+      const abort = () => {
+        pending.delete(id); ready.then(() => port.postMessage({ id, op: 'cancel' }));
+        reject(new DOMException('请求已取消', 'AbortError'));
+      };
+      const finish = fn => value => { signal?.removeEventListener('abort', abort); fn(value); };
+      pending.set(id, { resolve: finish(resolve), reject: finish(reject) });
+      signal?.addEventListener('abort', abort, { once: true });
+      ready.then(() => { if (pending.has(id)) port.postMessage({ id, op, ...payload }); });
     });
+  }
+  async function httpRequest(path, init = {}) {
+    let body = init.body ?? null;
+    if (body instanceof FormData) body = { form: [...body.entries()] };
+    else if (body instanceof URLSearchParams) {
+      const headers = new Headers(init.headers);
+      if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/x-www-form-urlencoded;charset=UTF-8');
+      init = { ...init, headers }; body = body.toString();
+    } else if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) body = new Blob([body]);
+    if (body !== null && typeof body !== 'string' && !(body instanceof Blob) && !body.form)
+      throw new TypeError('请求体支持文本、Blob、File、FormData、URLSearchParams 和二进制数组。');
+    const value = await rpc('request', { path, method: init.method || 'GET', headers: [...new Headers(init.headers)], body }, init.signal);
+    const channel = value.port;
+    let disposed = false, pendingPull;
+    const cleanup = () => { if (disposed) return; disposed = true; init.signal?.removeEventListener('abort', abort); channel?.close(); };
+    const abort = () => { channel?.postMessage({ op: 'cancel' }); pendingPull?.error(new DOMException('请求已取消', 'AbortError')); cleanup(); };
+    const stream = channel ? new ReadableStream({
+      start(controller) {
+        pendingPull = controller;
+        channel.onmessage = ({ data }) => {
+          if (disposed) return;
+          if (data.error) { controller.error(new Error(data.error)); cleanup(); }
+          else if (data.done) { controller.close(); cleanup(); }
+          else controller.enqueue(new Uint8Array(data.chunk));
+        };
+        channel.start();
+        init.signal?.addEventListener('abort', abort, { once: true });
+        if (init.signal?.aborted) abort();
+      },
+      pull() { if (!disposed) channel.postMessage({ op: 'pull' }); },
+      cancel() { channel.postMessage({ op: 'cancel' }); cleanup(); }
+    }, { highWaterMark: 0 }) : null;
+    return new Response(stream, { status: value.status, statusText: value.statusText, headers: value.headers });
   }
   window.ShiroBotDashboard = Object.freeze({
     ready,
-    call(action, args = null) { return request('call', { action, arguments: args }); },
+    request: httpRequest,
+    call(action, args = null) { return rpc('call', { action, arguments: args }); },
     async asset(path) {
-      const value = await request('asset', { path });
+      const value = await rpc('asset', { path });
       return new Blob([value.bytes], { type: value.contentType });
     },
     async assetUrl(path) {
@@ -51,11 +92,14 @@ export function webPageDocument(html: string, nonce: string) {
   return `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><script>${webBootstrap(nonce)}</script>\n${html}`
 }
 
-export interface WebBridgeMessage { id: number; op: 'call' | 'asset'; action?: string; arguments?: unknown; path?: string }
+export interface WebBridgeMessage { id: number; op: 'call' | 'asset' | 'request' | 'cancel'; action?: string; arguments?: unknown; path?: string
+  method?: string; headers?: [string, string][]; body?: string | Blob | { form: [string, string | File][] } | null }
 export function validWebBridgeMessage(value: unknown): value is WebBridgeMessage {
   if (!value || typeof value !== 'object') return false
   const message = value as WebBridgeMessage
   return Number.isSafeInteger(message.id) && message.id > 0 && (
     message.op === 'call' && typeof message.action === 'string' && message.action.length > 0 && message.action.length <= 100 ||
-    message.op === 'asset' && typeof message.path === 'string' && message.path.length > 0 && message.path.length <= 512)
+    message.op === 'asset' && typeof message.path === 'string' && message.path.length > 0 && message.path.length <= 512 ||
+    message.op === 'request' && typeof message.path === 'string' && message.path.length > 0 && message.path.length <= 8192 ||
+    message.op === 'cancel')
 }

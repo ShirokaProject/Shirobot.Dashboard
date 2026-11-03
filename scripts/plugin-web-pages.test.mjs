@@ -4,12 +4,13 @@ import vm from 'node:vm'
 import { readFile } from 'node:fs/promises'
 import { createServer } from 'vite'
 
-let server, bridge, api
+let server, bridge, api, transport
 const originalFetch = globalThis.fetch, originalStorage = globalThis.sessionStorage
 before(async () => {
   server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
   bridge = await server.ssrLoadModule('/src/views/pluginPages/webBridge.ts')
   api = await server.ssrLoadModule('/src/api/plugins/pages.ts')
+  transport = await server.ssrLoadModule('/src/views/pluginPages/webRequest.ts')
 })
 after(async () => {
   await server.close(); globalThis.fetch = originalFetch
@@ -74,4 +75,89 @@ test('iframe policy preserves opaque origin and denies network and form submissi
   assert.ok(document.indexOf('Content-Security-Policy') < document.indexOf('plugin()'))
   assert.ok(document.indexOf('shirobot-web-init') < document.indexOf('plugin()'))
   assert.ok(!bridge.webBootstrap('</script>').includes('</script>'))
+})
+
+test('raw request paths stay within the current page and credential headers are discarded', () => {
+  assert.equal(transport.pageRequestPath('/images/cat.png?size=2'), '/images/cat.png?size=2')
+  for (const path of ['https://other/', '//other/', '/../config', '/%2e%2e/config', '/%252e%252e/config', '/a\\b', '/x#fragment'])
+    assert.throws(() => transport.pageRequestPath(path))
+  const init = transport.pageRequestInit({ method: 'post', body: new Blob(['raw']), headers: [
+    ['Authorization', 'evil'], ['Cookie', 'secret'], ['X-Api-Key', 'secret'], ['X-Forwarded-Host', 'host'],
+    ['X-Correlation-Id', 'demo'], ['Content-Type', 'image/png']
+  ] }, new AbortController().signal)
+  assert.equal(init.headers.get('Authorization'), null)
+  assert.equal(init.headers.get('Cookie'), null)
+  assert.equal(init.headers.get('X-Api-Key'), null)
+  assert.equal(init.headers.get('X-Forwarded-Host'), null)
+  assert.equal(init.headers.get('X-Correlation-Id'), 'demo')
+  assert.equal(init.headers.get('Content-Type'), 'image/png')
+  assert.ok(init.body instanceof Blob)
+  const form = transport.pageRequestInit({ method: 'POST', body: { form: [['text', '猫'], ['image', new File(['data'], 'cat.png')]] } }, new AbortController().signal)
+  assert.ok(form.body instanceof FormData)
+  assert.equal(form.body.get('text'), '猫'); assert.equal(form.body.get('image').name, 'cat.png')
+  assert.throws(() => transport.pageRequestInit({ method: 'GET', body: 'data' }, new AbortController().signal))
+})
+
+function sandbox() {
+  const listeners = new Map(), rootPort = { start() {}, close() {}, postMessage() {} }
+  const parent = {}, window = { addEventListener: (name, handler) => listeners.set(name, handler), removeEventListener: name => listeners.delete(name) }
+  vm.runInNewContext(bridge.webBootstrap('nonce'), { window, parent, Blob, File, URL, FormData, URLSearchParams, Headers,
+    ArrayBuffer, Uint8Array, Response, ReadableStream, DOMException })
+  listeners.get('message')({ source: parent, data: { type: 'shirobot-web-init' }, ports: [rootPort] })
+  return { dashboard: window.ShiroBotDashboard, rootPort }
+}
+
+test('request returns a Response and pulls binary chunks with status, headers and backpressure', async () => {
+  const original = globalThis.fetch
+  const controller = new AbortController()
+  let pulls = 0, released = false, received
+  const bytes = new Uint8Array([0, 1, 2, 255])
+  globalThis.fetch = async (url, init) => {
+    received = { url, init }
+    return new Response(new ReadableStream({ pull(c) { pulls++; if (pulls === 1) c.enqueue(bytes); else c.close() } }, { highWaterMark: 0 }),
+      { status: 206, headers: { 'Content-Type': 'video/mp4', 'Content-Range': 'bytes 2-5/10' } })
+  }
+  const { dashboard, rootPort } = sandbox()
+  rootPort.postMessage = data => {
+    void transport.serveWebRequest('plugin/id', 'editor', data, controller,
+      message => rootPort.onmessage({ data: { id: data.id, ...message } }), () => { released = true })
+  }
+  try {
+    const response = await dashboard.request('/video', { headers: { Range: 'bytes=2-5' } })
+    assert.equal(response.status, 206)
+    assert.equal(response.headers.get('content-range'), 'bytes 2-5/10')
+    assert.equal(pulls, 0, 'body must not be read before the iframe consumes it')
+    assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [...bytes])
+    assert.ok(received.url.includes('/plugins/plugin%2Fid/pages/editor/web/request?path=%2Fvideo'))
+    assert.equal(received.init.headers.get('Range'), 'bytes=2-5')
+    assert.equal(received.init.credentials, 'omit'); assert.equal(received.init.redirect, 'error')
+    assert.equal(released, true)
+  } finally { controller.abort(); globalThis.fetch = original }
+})
+
+test('business errors remain HTTP responses and cancelling the body aborts upstream', async () => {
+  const original = globalThis.fetch, controller = new AbortController()
+  let canceled = false
+  globalThis.fetch = async () => new Response(new ReadableStream({ cancel() { canceled = true } }), { status: 422 })
+  const { dashboard, rootPort } = sandbox()
+  rootPort.postMessage = data => { void transport.serveWebRequest('p', 'e', data, controller,
+    message => rootPort.onmessage({ data: { id: data.id, ...message } }), () => {}) }
+  try {
+    const response = await dashboard.request('/validate')
+    assert.equal(response.status, 422); assert.equal(response.ok, false)
+    await response.body.cancel()
+    for (let i = 0; i < 10 && !canceled; i++) await new Promise(resolve => setImmediate(resolve))
+    assert.equal(controller.signal.aborted, true); assert.equal(canceled, true)
+  } finally { controller.abort(); globalThis.fetch = original }
+})
+
+test('AbortSignal cancels a pending HTTP request before headers', async () => {
+  const { dashboard, rootPort } = sandbox(), controller = new AbortController(), messages = []
+  rootPort.postMessage = data => messages.push(data)
+  const response = dashboard.request('/slow', { signal: controller.signal })
+  await new Promise(resolve => setImmediate(resolve))
+  controller.abort()
+  await assert.rejects(response, error => error.name === 'AbortError')
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(messages.at(-1).op, 'cancel')
 })

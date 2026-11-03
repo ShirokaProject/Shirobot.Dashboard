@@ -1,4 +1,4 @@
-import { apiBlobRequest, apiRequest } from '../core/http'
+import { apiBlobRequest, apiPluginResponse, apiRequest } from '../core/http'
 import type { PluginActionResponse } from './plugins'
 
 /** Component pages have no kind; custom sandbox pages use 'web'. Other kinds are legacy layouts. */
@@ -54,6 +54,9 @@ export function callPluginWebPage(pluginId: string, pageId: string, action: stri
 }
 export function getPluginWebAsset(pluginId: string, pageId: string, path: string, signal?: AbortSignal) {
   return apiBlobRequest(`${pluginPagePath(pluginId, pageId)}/web/assets?${new URLSearchParams({ path })}`, { signal })
+}
+export function requestPluginWebPage(pluginId: string, pageId: string, path: string, init?: RequestInit) {
+  return apiPluginResponse(`${pluginPagePath(pluginId, pageId)}/web/request?${new URLSearchParams({ path })}`, init)
 }
 
 export function uploadPluginPageFile(pluginId: string, pageId: string, file: File, signal?: AbortSignal) {

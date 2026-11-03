@@ -13,6 +13,7 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 import { callPluginWebPage, getPluginWebAsset, getPluginWebPage, type PluginPage } from '../../api/plugins/pages'
 import { getApiErrorMessage } from '../../api/core/http'
 import { validWebBridgeMessage, webPageDocument } from './webBridge'
+import { serveWebRequest } from './webRequest'
 
 const props = defineProps<{ pluginId: string; definition: PluginPage }>()
 const frame = ref<HTMLIFrameElement>(), document = ref(''), loading = ref(false), error = ref(''), revision = ref(0)
@@ -36,6 +37,7 @@ function connect(event: Event) {
   port = port1
   const request = controller, pluginId = props.pluginId, pageId = props.definition.id
   const inFlight = new Set<number>()
+  const transfers = new Map<number, AbortController>()
   const expectedNonce = nonce
   let authenticated = false
   port1.onmessage = async ({ data }: MessageEvent<unknown>) => {
@@ -45,11 +47,23 @@ function connect(event: Event) {
       else port1.close()
       return
     }
-    if (!validWebBridgeMessage(data) || request.signal.aborted || inFlight.has(data.id)) return
+    if (!validWebBridgeMessage(data) || request.signal.aborted) return
+    if (data.op === 'cancel') { transfers.get(data.id)?.abort(); return }
+    if (inFlight.has(data.id) || transfers.has(data.id)) return
     const respond = (message: object, transfer: Transferable[] = []) => {
       if (!request.signal.aborted) port1.postMessage({ id: data.id, ...message }, transfer)
     }
-    if (inFlight.size >= 32) { respond({ ok: false, error: '同时进行的网页请求过多。' }); return }
+    if (inFlight.size + transfers.size >= 32) { respond({ ok: false, error: '同时进行的网页请求过多。' }); return }
+    if (data.op === 'request') {
+      const transfer = new AbortController()
+      const abort = () => transfer.abort()
+      request.signal.addEventListener('abort', abort, { once: true }); transfers.set(data.id, transfer)
+      try {
+        await serveWebRequest(pluginId, pageId, data, transfer, respond,
+          () => { transfers.delete(data.id); request.signal.removeEventListener('abort', abort) })
+      } catch (cause) { respond({ ok: false, error: getApiErrorMessage(cause, '网页请求失败。') }) }
+      return
+    }
     inFlight.add(data.id)
     try {
       if (data.op === 'call') {
