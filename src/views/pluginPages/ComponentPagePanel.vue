@@ -1,6 +1,6 @@
 <template>
   <section class="component-page">
-    <div class="page-toolbar"><strong>{{ activeTitle }}</strong><button type="button" class="md-button text" :disabled="busy" @click="load">刷新</button></div>
+    <div class="page-toolbar"><h3>{{ activeTitle }}</h3><button type="button" class="md-button text compact" :disabled="busy" @click="load">刷新</button></div>
     <p v-if="error" role="alert">{{ error }}</p><p v-if="message" role="status">{{ message }}</p>
     <p v-if="loading">正在加载页面…</p>
     <div v-if="uploadStatus" role="status">{{ uploadStatus }} <button class="md-button text" type="button" @click="request?.abort()">取消上传</button></div>
@@ -88,7 +88,9 @@ watch(() => [props.pluginId, props.definition.id], () => { request?.abort(); act
 onBeforeUnmount(() => request?.abort())
 </script>
 <style scoped>
-.component-page { display: grid; gap: var(--md-space-3); }
+.component-page { display: flex; flex-direction: column; gap: var(--md-space-4); min-width: 0; }
+.component-page > p { margin: 0; }
+.page-toolbar h3 { margin: 0; font: var(--md-sys-typescale-title-medium); font-weight: 700; }
 .page-toolbar { display: flex; justify-content: space-between; align-items: center; }
 p[role='alert'] { color: var(--md-sys-color-error); white-space: pre-wrap; }
 </style>
