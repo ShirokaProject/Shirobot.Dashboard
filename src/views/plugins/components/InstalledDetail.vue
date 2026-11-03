@@ -33,6 +33,8 @@
 
     <MarketFacts
       :plugin="marketPlugin"
+      :plugin-id="plugin.id"
+      :repository="plugin.repo"
       :published-at="publishedAt"
       :compatibility="compatibility"
       :version="plugin.version"
