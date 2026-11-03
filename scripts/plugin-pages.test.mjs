@@ -146,3 +146,44 @@ test('the configuration page panel renders upload controls only for declared upl
   const readOnly = await renderToString(createSSRApp(Panel, { pluginId: 'Meme', definition: examplePage }))
   assert.ok(!readOnly.includes('type="file"'))
 })
+
+test('component pages POST bounded state and declared events with Bearer auth', async () => {
+  requests = []; response = json({ view: { type: 'column', children: [] }, state: { q: '猫' } })
+  const state = { q: '猫', page: '2' }
+  await pages.renderPluginPage('Meme', 'lib/../a', state)
+  assert.ok(new URL(requests[0].url).pathname.endsWith('/lib%2F..%2Fa/render'))
+  assert.deepEqual(JSON.parse(requests[0].init.body), { state })
+  assert.equal(requests[0].init.headers.get('Authorization'), 'Bearer test-key')
+  const event = { kind: 'action', element: 'n.2', action: 'delete', item: 'exact/id' }
+  response = json({ result: { ok: true }, view: null, state })
+  await pages.sendPluginPageEvent('Meme', 'library', state, event)
+  assert.deepEqual(JSON.parse(requests[1].init.body), { state, event })
+  const file = new File(['data'], '猫.png', { type: 'image/png' })
+  await pages.uploadPluginPageElement('Meme', 'library', state, 'import', file)
+  const url = new URL(requests[2].url)
+  assert.equal(url.searchParams.get('element'), 'import')
+  assert.deepEqual(JSON.parse(url.searchParams.get('state')), state)
+  assert.equal(requests[2].init.body, file)
+  assert.equal(requests[2].init.headers.get('Authorization'), 'Bearer test-key')
+  assert.equal(url.searchParams.get('token'), null)
+})
+test('component renderer escapes plugin content and only renders allowed row actions', async () => {
+  const { default: Renderer } = await server.ssrLoadModule('/src/views/pluginPages/UiRenderer.vue')
+  const node = { type: 'column', children: [
+    { type: 'text', text: '<script>alert(1)</script>' },
+    { type: 'text', markdown: true, text: '**Bold** <img src=x onerror=alert(1)> [unsafe](javascript:alert(1))' },
+    { type: 'link', text: 'unsafe link', url: 'javascript:alert(1)' },
+    { type: 'gallery', id: 'n.3', actions: [{ id: 'delete', label: 'Delete' }, { id: 'format', label: 'Forbidden' }], rows: [{ key: 'one', cells: [], card: { title: 'Cat', tags: ['cute'] }, actions: ['delete'] }] },
+    { type: 'upload', id: 'import', label: 'Upload', accept: ['image/png'], max_bytes: 1000 },
+    { type: 'form', id: 'hidden', dialog: true, submit_label: 'Hidden save', fields: [] },
+    { type: 'pager', id: 'page', total: 25, page_size: 24 }
+  ] }
+  const html = await renderToString(createSSRApp(Renderer, { node, state: {}, pluginId: 'Meme', pageId: 'library', busy: false, pagerReset: {} }))
+  assert.ok(html.includes('&lt;script&gt;') && !html.includes('<script>'))
+  assert.ok(/<strong[^>]*>Bold<\/strong>/.test(html) && !html.includes('<img src=x'))
+  assert.ok(!html.includes('href="javascript:'))
+  assert.ok(html.includes('Delete') && !html.includes('Forbidden'))
+  assert.ok(html.includes('accept="image/png"') && html.includes('type="file"'))
+  assert.ok(!html.includes('Hidden save'))
+  assert.ok(html.includes('共 25 条'))
+})
