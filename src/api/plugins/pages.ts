@@ -1,7 +1,7 @@
 import { apiBlobRequest, apiRequest } from '../core/http'
 import type { PluginActionResponse } from './plugins'
 
-/** Current page metadata; kind is present only on the previous host protocol. */
+/** Component pages have no kind; custom sandbox pages use 'web'. Other kinds are legacy layouts. */
 export interface PluginPage {
   id: string; title: string; icon?: string; description?: string; kind?: string
 }
@@ -42,6 +42,18 @@ export function runPluginPageAction(pluginId: string, pageId: string, actionId: 
 }
 export function getPluginPageImage(pluginId: string, pageId: string, fileId: string, signal?: AbortSignal) {
   return apiBlobRequest(`${pluginPagePath(pluginId, pageId)}/files?${new URLSearchParams({ id: fileId })}`, { signal })
+}
+
+export function getPluginWebPage(pluginId: string, pageId: string, signal?: AbortSignal) {
+  return apiRequest<{ html: string }>(`${pluginPagePath(pluginId, pageId)}/web`, { signal })
+}
+export function callPluginWebPage(pluginId: string, pageId: string, action: string, args: unknown, signal?: AbortSignal) {
+  return apiRequest<{ value: unknown }>(`${pluginPagePath(pluginId, pageId)}/web/call`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, arguments: args }), signal
+  })
+}
+export function getPluginWebAsset(pluginId: string, pageId: string, path: string, signal?: AbortSignal) {
+  return apiBlobRequest(`${pluginPagePath(pluginId, pageId)}/web/assets?${new URLSearchParams({ path })}`, { signal })
 }
 
 export function uploadPluginPageFile(pluginId: string, pageId: string, file: File, signal?: AbortSignal) {

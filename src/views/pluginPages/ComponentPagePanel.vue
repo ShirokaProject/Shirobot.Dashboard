@@ -1,5 +1,6 @@
 <template>
-  <section class="component-page">
+  <WebPagePanel v-if="webPage" :plugin-id="pluginId" :definition="webPage" />
+  <section v-else class="component-page">
     <div class="page-toolbar"><h3>{{ activeTitle }}</h3><button type="button" class="md-button text compact" :disabled="busy" @click="load">刷新</button></div>
     <p v-if="error" role="alert">{{ error }}</p><p v-if="message" role="status">{{ message }}</p>
     <p v-if="loading">正在加载页面…</p>
@@ -16,8 +17,10 @@ import { ElMessageBox } from 'element-plus'
 import { ApiError, getApiErrorMessage } from '../../api/core/http'
 import { getPluginPages, renderPluginPage, sendPluginPageEvent, uploadPluginPageElement, type PluginPage, type UiNode, type PageState, type PageEvent, type PageEventResponse } from '../../api/plugins/pages'
 import UiRenderer from './UiRenderer.vue'
+import WebPagePanel from './WebPagePanel.vue'
 const props = defineProps<{ pluginId: string; definition: PluginPage }>()
 const activePage = ref(''), activeTitle = ref(''), state = ref<PageState>({}), view = ref<UiNode | null>(null)
+const webPage = ref<PluginPage>()
 const loading = ref(false), busy = ref(false), error = ref(''), message = ref(''), uploadStatus = ref('')
 const fieldErrors = ref<Record<string, string>>({}), dialogVisible = ref(false), dialogForm = ref<UiNode>(), dialogValues = ref<Record<string, unknown>>({}), dialogKey = ref(0)
 let request: AbortController | undefined
@@ -40,6 +43,8 @@ async function openPage(id: string, next: PageState, controller: AbortController
   const pages = await getPluginPages(props.pluginId, controller.signal)
   const page = pages.pages.find(p => p.id === id)
   if (!page) throw new Error('目标页面不存在。')
+  if (controller.signal.aborted) return
+  if (page.kind === 'web') { webPage.value = page; dialogVisible.value = false; return }
   const response = await renderPluginPage(props.pluginId, id, next, controller.signal)
   if (controller.signal.aborted) return
   activePage.value = page.id; activeTitle.value = page.title; state.value = response.state; view.value = response.view; dialogVisible.value = false
@@ -84,7 +89,7 @@ async function upload(node: UiNode, files: File[]) {
     if (request === controller) { message.value = `上传完成 ${success}/${files.length}${controller.signal.aborted ? '（已取消）' : ''}`; error.value = failures.join('\n') }
   } finally { finish(controller) }
 }
-watch(() => [props.pluginId, props.definition.id], () => { request?.abort(); activePage.value = props.definition.id; activeTitle.value = props.definition.title; state.value = {}; view.value = null; message.value = ''; dialogVisible.value = false; void load() }, { immediate: true })
+watch(() => [props.pluginId, props.definition.id], () => { request?.abort(); webPage.value = undefined; activePage.value = props.definition.id; activeTitle.value = props.definition.title; state.value = {}; view.value = null; message.value = ''; dialogVisible.value = false; void load() }, { immediate: true })
 onBeforeUnmount(() => request?.abort())
 </script>
 <style scoped>
