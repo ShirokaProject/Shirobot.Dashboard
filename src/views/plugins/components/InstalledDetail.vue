@@ -43,6 +43,13 @@
       :permissions="plugin.permissions"
     />
 
+    <AutoUpdateItemSwitch
+      kind="plugins"
+      :id="plugin.id"
+      :disabled="!plugin.repo"
+      :hint="plugin.repo ? undefined : '没有声明 GitHub 仓库，无法自动更新'"
+    />
+
     <section v-if="actionsLoading || actionsError || extraActions.length" class="actions">
       <h3>插件操作</h3>
       <p v-if="actionsError" class="muted">{{ actionsError }}</p>
@@ -83,6 +90,7 @@
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import MarketFacts from './MarketFacts.vue'
+import AutoUpdateItemSwitch from '../../../components/AutoUpdateItemSwitch.vue'
 import type { MarketplacePlugin, PluginActionDefinition } from '../../../api'
 import type { Plugin, PluginStatus } from '../../../features/plugins/types'
 

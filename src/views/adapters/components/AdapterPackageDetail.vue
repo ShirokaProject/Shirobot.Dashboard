@@ -37,6 +37,8 @@
       <AdapterMarketFacts :entry="marketEntry" :repository="pkg.repository" />
     </dl>
 
+    <AutoUpdateItemSwitch kind="adapters" :id="pkg.id" />
+
     <p class="footnote">实例和连接配置保存在此适配器的 config.toml 中。</p>
 
     <footer class="detail-foot button-group">
@@ -53,6 +55,7 @@
 <script setup lang="ts">
 import AdapterMarketFacts from './AdapterMarketFacts.vue'
 import MdIcon from '../../../components/MdIcon.vue'
+import AutoUpdateItemSwitch from '../../../components/AutoUpdateItemSwitch.vue'
 import type { AdapterMarketEntry, AdapterStatus } from '../../../api'
 
 defineProps<{

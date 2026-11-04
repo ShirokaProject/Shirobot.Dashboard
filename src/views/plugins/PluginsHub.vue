@@ -54,7 +54,7 @@
       <div class="list-pane panel">
         <template v-if="tab === 'installed'">
           <p v-if="installed.loadError.value" class="list-note">{{ installed.loadError.value }}</p>
-          <AutoUpdateToggle config-key="auto_update_plugins" noun="插件" />
+          <AutoUpdateToggle kind="plugins" noun="插件" />
 
           <template v-if="attention.length">
             <h3 class="list-label">需要处理<span>{{ attention.length }}</span></h3>
