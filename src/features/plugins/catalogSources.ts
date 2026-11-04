@@ -222,3 +222,8 @@ export function removeDirectRepo(id: string, scope: SourceScope = 'plugins') {
   if (!CUSTOM_MARKET_SOURCES_ENABLED) return
   writeDirectRepos(scope, listDirectRepos(scope).filter(repo => repo.id !== id))
 }
+
+export function isOfficialPluginRepository(repository: string): boolean {
+  const repo = parseRepository(repository)
+  return repo?.host === 'github' && repo.owner.toLowerCase() === 'shirokaproject'
+}

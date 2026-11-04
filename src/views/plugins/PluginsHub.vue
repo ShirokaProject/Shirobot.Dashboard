@@ -40,6 +40,8 @@
           :sources="market.sources.value"
           :active-source-id="market.activeSource.value.id"
           :view="discoverView"
+          :plugin-group="pluginGroup"
+          @select-third-party="selectThirdParty"
           :direct-count="market.directEntries.value.length"
           @select-catalog="selectCatalog"
           @select-direct="discoverView = 'direct'"
@@ -130,7 +132,7 @@
                   <SiteIcon v-else :domain="entry.repo.domain" />
                 </span>
                 <span class="row-text">
-                  <strong class="market-name">{{ entry.plugin.name }}<OfficialPluginBadge :repository="entry.plugin.repository" /></strong>
+                  <strong class="market-name">{{ entry.plugin.name }}</strong>
                   <small>{{ entry.repo.owner }}/{{ entry.repo.repo }} · {{ repoHostLabel(entry.repo) }}</small>
                 </span>
                 <span class="row-status" :class="directTone(entry)">
@@ -160,7 +162,7 @@
         <template v-else>
           <header class="list-head">
             <div class="list-head-text">
-              <strong>{{ market.activeSource.value.name }}</strong>
+              <strong>{{ market.activeSource.value.builtIn ? (pluginGroup === 'official' ? '官方插件' : '第三方插件') : market.activeSource.value.name }}</strong>
               <a
                 v-if="sourceRepo"
                 class="source-link"
@@ -217,7 +219,7 @@
                 @click="market.selectedPlugin.value = plugin"
               >
                 <span class="row-text">
-                  <strong class="market-name">{{ plugin.name }}<OfficialPluginBadge :repository="plugin.repository" /></strong>
+                  <strong class="market-name">{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
                 </span>
                 <span v-if="plugin.installed" class="row-status">已安装</span>
@@ -330,11 +332,11 @@ import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
-import OfficialPluginBadge from '../../components/OfficialPluginBadge.vue'
 import SiteIcon from '../../components/SiteIcon.vue'
 import {
   CUSTOM_MARKET_SOURCES_ENABLED,
   githubRepoOf,
+  isOfficialPluginRepository,
   repoHostLabel,
   type ParsedRepository,
   type SourceType
@@ -395,7 +397,9 @@ function preparePluginUpdate(plugin: Plugin) {
 }
 
 // Keep the selected market sort within each group, with installed plugins last.
-const discoverList = computed(() => [...market.filteredPlugins.value]
+const pluginGroup = ref<'official' | 'third-party'>('official')
+const discoverList = computed(() => market.filteredPlugins.value
+  .filter(plugin => !market.activeSource.value.builtIn || isOfficialPluginRepository(plugin.repository) === (pluginGroup.value === 'official'))
   .sort((a, b) => Number(Boolean(a.installed)) - Number(Boolean(b.installed))))
 
 const discoverEmptyText = computed(() => {
@@ -435,7 +439,15 @@ const addSourceType = ref<SourceType>('repo')
 
 function selectCatalog(id: string) {
   discoverView.value = 'catalog'
+  pluginGroup.value = 'official'
   market.selectSource(id)
+}
+
+function selectThirdParty() {
+  const builtIn = market.sources.value.find(source => source.builtIn)
+  if (builtIn) market.selectSource(builtIn.id)
+  discoverView.value = 'catalog'
+  pluginGroup.value = 'third-party'
 }
 
 function openAddSource(type: SourceType) {

@@ -7,12 +7,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MdIcon from './MdIcon.vue'
-import { parseRepository } from '../features/plugins/catalogSources'
+import { isOfficialPluginRepository } from '../features/plugins/catalogSources'
 const props = defineProps<{ repository: string }>()
-const official = computed(() => {
-  const repo = parseRepository(props.repository)
-  return repo?.host === 'github' && repo.owner.toLowerCase() === 'shirokaproject'
-})
+const official = computed(() => isOfficialPluginRepository(props.repository))
 </script>
 
 <style scoped>

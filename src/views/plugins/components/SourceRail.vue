@@ -6,14 +6,14 @@
         <button
           type="button"
           class="rail-item"
-          :class="{ selected: view === 'catalog' && source.id === activeSourceId }"
-          :aria-current="view === 'catalog' && source.id === activeSourceId ? 'true' : undefined"
+          :class="{ selected: view === 'catalog' && source.id === activeSourceId && (!source.builtIn || pluginGroup !== 'third-party') }"
+          :aria-current="view === 'catalog' && source.id === activeSourceId && (!source.builtIn || pluginGroup !== 'third-party') ? 'true' : undefined"
           @click="emit('selectCatalog', source.id)"
         >
           <MdIcon :name="source.builtIn ? 'verified' : 'folder'" class="rail-icon" />
           <span class="rail-text">
-            <strong>{{ source.name }}</strong>
-            <small>{{ source.builtIn ? '官方收录' : source.url }}</small>
+            <strong>{{ source.builtIn && pluginGroup ? '官方插件' : source.name }}</strong>
+            <small>{{ source.builtIn ? (pluginGroup ? 'ShirokaProject' : '官方收录') : source.url }}</small>
           </span>
         </button>
         <button
@@ -25,6 +25,13 @@
           @click="emit('removeCatalog', source.id)"
         >
           <MdIcon name="close" />
+        </button>
+      </li>
+      <li v-if="pluginGroup">
+        <button type="button" class="rail-item" :class="{ selected: view === 'catalog' && pluginGroup === 'third-party' }"
+          :aria-current="view === 'catalog' && pluginGroup === 'third-party' ? 'true' : undefined" @click="emit('selectThirdParty')">
+          <MdIcon name="folder" class="rail-icon" />
+          <span class="rail-text"><strong>第三方插件</strong><small>社区开发者</small></span>
         </button>
       </li>
     </ul>
@@ -67,11 +74,13 @@ withDefaults(defineProps<{
   view: 'catalog' | 'direct'
   directCount: number
   /** What the sources hold: 插件 or Adapter */
+  pluginGroup?: 'official' | 'third-party'
   noun?: string
 }>(), { noun: '插件' })
 
 const emit = defineEmits<{
   selectCatalog: [id: string]
+  selectThirdParty: []
   selectDirect: []
   removeCatalog: [id: string]
   add: [type: SourceType]
