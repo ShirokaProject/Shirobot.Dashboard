@@ -53,6 +53,7 @@
         <!-- 已安装 -->
         <template v-if="tab === 'installed'">
           <p v-if="installed.error.value" class="list-note">{{ installed.error.value }}</p>
+          <AutoUpdateToggle config-key="auto_update_adapters" noun="适配器" />
 
           <template v-if="attention.length">
             <h3 class="list-label">需要处理<span>{{ attention.length }}</span></h3>
@@ -368,6 +369,7 @@
 
 <script setup lang="ts">
 import RestartNotice from '../../layout/components/RestartNotice.vue'
+import AutoUpdateToggle from '../../components/AutoUpdateToggle.vue'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'

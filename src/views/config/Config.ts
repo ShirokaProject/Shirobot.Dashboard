@@ -1,4 +1,5 @@
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { getApiErrorMessage, getAppConfig, updateAppConfig, type AppConfigData } from '../../api'
 import type { ConfigField, ConfigGroup } from '../pluginConfig/usePluginConfig'
 import type { PluginConfigSchemaItem } from '../../api/plugins/config'
@@ -142,7 +143,9 @@ function makePatch(config: AppConfigData, fields: HostConfigField[]): AppConfigD
 }
 
 export function useConfigPage() {
-  const activeGroup = ref('')
+  const route = useRoute()
+  // ?group=auto_update opens that group, e.g. from the auto-update shortcut on the plugins page
+  const activeGroup = ref(typeof route.query.group === 'string' ? route.query.group : '')
   const loading = ref(true)
   const saving = ref(false)
   const loadError = ref('')
