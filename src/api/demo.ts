@@ -204,11 +204,11 @@ const demoConfig: AppConfigResponse = {
     {
       key: 'update', label: '自动更新', type: 'section', group_id: 'auto_update', group_label: '自动更新', group_icon: 'refresh', group_description: '每天定时更新插件、适配器和主程序。', group_order: 25, order: 10,
       fields: [
-        { key: 'plugins', label: '自动更新插件', type: 'boolean', description: '每天在设定时间自动更新配置了 GitHub 仓库的已加载插件。', order: 10 },
-        { key: 'exclude_plugins', label: '不自动更新的插件', type: 'array', item_type: 'string', description: '不参与自动更新的插件 ID，例如自己修改过、想停留在当前版本的插件。', order: 20 },
-        { key: 'adapters', label: '自动更新适配器', type: 'boolean', description: '每天在设定时间从适配器市场更新已安装的适配器包。', order: 30 },
-        { key: 'exclude_adapters', label: '不自动更新的适配器', type: 'array', item_type: 'string', description: '不参与自动更新的适配器包 ID。', order: 40 },
-        { key: 'host', label: '自动更新主程序', type: 'boolean', description: '每天在设定时间更新主程序；新版本先试运行，替换后自动重启。', order: 50 },
+        { key: 'host', label: '自动更新主程序', type: 'boolean', description: '每天在设定时间更新主程序；新版本先试运行，替换后自动重启。', order: 10 },
+        { key: 'plugins', label: '自动更新插件', type: 'boolean', description: '每天在设定时间自动更新配置了 GitHub 仓库的已加载插件。', order: 20 },
+        { key: 'exclude_plugins', label: '不自动更新的插件', type: 'array', item_type: 'string', description: '不参与自动更新的插件 ID，例如自己修改过、想停留在当前版本的插件。', order: 30 },
+        { key: 'adapters', label: '自动更新适配器', type: 'boolean', description: '每天在设定时间从适配器市场更新已安装的适配器包。', order: 40 },
+        { key: 'exclude_adapters', label: '不自动更新的适配器', type: 'array', item_type: 'string', description: '不参与自动更新的适配器包 ID。', order: 50 },
         { key: 'skip_major', label: '跳过大版本更新', type: 'boolean', description: '主版本号变化（如 1.x → 2.0）时不自动更新，只通知 Owner 手动更新；无法识别版本号时照常更新。', order: 60 },
         { key: 'time', label: '自动更新时间', type: 'string', description: '自动更新的执行时间，格式 HH:mm，使用宿主所在系统的本地时区。', order: 70 },
         { key: 'restart_on_pending', label: '热更新失败时自动重启', type: 'boolean', description: '自动更新时插件或适配器无法热替换（新版本已暂存，等待重启）时，自动重启宿主完成更新。', order: 80 }
@@ -248,11 +248,11 @@ const demoConfig: AppConfigResponse = {
     github_proxy: 'https://gh-proxy.com/',
     host_update_repository: 'ShirokaProject/ShiroBot',
     update: {
+      host: false,
       plugins: false,
       exclude_plugins: [],
       adapters: false,
       exclude_adapters: [],
-      host: false,
       skip_major: true,
       time: '02:00',
       restart_on_pending: true
