@@ -1,5 +1,6 @@
 import { compareVersions } from '../../features/plugins/updates'
-import { formatContractCompatibility } from '../../features/plugins/formatCompatibility'
+import { apiRequest } from '../../api/core/http'
+import { contractAbiRejection, formatContractCompatibility } from '../../features/plugins/formatCompatibility'
 import { offerRestartForStagedUpdate } from '../../features/hostPower/pendingRestart'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getSessionBaseUrl } from '../../auth/session'
@@ -57,6 +58,8 @@ function placeholderFor(repo: DirectRepository, status: string, message: string)
 }
 
 export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) {
+  const hostAbi = ref<Record<string, string> | null>(null)
+  const abiRejection = (plugin: MarketplacePlugin) => contractAbiRejection(plugin.compatibility.abi, hostAbi.value)
   const sources = ref<CatalogSource[]>(listCatalogSources())
   const activeSource = ref<CatalogSource>(getActiveCatalogSource())
   const directEntries = ref<DirectEntry[]>(listDirectRepos().map(repo => ({
@@ -379,6 +382,7 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
 
   function installButtonLabel(plugin: MarketplacePlugin) {
     if (preparingPluginId.value === plugin.id) return '准备中...'
+    if (abiRejection(plugin)) return 'ABI 不兼容'
     if (!canInstallPlugin(plugin)) return plugin.deprecated ? '已弃用' : '不可安装'
     if (!plugin.installed) return '安装'
     const comparison = compareVersions(plugin.installed.version, plugin.release.version!)
@@ -388,15 +392,19 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
 
   function canInstallPlugin(plugin: MarketplacePlugin) {
     return !plugin.deprecated
+      && !abiRejection(plugin)
       && plugin.health.status === 'available'
       && Boolean(plugin.repository && plugin.release.version && plugin.release.asset?.url && plugin.release.asset.digest)
   }
 
   function formatCompatibility(plugin: MarketplacePlugin) {
-    return formatContractCompatibility(plugin.compatibility)
+    return [formatContractCompatibility(plugin.compatibility), abiRejection(plugin)].filter(Boolean).join(' · ')
   }
 
   onMounted(() => {
+    void apiRequest<Record<string, string>>('/api/v1/plugins/contract-abi')
+      .then(versions => { hostAbi.value = versions })
+      .catch(() => { hostAbi.value = null })
     void loadMarketplacePlugins().then(applyDashboardRefresh)
     resolveAllDirect()
   })
