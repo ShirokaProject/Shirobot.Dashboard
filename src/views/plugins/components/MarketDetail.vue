@@ -2,7 +2,7 @@
   <article v-if="plugin" class="detail">
     <header class="detail-head">
       <div class="detail-title">
-        <div class="market-title-line"><h2>{{ plugin.name }}</h2><OfficialPluginBadge :repository="plugin.repository" /></div>
+        <div class="market-title-line"><PluginDeveloperAvatar :repository="plugin.repository" :authors="plugin.authors" /><h2>{{ plugin.name }}</h2><OfficialPluginBadge :repository="plugin.repository" /></div>
         <p>{{ authors }}<span class="sep">·</span>{{ category }}<span class="version mono">{{ plugin.release.version ? `v${plugin.release.version}` : '无版本' }}</span></p>
       </div>
     </header>
@@ -37,6 +37,7 @@
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
+import PluginDeveloperAvatar from '../../../components/PluginDeveloperAvatar.vue'
 import OfficialPluginBadge from '../../../components/OfficialPluginBadge.vue'
 import MarketFacts from './MarketFacts.vue'
 import { DOCS_URL } from '../../../features/docs'
