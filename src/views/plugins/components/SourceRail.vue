@@ -106,7 +106,7 @@ h3 ~ h3 {
 .rail-list {
   display: flex;
   flex-direction: column;
-  gap: var(--md-space-2);
+  gap: 16px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -132,6 +132,11 @@ h3 ~ h3 {
   cursor: pointer;
   text-align: left;
   transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.rail-item:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
 }
 
 .rail-item:hover {
