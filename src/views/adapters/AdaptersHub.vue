@@ -193,7 +193,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
               ><GitHubIcon /><span>{{ sourceRepo }}</span></a>
-              <small v-else>{{ market.sourceRepository.value || market.activeSource.value.url || '后端默认目录' }}</small>
+              <small v-else>{{ market.sourceRepository.value || market.activeSource.value.url || '官方收录的适配器' }}</small>
             </div>
             <span v-if="market.entries.value.length && market.generatedAt.value" class="list-head-time">更新于 {{ market.generatedAt.value }}</span>
             <button

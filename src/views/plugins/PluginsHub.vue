@@ -170,7 +170,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
               ><GitHubIcon /><span>{{ sourceRepo }}</span></a>
-              <small v-else>{{ market.sourceRepository.value || '后端默认目录' }}</small>
+              <small v-else>{{ market.sourceRepository.value || catalogDescription }}</small>
             </div>
             <span v-if="market.marketplacePlugins.value.length" class="list-head-time">更新于 {{ market.generatedAt.value }}</span>
             <button
@@ -467,6 +467,10 @@ function addCatalog(name: string, url: string) {
 }
 
 const sourceRepo = computed(() => githubRepoOf(market.sourceRepository.value))
+const catalogDescription = computed(() => {
+  if (!market.activeSource.value.builtIn) return '自定义目录'
+  return pluginGroup.value === 'official' ? 'ShirokaProject 官方维护的插件' : '社区开发者发布的插件，安装前请确认来源'
+})
 
 const directList = computed(() => {
   const query = market.keyword.value.trim().toLowerCase()

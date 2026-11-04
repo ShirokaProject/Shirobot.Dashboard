@@ -106,7 +106,7 @@ h3 ~ h3 {
 .rail-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--md-space-1);
   margin: 0;
   padding: 0;
   list-style: none;
