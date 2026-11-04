@@ -2,7 +2,7 @@
   <article v-if="plugin" class="detail">
     <header class="detail-head">
       <div class="detail-title">
-        <h2>{{ plugin.name }}</h2>
+        <div class="market-title-line"><h2>{{ plugin.name }}</h2><OfficialPluginBadge :repository="plugin.repository" /></div>
         <p>{{ authors }}<span class="sep">·</span>{{ category }}</p>
       </div>
       <span class="version mono">{{ plugin.release.version ? `v${plugin.release.version}` : '无版本' }}</span>
@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import MdIcon from '../../../components/MdIcon.vue'
+import OfficialPluginBadge from '../../../components/OfficialPluginBadge.vue'
 import MarketFacts from './MarketFacts.vue'
 import { DOCS_URL } from '../../../features/docs'
 import type { MarketplacePlugin } from '../../../api'
@@ -62,3 +63,8 @@ const emit = defineEmits<{ install: [plugin: MarketplacePlugin] }>()
 </script>
 
 <style scoped src="./detail.css"></style>
+
+<style scoped>
+.market-title-line { display: flex; align-items: center; gap: 8px; }
+.market-title-line h2 { min-width: 0; }
+</style>

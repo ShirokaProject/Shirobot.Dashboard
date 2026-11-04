@@ -130,7 +130,7 @@
                   <SiteIcon v-else :domain="entry.repo.domain" />
                 </span>
                 <span class="row-text">
-                  <strong>{{ entry.plugin.name }}</strong>
+                  <strong class="market-name">{{ entry.plugin.name }}<OfficialPluginBadge :repository="entry.plugin.repository" /></strong>
                   <small>{{ entry.repo.owner }}/{{ entry.repo.repo }} · {{ repoHostLabel(entry.repo) }}</small>
                 </span>
                 <span class="row-status" :class="directTone(entry)">
@@ -217,7 +217,7 @@
                 @click="market.selectedPlugin.value = plugin"
               >
                 <span class="row-text">
-                  <strong>{{ plugin.name }}</strong>
+                  <strong class="market-name">{{ plugin.name }}<OfficialPluginBadge :repository="plugin.repository" /></strong>
                   <small>{{ plugin.description }}</small>
                 </span>
                 <span v-if="plugin.installed" class="row-status">已安装</span>
@@ -330,6 +330,7 @@ import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
+import OfficialPluginBadge from '../../components/OfficialPluginBadge.vue'
 import SiteIcon from '../../components/SiteIcon.vue'
 import {
   CUSTOM_MARKET_SOURCES_ENABLED,
