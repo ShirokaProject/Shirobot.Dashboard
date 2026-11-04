@@ -982,6 +982,8 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     ],
     unavailable: []
   } as T
+  if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/pages$/.test(pathname)) return { pages: [] } as T
+
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return { ...clone(demoPluginConfig), raw_config: true } as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
     const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[]; priority?: number | null } }

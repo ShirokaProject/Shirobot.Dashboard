@@ -2,19 +2,20 @@
   <nav class="config-nav" aria-label="配置分类">
     <div class="mobile-nav">
       <label :for="categoryId">配置分类</label>
-      <select :id="categoryId" :value="view" @change="emit('update:view', ($event.target as HTMLSelectElement).value)">
-        <optgroup v-if="groups.length" label="配置">
-          <option v-for="group in groups" :key="group.key" :value="group.key">{{ group.label }} · {{ group.fields.length }} 项</option>
-        </optgroup>
-        <optgroup v-if="pages.length" label="插件页面">
-          <option v-for="page in pages" :key="page.id" :value="pluginPageView(page.id)">{{ page.title }}</option>
-        </optgroup>
-        <optgroup v-if="showInstance || showRoutes || showListeners" :label="showInstance ? '实例与路由' : '路由与监听'">
-          <option v-if="showInstance" :value="INSTANCE_VIEW">实例</option>
-          <option v-if="showRoutes" :value="ROUTES_VIEW">路由</option>
-          <option v-if="showListeners" :value="LISTENERS_VIEW">监听</option>
-        </optgroup>
-      </select>
+      <el-select :id="categoryId" class="category-select" :model-value="view" aria-label="配置分类"
+        @update:model-value="emit('update:view', $event)">
+        <el-option-group v-if="groups.length" label="配置">
+          <el-option v-for="group in groups" :key="group.key" :value="group.key" :label="`${group.label} · ${group.fields.length} 项`" />
+        </el-option-group>
+        <el-option-group v-if="pages.length" label="插件页面">
+          <el-option v-for="page in pages" :key="page.id" :value="pluginPageView(page.id)" :label="page.title" />
+        </el-option-group>
+        <el-option-group v-if="showInstance || showRoutes || showListeners" :label="showInstance ? '实例与路由' : '路由与监听'">
+          <el-option v-if="showInstance" :value="INSTANCE_VIEW" label="实例" />
+          <el-option v-if="showRoutes" :value="ROUTES_VIEW" label="路由" />
+          <el-option v-if="showListeners" :value="LISTENERS_VIEW" label="监听" />
+        </el-option-group>
+      </el-select>
       <span v-if="pagesLoading" class="nav-note" role="status">插件页面加载中…</span>
       <template v-else-if="pagesError"><span class="nav-note error" role="alert">{{ pagesError }}</span><button type="button" class="md-button text compact" @click="emit('retry-pages')">重试</button></template>
     </div>
@@ -179,22 +180,9 @@ hr {
     font: var(--md-sys-typescale-label-medium);
   }
 
-  .mobile-nav select {
+  .category-select {
     flex: 1;
     min-width: 0;
-    min-height: 48px;
-    padding: 0 var(--md-space-3);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: var(--md-sys-shape-corner-medium);
-    background: var(--app-card);
-    color: var(--md-sys-color-on-surface);
-    font: var(--md-sys-typescale-body-medium);
-    font-size: 16px;
-  }
-
-  .mobile-nav select:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary);
-    outline-offset: 2px;
   }
 
   .mobile-nav .nav-note { flex-basis: 100%; padding: 0; }
