@@ -183,10 +183,23 @@
               <p>近 24 小时 · 共 {{ messageTotal }} 条<template v-if="peakBar"> · 高峰 {{ peakBar.time }}（{{ peakBar.count }} 条）</template></p>
             </div>
           </div>
-          <div v-if="bars.length" class="bars" role="img" aria-label="近 24 小时消息频率柱状图">
-            <div v-for="(bar, index) in bars" :key="`${bar.time}-${index}`" class="bar-column" :title="`${bar.time} · ${bar.count} 条`">
+          <div v-if="bars.length" class="bars" role="list" aria-label="近 24 小时消息频率">
+            <div
+              v-for="(bar, index) in bars"
+              :key="`${bar.time}-${index}`"
+              class="bar-column"
+              role="listitem"
+              tabindex="0"
+              :aria-label="`${bar.range}，${bar.count} 条消息`"
+            >
               <div class="bar-track">
                 <div class="bar" :class="{ peak: bar.peak }" :style="{ height: `${bar.height}%` }"></div>
+                <span
+                  class="bar-tip"
+                  :class="{ start: index < 2, end: index >= bars.length - 2 }"
+                  :style="{ bottom: `${bar.height}%` }"
+                  aria-hidden="true"
+                ><strong>{{ bar.count }} 条</strong>{{ bar.range }}</span>
               </div>
               <span class="bar-time">{{ index % 2 === 0 ? bar.time : '' }}</span>
             </div>

@@ -228,6 +228,7 @@ export function useOverviewPage() {
     const maxCount = Math.max(...counts, 0)
     return buckets.map((bucket, index) => ({
       time: bucket.start_time,
+      range: bucket.end_time ? `${bucket.start_time}–${bucket.end_time}` : bucket.start_time,
       count: counts[index],
       height: maxCount > 0 ? Math.max(6, Math.round((counts[index] / maxCount) * 100)) : 0,
       peak: maxCount > 0 && counts[index] === maxCount
