@@ -2,8 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { formatAdapterPlatform, modelsFromAbi } from '../src/features/adapters/platform.ts'
 
-test('the chat platform from the model comes before the adapter protocol', () => {
-  assert.equal(formatAdapterPlatform('milky', ['QQ']), 'QQ · Milky')
+test('adapters are labelled by the chat platform of their model', () => {
+  assert.equal(formatAdapterPlatform('milky', ['QQ']), 'QQ')
+  assert.equal(formatAdapterPlatform('qq-official', ['QQ']), 'QQ')
   assert.equal(formatAdapterPlatform('telegram', ['Telegram']), 'Telegram')
   assert.equal(formatAdapterPlatform('onebot', []), 'OneBot')
   assert.equal(formatAdapterPlatform('', ['QQ']), 'QQ')

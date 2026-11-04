@@ -22,13 +22,14 @@ export function formatPlatform(value: string): string {
 }
 
 /**
- * "QQ · Milky": the chat platform, from the ShiroBot.Model.* the adapter is built on, then the adapter's own
- * platform (usually its protocol). Telegram and Discord adapters read the same way, so they tell apart at a glance.
+ * The chat platform an adapter serves, from the ShiroBot.Model.* it is built on ("QQ" for Milky and the QQ
+ * official bot alike). The adapter's own platform field is usually its protocol, so it is only the fallback
+ * when no Model is known.
  */
 export function formatAdapterPlatform(platform: string, models: readonly string[]): string {
-  const own = platform.trim() ? formatPlatform(platform) : ''
-  const families = [...new Set(models.map(formatPlatform))].filter(family => family.toLowerCase() !== own.toLowerCase())
-  return [families.join(' / '), own].filter(Boolean).join(' · ') || '未声明'
+  const families = [...new Set(models.map(formatPlatform))].filter(Boolean)
+  if (families.length) return families.join(' / ')
+  return platform.trim() ? formatPlatform(platform) : '未声明'
 }
 
 /** Model names from ABI requirement keys such as "ShiroBot.Model.QQ" or "Model.QQ". */
