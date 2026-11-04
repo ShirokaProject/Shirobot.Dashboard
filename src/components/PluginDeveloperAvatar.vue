@@ -33,15 +33,15 @@ watch(login, () => { failed.value = false })
 .developer-avatar {
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 25px;
+  height: 25px;
   flex: 0 0 auto;
   overflow: hidden;
-  border-radius: var(--md-sys-shape-corner-small);
+  border-radius: 40%;
   box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
 }
 .developer-avatar img { width: 100%; height: 100%; object-fit: cover; }
