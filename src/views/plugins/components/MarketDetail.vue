@@ -65,6 +65,6 @@ const emit = defineEmits<{ install: [plugin: MarketplacePlugin] }>()
 <style scoped src="./detail.css"></style>
 
 <style scoped>
-.market-title-line { display: flex; align-items: center; gap: 8px; }
-.market-title-line h2 { min-width: 0; }
+.market-title-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.market-title-line h2 { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 </style>
