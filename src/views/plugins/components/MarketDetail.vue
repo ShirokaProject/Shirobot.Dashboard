@@ -3,9 +3,8 @@
     <header class="detail-head">
       <div class="detail-title">
         <div class="market-title-line"><h2>{{ plugin.name }}</h2><OfficialPluginBadge :repository="plugin.repository" /></div>
-        <p>{{ authors }}<span class="sep">·</span>{{ category }}</p>
+        <p>{{ authors }}<span class="sep">·</span>{{ category }}<span class="version mono">{{ plugin.release.version ? `v${plugin.release.version}` : '无版本' }}</span></p>
       </div>
-      <span class="version mono">{{ plugin.release.version ? `v${plugin.release.version}` : '无版本' }}</span>
     </header>
 
     <p class="detail-desc">{{ plugin.description }}</p>
@@ -65,6 +64,9 @@ const emit = defineEmits<{ install: [plugin: MarketplacePlugin] }>()
 <style scoped src="./detail.css"></style>
 
 <style scoped>
+.detail-head { display: block; }
+.detail-title p { display: flex; align-items: center; }
+.detail-title .version { margin-left: auto; }
 .market-title-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .market-title-line h2 { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 </style>
