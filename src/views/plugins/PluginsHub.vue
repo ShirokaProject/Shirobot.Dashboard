@@ -132,7 +132,7 @@
                   <SiteIcon v-else :domain="entry.repo.domain" />
                 </span>
                 <span class="row-text">
-                  <strong class="market-name"><PluginDeveloperAvatar :repository="entry.plugin.repository" :authors="entry.plugin.authors" />{{ entry.plugin.name }}</strong>
+                  <strong class="market-name"><MdIcon name="extension" class="market-plugin-icon" />{{ entry.plugin.name }}</strong>
                   <small>{{ entry.repo.owner }}/{{ entry.repo.repo }} · {{ repoHostLabel(entry.repo) }}</small>
                 </span>
                 <span class="row-status" :class="directTone(entry)">
@@ -219,7 +219,7 @@
                 @click="market.selectedPlugin.value = plugin"
               >
                 <span class="row-text">
-                  <strong class="market-name"><PluginDeveloperAvatar :repository="plugin.repository" :authors="plugin.authors" />{{ plugin.name }}</strong>
+                  <strong class="market-name"><MdIcon name="extension" class="market-plugin-icon" />{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
                 </span>
                 <span v-if="plugin.installed" class="row-status">已安装</span>
@@ -332,7 +332,6 @@ import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
-import PluginDeveloperAvatar from '../../components/PluginDeveloperAvatar.vue'
 import SiteIcon from '../../components/SiteIcon.vue'
 import {
   CUSTOM_MARKET_SOURCES_ENABLED,

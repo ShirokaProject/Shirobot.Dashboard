@@ -467,3 +467,5 @@
 }
 
 .market-name { display: flex; align-items: center; gap: 8px; }
+
+.market-plugin-icon { width: 25px; height: 25px; flex: 0 0 auto; color: var(--md-sys-color-on-surface-variant); }
