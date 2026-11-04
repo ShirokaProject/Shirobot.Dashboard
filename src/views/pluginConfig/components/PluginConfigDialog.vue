@@ -227,16 +227,20 @@ async function openFullPage() {
 /* Nav | content; height follows the content (no empty well under short categories),
    capped so long ones scroll inside while header and footer stay put */
 .ws-body {
-  min-height: 360px;
+  min-height: 0;
+  width: 100%;
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
-  align-items: start;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
   gap: var(--md-space-5);
 }
 
 .ws-nav,
 .ws-content {
-  max-height: min(72vh, 760px);
+  min-height: 0;
+  max-height: min(65vh, 760px);
+  overscroll-behavior: contain;
   overflow-y: auto;
 }
 
@@ -249,17 +253,16 @@ async function openFullPage() {
   padding: var(--md-space-1) var(--md-space-1) var(--md-space-4);
 }
 
-@media (max-width: 599px) {
+@media (max-width: 839px) {
   .ws-body {
-    height: auto;
-    max-height: 70vh;
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--md-space-3);
   }
 
-  .ws-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
+  .ws-nav { overflow: visible; }
+
+  .ws-content { max-height: none; }
 }
 
 .ws-note {
@@ -311,20 +314,48 @@ async function openFullPage() {
 }
 
 :global(.config-workspace.el-dialog) {
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
   padding: 0;
 }
 
 :global(.config-workspace .el-dialog__header) {
+  flex: none;
   padding: var(--md-space-5) var(--md-space-6) var(--md-space-3);
   margin: 0;
 }
 
 :global(.config-workspace .el-dialog__body) {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
   padding: 0 var(--md-space-4);
 }
 
 :global(.config-workspace .el-dialog__footer) {
+  flex: none;
   padding: var(--md-space-3) var(--md-space-4);
   border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+@media (max-width: 599px) {
+  :global(.config-workspace.el-dialog) {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  :global(.config-workspace .el-dialog__header) {
+    padding: var(--md-space-4);
+  }
+
+  .ws-foot { flex-wrap: wrap; gap: var(--md-space-2); }
+  .ws-foot > .md-button.text { margin-left: 0; padding-inline: var(--md-space-2); }
+  .ws-dirty, .ws-saved { order: 1; flex-basis: 100%; margin-left: 0; }
+  .ws-dirty + .button-group, .ws-saved + .button-group { margin-left: auto; }
 }
 </style>

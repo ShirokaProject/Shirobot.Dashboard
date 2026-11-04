@@ -1,5 +1,24 @@
 <template>
   <nav class="config-nav" aria-label="配置分类">
+    <div class="mobile-nav">
+      <label :for="categoryId">配置分类</label>
+      <select :id="categoryId" :value="view" @change="emit('update:view', ($event.target as HTMLSelectElement).value)">
+        <optgroup v-if="groups.length" label="配置">
+          <option v-for="group in groups" :key="group.key" :value="group.key">{{ group.label }} · {{ group.fields.length }} 项</option>
+        </optgroup>
+        <optgroup v-if="pages.length" label="插件页面">
+          <option v-for="page in pages" :key="page.id" :value="pluginPageView(page.id)">{{ page.title }}</option>
+        </optgroup>
+        <optgroup v-if="showInstance || showRoutes || showListeners" :label="showInstance ? '实例与路由' : '路由与监听'">
+          <option v-if="showInstance" :value="INSTANCE_VIEW">实例</option>
+          <option v-if="showRoutes" :value="ROUTES_VIEW">路由</option>
+          <option v-if="showListeners" :value="LISTENERS_VIEW">监听</option>
+        </optgroup>
+      </select>
+      <span v-if="pagesLoading" class="nav-note" role="status">插件页面加载中…</span>
+      <template v-else-if="pagesError"><span class="nav-note error" role="alert">{{ pagesError }}</span><button type="button" class="md-button text compact" @click="emit('retry-pages')">重试</button></template>
+    </div>
+    <div class="desktop-nav">
     <section v-if="groups.length" class="nav-section" aria-label="配置分组">
       <span class="nav-section-label">配置</span>
     <button
@@ -61,10 +80,12 @@
       <MdIcon name="hearing" />
     </button>
     </section>
+    </div>
   </nav>
 </template>
 
 <script setup lang="ts">
+import { useId } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { PluginPage } from '../../../api'
 import { pluginPageView } from '../../pluginPages/usePluginPages'
@@ -75,10 +96,14 @@ withDefaults(
   { showRoutes: true, showInstance: false, showListeners: false, pages: () => [], pagesLoading: false, pagesError: '' }
 )
 const emit = defineEmits<{ 'update:view': [view: string]; 'retry-pages': [] }>()
+const categoryId = useId()
 </script>
 
 <style scoped>
-.config-nav {
+.mobile-nav { display: none; }
+
+.config-nav,
+.desktop-nav {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -136,5 +161,42 @@ hr {
   margin: var(--md-space-2) 0;
   border: 0;
   border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+@media (max-width: 839px) {
+  .desktop-nav { display: none; }
+
+  .mobile-nav {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--md-space-2);
+  }
+
+  .mobile-nav label {
+    color: var(--md-sys-color-on-surface-variant);
+    font: var(--md-sys-typescale-label-medium);
+  }
+
+  .mobile-nav select {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0 var(--md-space-3);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--app-card);
+    color: var(--md-sys-color-on-surface);
+    font: var(--md-sys-typescale-body-medium);
+    font-size: 16px;
+  }
+
+  .mobile-nav select:focus-visible {
+    outline: 2px solid var(--md-sys-color-primary);
+    outline-offset: 2px;
+  }
+
+  .mobile-nav .nav-note { flex-basis: 100%; padding: 0; }
 }
 </style>
