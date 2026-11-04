@@ -132,7 +132,7 @@
                   <SiteIcon v-else :domain="entry.repo.domain" />
                 </span>
                 <span class="row-text">
-                  <strong class="market-name"><MdIcon name="extension" class="market-plugin-icon" />{{ entry.plugin.name }}</strong>
+                  <strong>{{ entry.plugin.name }}</strong>
                   <small>{{ entry.repo.owner }}/{{ entry.repo.repo }} · {{ repoHostLabel(entry.repo) }}</small>
                 </span>
                 <span class="row-status" :class="directTone(entry)">
@@ -219,7 +219,7 @@
                 @click="market.selectedPlugin.value = plugin"
               >
                 <span class="row-text">
-                  <strong class="market-name"><MdIcon name="extension" class="market-plugin-icon" />{{ plugin.name }}</strong>
+                  <strong>{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
                 </span>
                 <span v-if="plugin.installed" class="row-status">已安装</span>
