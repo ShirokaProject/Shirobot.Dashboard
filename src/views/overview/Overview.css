@@ -397,6 +397,11 @@
   white-space: nowrap;
 }
 
+.runtime-fact dd.runtime-mode {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .runtime-fact dd.mono {
   font-family: var(--font-mono);
   font-size: 13px;

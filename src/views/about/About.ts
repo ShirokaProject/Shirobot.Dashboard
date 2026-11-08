@@ -4,6 +4,7 @@ import { applyHostUpdate, checkHostUpdate, getApiErrorMessage, getOverview, type
 import { hostUpdateSnapshot } from '../../features/plugins/updateCounts'
 import { DOCS_URL } from '../../features/docs'
 import { DASHBOARD_VERSION } from '../../version'
+import { describeRunMode } from '../../features/overview/runtime'
 
 export const ORG_URL = 'https://github.com/ShirokaProject'
 
@@ -12,8 +13,6 @@ export const links = [
   { icon: 'link', label: '官方文档', detail: 'docs.shiroka.org', href: DOCS_URL },
   { icon: 'error', label: '问题反馈', detail: '在 GitHub 提交 Issue', href: `${ORG_URL}/ShiroBot/issues` }
 ] as const
-
-const modeLabels: Record<string, string> = { docker: 'Docker', native: '直接运行', systemd: 'systemd 服务' }
 
 function formatBuildTime(value?: string) {
   if (!value) return ''
@@ -53,7 +52,7 @@ export function useAboutPage() {
       { label: '主程序', value: backendVersion.value },
       { label: 'SDK ABI', value: overview.value?.sdk_abi_version },
       { label: '运行时', value: [runtime?.framework, runtime?.os, runtime?.arch].filter(Boolean).join(' · ') },
-      { label: '运行方式', value: runtime?.mode ? modeLabels[runtime.mode] ?? runtime.mode : '' },
+      { label: '运行方式', value: runtime ? describeRunMode(runtime) : '' },
       { label: '构建时间', value: formatBuildTime(runtime?.build_time) }
     ].filter(fact => fact.value)
   })

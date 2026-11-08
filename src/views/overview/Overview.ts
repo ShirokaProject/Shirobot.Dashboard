@@ -18,6 +18,7 @@ import {
 import type { LogLevel, RuntimeLog } from '../../features/logs/types'
 import type { Plugin } from '../../features/plugins/types'
 import { faceFor, greetingFor } from '../../features/overview/greeting'
+import { describeRunMode, isContainerRuntime } from '../../features/overview/runtime'
 import { getDashboardSession, getSessionModeLabel } from '../../auth/session'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -76,10 +77,6 @@ function formatDuration(totalSeconds: number) {
 }
 
 export type RuntimeIcon = 'deployed_code' | 'sell' | 'computer' | 'memory' | 'code' | 'calendar_today'
-
-function runModeLabel(mode: string) {
-  return { docker: 'Docker', systemd: 'systemd 服务', native: '直接运行', windows_service: 'Windows 服务' }[mode.toLowerCase()] ?? mode
-}
 
 function formatBytes(bytes: number) {
   if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`
@@ -199,13 +196,13 @@ export function useOverviewPage() {
     const runtime = overview.value?.runtime
     if (!runtime) return []
     const facts: Array<{ key: string; icon: RuntimeIcon; label: string; value: string; mono?: boolean }> = []
-    if (runtime.mode) facts.push({ key: 'mode', icon: 'deployed_code', label: '运行方式', value: runModeLabel(runtime.mode) })
+    if (runtime.mode) facts.push({ key: 'mode', icon: 'deployed_code', label: '运行方式', value: describeRunMode(runtime) })
     if (runtime.version_tag) facts.push({ key: 'tag', icon: 'sell', label: '版本 Tag', value: runtime.version_tag, mono: true })
     if (overview.value?.sdk_abi_version) facts.push({ key: 'sdk-abi', icon: 'code', label: 'SDK ABI', value: overview.value.sdk_abi_version, mono: true })
     if (runtime.os) facts.push({ key: 'os', icon: 'computer', label: '系统', value: runtime.os })
     if (runtime.arch) facts.push({ key: 'arch', icon: 'memory', label: '架构', value: runtime.arch, mono: true })
     if (runtime.framework) facts.push({ key: 'framework', icon: 'code', label: '运行时', value: runtime.framework })
-    if (runtime.build_time) facts.push({ key: 'build', icon: 'calendar_today', label: runtime.mode === 'docker' ? '镜像构建' : '构建时间', value: formatDateTime(runtime.build_time) })
+    if (runtime.build_time) facts.push({ key: 'build', icon: 'calendar_today', label: isContainerRuntime(runtime) ? '镜像构建' : '构建时间', value: formatDateTime(runtime.build_time) })
     return facts
   })
 

@@ -160,7 +160,7 @@
             <dl class="runtime-facts">
               <div v-for="fact in runtimeFacts" :key="fact.key" class="runtime-fact">
                 <dt><MdIcon :name="fact.icon" />{{ fact.label }}</dt>
-                <dd :class="{ mono: fact.mono }" :title="fact.value">{{ fact.value }}</dd>
+                <dd :class="{ mono: fact.mono, 'runtime-mode': fact.key === 'mode' }" :title="fact.value">{{ fact.value }}</dd>
               </div>
             </dl>
             <div v-if="memory" class="memory-card">
