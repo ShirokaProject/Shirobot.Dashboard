@@ -2,7 +2,7 @@ import type { OverviewRuntime } from '../../api/overview/overview'
 
 const labels: Record<string, string> = {
   docker: 'Docker', podman: 'Podman', containerd: 'containerd', 'cri-o': 'CRI-O',
-  gvisor: 'gVisor', kata: 'Kata Containers', container: '容器（引擎未知）',
+  gvisor: 'gVisor', kata: 'Kata Containers', container: 'Container', kubernetes: 'Kubernetes',
   'apple-container': 'Apple Container', 'wsl-containers': 'WSL Containers',
   orbstack: 'OrbStack', 'docker-desktop': 'Docker Desktop', colima: 'Colima', lima: 'Colima/Lima',
   'rancher-desktop': 'Rancher Desktop', wsl2: 'WSL2', linuxkit: 'LinuxKit',
@@ -19,9 +19,10 @@ export function isContainerRuntime(runtime: OverviewRuntime): boolean {
 }
 
 export function describeRunMode(runtime: OverviewRuntime): string {
-  if (!runtime.mode) return ''
-  const parts = [runtime.mode, runtime.container_runtime, runtime.container_host, runtime.orchestrator]
-    .filter((value): value is string => Boolean(value))
-    .map(value => value.toLowerCase())
-  return [...new Set(parts)].map(value => value === 'kubernetes' ? 'Kubernetes' : labels[value] ?? value).join(' · ')
+  const candidates = [runtime.orchestrator, runtime.container_host, runtime.container_runtime, runtime.container_engine, runtime.mode]
+  for (const candidate of candidates) {
+    const key = candidate?.trim().toLowerCase()
+    if (key && key !== 'container' && labels[key]) return labels[key]!
+  }
+  return isContainerRuntime(runtime) ? 'Container' : runtime.mode ?? ''
 }
