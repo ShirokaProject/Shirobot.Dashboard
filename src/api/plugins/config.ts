@@ -69,6 +69,12 @@ export interface PluginRoutesConfig {
   priority_configured?: boolean
   /** The priority from the plugin's attribute, 2 when it declares none */
   declared_priority?: number
+  prefix_mode?: 'default' | 'required' | 'disabled'
+  custom_prefix?: string
+  effective_prefix?: string
+  message_prefix?: string
+  default_require_prefix?: boolean
+  effective_require_prefix?: boolean
 }
 
 export interface PluginConfigResponse {
@@ -88,6 +94,8 @@ export interface PluginConfigUpdateRequest {
     groups: string[]
     /** An override, or null to use the plugin's declared priority */
     priority?: number | null
+    prefix_mode?: 'default' | 'required' | 'disabled'
+    custom_prefix?: string
   }
 }
 

@@ -196,8 +196,13 @@ const demoPlugins: BackendPlugin[] = [
 
 const demoConfig: AppConfigResponse = {
   schema: [
-    { key: 'enable_log', label: '启用日志', type: 'boolean', description: '是否输出普通运行日志。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 20 },
-    { key: 'showid', label: '显示群与用户 ID', type: 'boolean', description: '在消息日志中显示群 ID 和用户 ID。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 25 },
+    { key: 'enable_log', label: '输出日志', type: 'boolean', description: '是否在终端输出普通日志；Dashboard 和本地保存单独工作。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 20 },
+    { key: 'showid', label: '显示群与用户 ID', type: 'boolean', description: '在消息日志中显示群 ID 和用户 ID。', group_id: 'runtime', group_label: '运行时', group_order: 10, order: 25 },
+    { key: 'logs', label: '本地日志', type: 'section', group_id: 'logs', group_label: '日志', group_icon: 'folder', group_description: '本地日志保存与自动清理。', group_order: 15, order: 30,
+      fields: [
+        { key: 'save_to_file', label: '保存日志到本地', type: 'boolean', default_value: true, description: '默认开启。写入运行目录 logs 文件夹，历史从文件读取，不再保留内存历史副本。修改即时生效。', order: 30 },
+        { key: 'retention_days', label: '日志保留天数', type: 'integer', default_value: 3, min: 1, max: 3650, description: '默认保留最近 3 个自然日（含今天），自动清理过期文件。', order: 40 }
+      ] },
     { key: 'disable_console_input', label: '禁用控制台输入', type: 'boolean', description: '关闭交互式控制台输入。', group_id: 'runtime', group_label: '运行时', group_icon: 'settings', group_description: '运行时行为与日志设置。', group_order: 10, order: 30 },
     { key: 'github_proxy', label: 'GitHub 代理', type: 'string', description: '下载 GitHub 资源时使用的代理前缀。', group_id: 'updates', group_label: '更新与主题', group_icon: 'download', group_description: '主程序更新来源和主题设置。', group_order: 20, order: 10 },
     { key: 'host_update_repository', label: '宿主更新仓库', type: 'string', description: '格式为 owner/repository。', group_id: 'updates', group_label: '更新与主题', group_order: 20, order: 20 },
@@ -223,7 +228,10 @@ const demoConfig: AppConfigResponse = {
       fields: [{ key: 'default', label: '默认插件路由', type: 'section', fields: [
         { key: 'mode', label: '默认路由模式', type: 'string', options: ['blacklist', 'whitelist'], description: 'blacklist：除列表中的群外全部允许；whitelist：仅允许列表中的群。', order: 30 },
         { key: 'groups', label: '默认路由群组', type: 'array', item_type: 'string', description: '黑名单为空时允许所有群，白名单为空时不允许任何群。', order: 40 }
-      ] }]
+      ] },
+        { key: 'require_message_prefix', label: '默认要求触发前缀', type: 'boolean', description: '默认关闭。仅限制精确／前缀命令路由；@ 机器人、整条消息监听和自定义判断照常接收原文。', order: 10 },
+        { key: 'message_prefix', label: '消息触发前缀', type: 'string', description: '群聊和私聊命令的触发前缀，区分大小写；留空不限制。命令匹配前去掉前缀，@ 和整条消息监听不受限制。', order: 11 }
+      ]
     },
     {
       key: 'api', label: 'HTTP API', type: 'section', group_id: 'api', group_label: 'API', group_icon: 'code', group_description: 'Dashboard 和外部工具访问主程序的 HTTP API。', group_order: 40,
@@ -243,6 +251,7 @@ const demoConfig: AppConfigResponse = {
   config: {
     protocols: [],
     enable_log: true,
+    logs: { save_to_file: true, retention_days: 3 },
     showid: false,
     disable_console_input: false,
     github_proxy: 'https://gh-proxy.com/',
@@ -261,7 +270,7 @@ const demoConfig: AppConfigResponse = {
     owner_list: ['milky-main:1034028486'],
     owner_notifications: true,
     admin_list: [],
-    plugin_routes: { default: { mode: 'blacklist', groups: [] } },
+    plugin_routes: { default: { mode: 'blacklist', groups: [] }, message_prefix: '', require_message_prefix: false },
     api: {
       enable: true,
       listen_urls: ['http://localhost:8080'],
@@ -306,8 +315,25 @@ const demoPluginConfig: PluginConfigResponse = {
     default_groups: [],
     priority: 2,
     priority_configured: false,
-    declared_priority: 2
+    declared_priority: 2,
+    prefix_mode: 'default',
+    custom_prefix: '',
+    effective_prefix: '',
+    message_prefix: '',
+    default_require_prefix: false,
+    effective_require_prefix: false
   }
+}
+
+function updateDemoPrefix() {
+  const config = demoConfig.config.plugin_routes as { message_prefix?: string; require_message_prefix?: boolean }
+  const routes = demoPluginConfig.routes
+  routes.message_prefix = config.message_prefix ?? ''
+  routes.default_require_prefix = config.require_message_prefix ?? false
+  routes.effective_prefix = routes.prefix_mode === 'required' && routes.custom_prefix?.trim()
+    ? routes.custom_prefix : routes.message_prefix
+  routes.effective_require_prefix = Boolean(routes.effective_prefix.trim()) &&
+    (routes.prefix_mode === 'required' || (routes.prefix_mode !== 'disabled' && routes.default_require_prefix))
 }
 
 const demoLogs: RuntimeLog[] = [
@@ -986,7 +1012,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
 
   if (method === 'GET' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) return { ...clone(demoPluginConfig), raw_config: true } as T
   if (method === 'PATCH' && /^\/api\/v1\/plugins\/[^/]+\/config$/.test(pathname)) {
-    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[]; priority?: number | null } }
+    const payload = JSON.parse(String(init?.body ?? '{}')) as { config?: typeof demoPluginConfig.config; routes?: { mode?: string; groups?: string[]; priority?: number | null; prefix_mode?: 'default' | 'required' | 'disabled'; custom_prefix?: string } }
     if (payload.config) demoPluginConfig.config = { ...demoPluginConfig.config, ...payload.config }
     if (payload.routes) {
       demoPluginConfig.routes = {
@@ -999,8 +1025,11 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
         ...(payload.routes.priority === undefined ? {} : {
           priority: payload.routes.priority ?? demoPluginConfig.routes.declared_priority,
           priority_configured: payload.routes.priority !== null
-        })
+        }),
+        ...(payload.routes.prefix_mode === undefined ? {} : { prefix_mode: payload.routes.prefix_mode }),
+        ...(payload.routes.custom_prefix === undefined ? {} : { custom_prefix: payload.routes.custom_prefix })
       }
+      updateDemoPrefix()
     }
     return clone({
       ok: true,
@@ -1017,6 +1046,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
     const defaults = (demoConfig.config.plugin_routes as { default: { mode: string; groups: string[] } }).default
     demoPluginConfig.routes.default_mode = defaults.mode
     demoPluginConfig.routes.default_groups = [...defaults.groups]
+    updateDemoPrefix()
     if (demoPluginConfig.routes.mode === 'default') {
       demoPluginConfig.routes.effective_mode = defaults.mode
       demoPluginConfig.routes.effective_groups = [...defaults.groups]

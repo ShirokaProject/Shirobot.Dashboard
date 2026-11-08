@@ -95,6 +95,38 @@
           </div>
         </div>
 
+        <div v-if="routes.prefix_mode !== undefined" class="group-card priority-card">
+          <div class="route-row">
+            <div>
+              <strong>触发前缀</strong>
+              <p>仅限制精确／前缀命令路由，匹配前去掉前缀。@ 机器人、整条消息监听和插件自定义判断照常接收原文。</p>
+              <p>全局前缀：{{ routes.message_prefix ? `「${routes.message_prefix}」` : '未设置，不限制触发' }}；全局默认{{ routes.default_require_prefix ? '要求前缀' : '不要求前缀' }}。</p>
+            </div>
+            <div class="button-group" role="radiogroup" aria-label="触发前缀">
+              <button
+                v-for="mode in prefixModes"
+                :key="mode.value"
+                type="button"
+                role="radio"
+                class="md-button compact toggle"
+                :class="{ selected: routes.prefix_mode === mode.value }"
+                :aria-checked="routes.prefix_mode === mode.value"
+                @click="routes.prefix_mode = mode.value"
+              >{{ mode.label }}</button>
+            </div>
+          </div>
+          <div v-if="routes.prefix_mode === 'required' && routes.custom_prefix !== undefined" class="route-groups">
+            <label for="route-custom-prefix"><strong>插件前缀</strong></label>
+            <el-input
+              id="route-custom-prefix"
+              v-model="routes.custom_prefix"
+              :placeholder="routes.message_prefix ? `留空使用全局前缀「${routes.message_prefix}」` : '输入这个插件的触发前缀，例如 !'"
+              clearable
+            />
+            <p>仅对这个插件生效。留空使用全局前缀；全局也为空时不限制触发。</p>
+          </div>
+        </div>
+
         <div v-if="routes.declared_priority !== undefined" class="group-card priority-card">
           <div class="route-row">
             <div>
@@ -128,6 +160,7 @@
           <div><dt>全局默认</dt><dd>{{ modeLabel(routes.default_mode) }}</dd></div>
           <div><dt>全局默认群组</dt><dd>{{ routes.default_groups.length ? routes.default_groups.join(', ') : '无' }}</dd></div>
           <div><dt>单独配置</dt><dd>{{ routes.configured ? '是' : '否，沿用全局默认' }}</dd></div>
+          <div v-if="routes.prefix_mode !== undefined"><dt>当前前缀要求</dt><dd>{{ routes.effective_require_prefix ? `要求「${routes.effective_prefix ?? routes.message_prefix}」` : '不要求前缀' }}</dd></div>
           <div v-if="routes.declared_priority !== undefined"><dt>优先级来源</dt><dd>{{ routes.priority_configured ? '单独设置' : '插件声明' }}</dd></div>
         </dl>
       </section>
@@ -211,6 +244,12 @@ const routeModes = [
   { value: 'whitelist', label: '白名单' }
 ]
 
+const prefixModes = [
+  { value: 'default' as const, label: '跟随全局' },
+  { value: 'required' as const, label: '要求前缀' },
+  { value: 'disabled' as const, label: '不要求前缀' }
+]
+
 function modeLabel(mode: string) {
   return { blacklist: '黑名单', whitelist: '白名单', default: '跟随全局' }[mode] ?? mode
 }
@@ -292,7 +331,8 @@ function modeLabel(mode: string) {
   font: var(--md-sys-typescale-title-small);
 }
 
-.route-row p {
+.route-row p,
+.route-groups p {
   margin: 2px 0 0;
   color: var(--md-sys-color-on-surface-variant);
   font: var(--md-sys-typescale-body-small);
