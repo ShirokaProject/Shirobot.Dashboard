@@ -58,3 +58,6 @@ temp/
 # Large screenshots / local captures
 *.psd
 *.ai
+
+# Python release tooling cache
+__pycache__/
