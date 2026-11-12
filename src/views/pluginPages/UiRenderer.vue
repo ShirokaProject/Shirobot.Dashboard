@@ -14,7 +14,7 @@
   <p v-else-if="node.type === 'empty'" class="ui-empty">{{ node.text }}</p>
   <div v-else-if="node.type === 'metric'" class="ui-metric"><small>{{ node.label }}</small><strong>{{ node.value }}</strong><small v-if="node.hint">{{ node.hint }}</small></div>
   <pre v-else-if="node.type === 'code'">{{ node.text }}</pre>
-  <PageImage v-else-if="node.type === 'image' && node.file" :plugin-id="pluginId" :page-id="pageId" :file="node.file" :alt="node.alt" />
+  <PageImage v-else-if="node.type === 'image' && node.file" :plugin-id="pluginId" :owner-kind="ownerKind" :page-id="pageId" :file="node.file" :alt="node.alt" />
   <button v-else-if="node.type === 'link' && node.page" class="md-button text" type="button" :disabled="busy" @click="emit('navigate', node.page, {})">{{ node.text }}</button>
   <a v-else-if="node.type === 'link' && safeUrl" :href="safeUrl" target="_blank" rel="noopener noreferrer">{{ node.text }}</a>
   <form v-else-if="node.type === 'filters'" class="ui-filters" @submit.prevent="emit('state', { ...filterDraft, ...pagerReset })">
@@ -32,7 +32,7 @@
     <div v-if="node.type === 'table'" class="ui-table"><table><thead><tr><th v-for="(column, i) in node.columns || []" :key="i">{{ column }}</th><th>操作</th></tr></thead><tbody><tr v-for="row in node.rows || []" :key="row.key"><td v-for="(cell, i) in row.cells" :key="i">{{ cell }}</td><td><button v-for="action in actions(row.actions)" :key="action.id" class="md-button text" type="button" :disabled="busy" @click="emit('event', { kind: 'action', element: node.id!, action: action.id, item: row.key }, action)">{{ action.label }}</button></td></tr></tbody></table></div>
     <div v-else :class="['ui-items', node.type]">
       <article v-for="row in node.rows || []" :key="row.key" class="ui-item">
-        <div v-if="row.card?.image" class="ui-item-media"><PageImage :plugin-id="pluginId" :page-id="pageId" :file="row.card.image" :alt="row.card.title" /></div>
+        <div v-if="row.card?.image" class="ui-item-media"><PageImage :plugin-id="pluginId" :owner-kind="ownerKind" :page-id="pageId" :file="row.card.image" :alt="row.card.title" /></div>
         <div class="ui-item-body">
           <h4 v-if="row.card?.title" class="ui-item-title" :title="row.card.title">{{ row.card.title }}</h4>
           <p v-if="row.card?.description" class="ui-item-description">{{ row.card.description }}</p>
@@ -71,7 +71,7 @@ import MdIcon from '../../components/MdIcon.vue'
 import DirectoryPicker from '../../components/DirectoryPicker.vue'
 import PageImage from './PageImage.vue'
 import SafeMarkdown from './SafeMarkdown.vue'
-const props = withDefaults(defineProps<{ node: UiNode; state: PageState; pluginId: string; pageId: string; busy: boolean; pagerReset: PageState; errors?: Record<string, string>; dialog?: boolean; initialValues?: Record<string, unknown> }>(), { errors: () => ({}) })
+const props = withDefaults(defineProps<{ node: UiNode; state: PageState; pluginId: string; ownerKind?: 'plugins' | 'adapters'; pageId: string; busy: boolean; pagerReset: PageState; errors?: Record<string, string>; dialog?: boolean; initialValues?: Record<string, unknown> }>(), { errors: () => ({}) })
 const emit = defineEmits<{ state: [patch: PageState]; event: [event: PageEvent, action?: { confirm?: string; label?: string; danger?: boolean }]; upload: [node: UiNode, files: File[]]; navigate: [id: string, state: PageState] }>()
 const handlers = { state: (s: PageState) => emit('state', s), event: (e: PageEvent, a?: { confirm?: string; label?: string; danger?: boolean }) => emit('event', e, a), upload: (n: UiNode, files: File[]) => emit('upload', n, files), navigate: (id: string, state: PageState) => emit('navigate', id, state) }
 const fileInput = ref<HTMLInputElement | null>(null)

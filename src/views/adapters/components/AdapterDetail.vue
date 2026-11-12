@@ -42,6 +42,8 @@
       <AdapterMarketFacts :entry="marketEntry" :repository="adapter.repository" />
     </dl>
 
+    <AdapterActions :id="adapter.id" :loaded="adapter.loaded" :busy="busy" />
+
     <footer class="detail-foot button-group">
       <button type="button" class="md-button tonal" :disabled="busy" @click="emit('config')">
         <MdIcon name="settings" />配置
@@ -55,6 +57,7 @@
 
 <script setup lang="ts">
 import AdapterMarketFacts from './AdapterMarketFacts.vue'
+import AdapterActions from './AdapterActions.vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { AdapterMarketEntry, AdapterStatus } from '../../../api'
 

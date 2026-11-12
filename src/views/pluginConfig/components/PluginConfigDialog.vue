@@ -37,7 +37,7 @@
         :show-listeners="state.hasRoutes.value && state.listeners.value !== undefined"
       />
       <div class="ws-content">
-        <PluginPagePanel v-if="activePage" :key="`${pluginId}:${activePage.id}`" :plugin-id="pluginId" :definition="activePage" />
+        <PluginPagePanel v-if="activePage" :key="`${pluginId}:${activePage.id}`" :plugin-id="pluginId" :definition="activePage" :owner-kind="target === 'adapter' ? 'adapters' : 'plugins'" />
         <PluginConfigForm v-else
           v-model:instance="instanceDraft"
           :instance-error="instanceDirty ? idError : ''"
@@ -102,7 +102,7 @@ const state = usePluginConfig(activeId, () => props.target)
 
 // Current category: a group key or ROUTES_VIEW. Starts on the first group each time.
 const view = ref('')
-const pageNavigation = usePluginPages(activeId, () => props.visible && props.target === 'plugin')
+const pageNavigation = usePluginPages(activeId, () => props.visible, () => props.target)
 const activePage = computed(() => selectedPluginPage(pageNavigation.pages.value, view.value))
 watch(() => state.groups.value, groups => {
   // Still loading: leave the choice for when the groups arrive.

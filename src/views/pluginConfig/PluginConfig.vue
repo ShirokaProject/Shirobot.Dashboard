@@ -73,7 +73,7 @@
           :show-listeners="hasRoutes && listeners !== undefined"
         />
         <div class="page-main">
-          <PluginPagePanel v-if="activePage" :key="`${pluginId}:${activePage.id}`" :plugin-id="pluginId" :definition="activePage" />
+          <PluginPagePanel v-if="activePage" :key="`${pluginId}:${activePage.id}`" :plugin-id="pluginId" :definition="activePage" :owner-kind="target === 'adapter' ? 'adapters' : 'plugins'" />
           <PluginConfigForm v-else
             v-model:route-groups="routeGroups"
             :view="view"
@@ -222,7 +222,7 @@ async function switchTo(kind: ConfigTarget, id: string) {
 
 // Current category: a group key or ROUTES_VIEW; reset per target, first group once loaded.
 const view = ref('')
-const pageNavigation = usePluginPages(pluginId, () => target.value === 'plugin')
+const pageNavigation = usePluginPages(pluginId, () => true, () => target.value)
 const activePage = computed(() => selectedPluginPage(pageNavigation.pages.value, view.value))
 let pendingPage = typeof route.query.page === 'string' ? route.query.page : ''
 watch([pluginId, target, () => route.query.page], () => {

@@ -41,7 +41,7 @@ export function pageRequestInit(data: WebBridgeMessage, signal: AbortSignal): Re
 
 /** Response data is pulled one chunk at a time, transferred rather than buffered as one large postMessage. */
 export async function serveWebRequest(pluginId: string, pageId: string, data: WebBridgeMessage, controller: AbortController,
-  respond: (value: object, transfer?: Transferable[]) => void, release: () => void) {
+  respond: (value: object, transfer?: Transferable[]) => void, release: () => void, request = requestPluginWebPage) {
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined, port: MessagePort | undefined
   let finished = false, pulling = false, bytes = 0
   const finish = () => {
@@ -52,7 +52,7 @@ export async function serveWebRequest(pluginId: string, pageId: string, data: We
   const aborted = () => { port?.postMessage({ error: '请求已取消。' }); finish() }
   controller.signal.addEventListener('abort', aborted, { once: true })
   try {
-    const response = await requestPluginWebPage(pluginId, pageId, pageRequestPath(data.path!), pageRequestInit(data, controller.signal))
+    const response = await request(pluginId, pageId, pageRequestPath(data.path!), pageRequestInit(data, controller.signal))
     if (controller.signal.aborted) { finish(); return }
     const headers = [...response.headers].filter(([name]) => responseHeaders.has(name) || name.startsWith('x-') && !/auth|token|key/.test(name))
     if (!response.body || data.method?.toUpperCase() === 'HEAD' || [204, 205, 304].includes(response.status)) {
