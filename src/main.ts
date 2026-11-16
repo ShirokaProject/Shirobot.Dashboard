@@ -5,7 +5,8 @@ import 'element-plus/dist/index.css'
 import './style.css'
 import App from './App.vue'
 import router from './router'
-import { setUnauthorizedHandler } from './api/core/http'
+import { describeUnhandledError, setUnauthorizedHandler } from './api/core/http'
+import { toastError } from './features/toast'
 import { forgetRememberedKey } from './auth/backends'
 import { clearDashboardSession, getDashboardSession, hasDashboardSession } from './auth/session'
 import { preloadDashboardPages } from './router/pageLoaders'
@@ -20,6 +21,19 @@ setUnauthorizedHandler(() => {
 })
 
 const app = createApp(App)
+
+// Last resort for a failed request no page handled: without it the failure only reaches the console.
+function reportUnhandled(reason: unknown) {
+  const message = describeUnhandledError(reason)
+  if (message) toastError(message)
+}
+// Vue keeps errors from hooks and event handlers away from the window, so both paths are needed.
+app.config.errorHandler = reason => {
+  console.error(reason)
+  reportUnhandled(reason)
+}
+window.addEventListener('unhandledrejection', event => reportUnhandled(event.reason))
+
 app.use(router)
 app.use(ElementPlus)
 app.mount('#app')

@@ -1,7 +1,7 @@
 import { getDashboardSession, getSessionBaseUrl, isDemoMode } from '../../auth/session'
 import { ApiError } from './errors'
 
-export { ApiError, getApiErrorMessage } from './errors'
+export { ApiError, describeUnhandledError, getApiErrorMessage } from './errors'
 
 export const HOST_STATE_CHANGED_EVENT = 'shirobot-host-state-changed'
 

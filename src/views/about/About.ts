@@ -2,6 +2,7 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { applyHostUpdate, checkHostUpdate, getApiErrorMessage, getOverview, type OverviewResponse } from '../../api'
 import { hostUpdateSnapshot } from '../../features/plugins/updateCounts'
+import { toastError } from '../../features/toast'
 import { DOCS_URL } from '../../features/docs'
 import { DASHBOARD_VERSION } from '../../version'
 
@@ -34,8 +35,9 @@ export function useAboutPage() {
     try {
       overview.value = await getOverview()
       loadState.value = 'ready'
-    } catch {
+    } catch (error) {
       loadState.value = 'error'
+      toastError(getApiErrorMessage(error, '读取宿主信息失败'))
     }
   })
 

@@ -40,3 +40,17 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message.trim()) return error.message
   return fallback
 }
+
+// Chrome, Safari and Firefox each word a failed fetch differently.
+const unreachablePattern = /failed to fetch|load failed|networkerror/i
+
+/**
+ * What to tell the user about a failure no caller handled, or null to stay silent. Only failed requests
+ * are reported: dismissed dialogs and aborted requests are not failures, an expired key already returns
+ * to the login page, and other errors are bugs that belong in the console.
+ */
+export function describeUnhandledError(reason: unknown) {
+  if (reason instanceof ApiError) return reason.status === 401 ? null : getApiErrorMessage(reason, '请求失败')
+  if (reason instanceof TypeError && unreachablePattern.test(reason.message)) return getApiErrorMessage(reason, '请求失败')
+  return null
+}
