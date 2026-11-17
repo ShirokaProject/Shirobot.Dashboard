@@ -79,22 +79,27 @@
 
       <div class="stream-body">
         <div ref="scroller" class="stream-lines" :class="{ 'with-source': activeSource === 'ALL' }" role="log" aria-live="polite" @scroll="onScroll">
-          <div
-            v-for="log in filteredLogs"
-            :key="log.id"
-            class="line"
-            :class="`level-${log.level.toLowerCase()}`"
-          >
-            <time>{{ log.time }}</time>
-            <span class="level">{{ levelLabels[log.level] }}</span>
-            <button
-              v-if="activeSource === 'ALL'"
-              type="button"
-              class="source"
-              :title="`只看 ${sourceLabel(log.source)}（${log.source}）`"
-              @click="activeSource = log.source"
-            >{{ sourceLabel(log.source) }}</button>
-            <span class="message"><template v-for="(part, index) in highlight(log.message)" :key="index"><mark v-if="part.hit">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
+          <!-- One track for all lines, so a new line can glide the whole tail up as one piece -->
+          <div ref="track" class="stream-track">
+            <div
+              v-for="log in filteredLogs"
+              :key="log.id"
+              :data-id="log.id"
+              class="line"
+              :class="`level-${log.level.toLowerCase()}`"
+            >
+              <time>{{ log.time }}</time>
+              <span class="level">{{ levelLabels[log.level] }}</span>
+              <button
+                v-if="activeSource === 'ALL'"
+                type="button"
+                class="source"
+                :title="`只看 ${sourceLabel(log.source)}（${log.source}）`"
+                @click="activeSource = log.source"
+              >{{ sourceLabel(log.source) }}</button>
+              <span class="message"><template v-for="(part, index) in highlight(log.message)" :key="index"><mark v-if="part.hit">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
+            </div>
+
           </div>
 
           <div v-if="!filteredLogs.length" class="stream-empty">
@@ -211,12 +216,52 @@ function jumpToLatest() {
   scrollToBottom(true)
 }
 
+// ---------- new lines glide in ----------
+
+const track = ref<HTMLElement | null>(null)
+const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)'
+let glide: Animation | null = null
+
+/** How far the track is still displaced by a glide in flight, so a new one starts from there. */
+function glideOffset() {
+  if (!glide || glide.playState !== 'running' || !track.value) return 0
+  const transform = getComputedStyle(track.value).transform
+  return transform === 'none' ? 0 : new DOMMatrix(transform).m42
+}
+
+/**
+ * The view jumps to the bottom at once, as before, so reading position and the unseen count stay
+ * exact; what you see is the tail sliding up by the new lines' height while they fade in. A burst
+ * taller than half the view lands directly, since sliding that far would only blur the text.
+ */
+function glideIn(shift: number, firstNewId: number) {
+  const element = scroller.value
+  const lines = track.value
+  if (!element || !lines || shift <= 0) return
+  const fresh = Array.from(lines.children).filter(line => Number((line as HTMLElement).dataset.id) >= firstNewId)
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  for (const line of fresh) line.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: EASE_OUT })
+  if (reduce || shift > element.clientHeight / 2) return
+  const from = shift + glideOffset()
+  glide?.cancel()
+  glide = lines.animate([{ transform: `translateY(${from}px)` }, { transform: 'translateY(0)' }], { duration: 220, easing: EASE_OUT })
+}
+
 // New lines keep the view pinned to the bottom unless the reader has scrolled up.
-watch(() => filteredLogs.value.at(-1)?.id, async () => {
+watch(() => filteredLogs.value.at(-1)?.id, async (latest, previous) => {
   if (!following.value) return
   markSeen()
+  // Measured on the line that was last before the update: how far it actually moved is how far
+  // the tail moved, whether the list grew or a full buffer dropped its oldest line to make room.
+  const anchor = previous === undefined ? null : track.value?.querySelector<HTMLElement>(`[data-id="${previous}"]`)
+  const before = anchor?.getBoundingClientRect().top ?? 0
   await nextTick()
   scrollToBottom()
+  // Only lines appended to a view already on screen glide; a first load or a new filter lands.
+  if (anchor?.isConnected && previous !== undefined && latest !== undefined && latest > previous) {
+    const firstNewId = filteredLogs.value.find(log => log.id > previous)?.id ?? latest
+    glideIn(before - anchor.getBoundingClientRect().top, firstNewId)
+  }
 })
 
 // A new filter is a new view: start from the latest line again.
