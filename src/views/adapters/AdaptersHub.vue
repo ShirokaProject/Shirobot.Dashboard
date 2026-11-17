@@ -89,35 +89,38 @@
                 </span>
                 <span class="row-meta">{{ packageEnabled(group.package) ? '' : '已关闭 · ' }}{{ group.instances.length }} 个实例</span>
               </button>
-              <ul v-if="isExpanded(group.package.id)" class="rows instance-rows">
-                <li v-for="adapter in group.instances" :key="adapter.id">
-                  <button
-                    type="button"
-                    class="row"
-                    :class="{ selected: installed.selectedId.value === adapter.id }"
-                    @click="installed.selectedId.value = adapter.id"
-                  >
-                    <span class="row-text">
-                      <strong>{{ adapter.name }}</strong>
-                      <small>{{ adapter.id }}</small>
-                    </span>
-                    <span class="row-status">
-                      <span class="status-dot" :class="adapterTone(adapter)" aria-hidden="true"></span>
-                      {{ adapterLabel(adapter) }}
-                    </span>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    class="row add-instance"
-                    :disabled="Boolean(installed.operation.value)"
-                    @click="installed.openInstance(group.package.id)"
-                  >
-                    <MdIcon name="add" />添加实例
-                  </button>
-                </li>
-              </ul>
+              <!-- A package opens its instances in place, pushing the packages below down -->
+              <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
+                <ul v-if="isExpanded(group.package.id)" class="rows instance-rows">
+                  <li v-for="adapter in group.instances" :key="adapter.id">
+                    <button
+                      type="button"
+                      class="row"
+                      :class="{ selected: installed.selectedId.value === adapter.id }"
+                      @click="installed.selectedId.value = adapter.id"
+                    >
+                      <span class="row-text">
+                        <strong>{{ adapter.name }}</strong>
+                        <small>{{ adapter.id }}</small>
+                      </span>
+                      <span class="row-status">
+                        <span class="status-dot" :class="adapterTone(adapter)" aria-hidden="true"></span>
+                        {{ adapterLabel(adapter) }}
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      class="row add-instance"
+                      :disabled="Boolean(installed.operation.value)"
+                      @click="installed.openInstance(group.package.id)"
+                    >
+                      <MdIcon name="add" />添加实例
+                    </button>
+                  </li>
+                </ul>
+              </Transition>
             </li>
           </TransitionGroup>
           <div v-else-if="!installed.loading.value" class="list-empty">
@@ -687,7 +690,8 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
   font-size: 20px;
   color: var(--md-sys-color-on-surface-variant);
   transform: rotate(-90deg);
-  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  /* Turns with the instances unfolding under it, on their curve and length */
+  transition: transform 220ms var(--app-ease-out);
 }
 .chevron.open { transform: none; }
 /* Instances sit under the package, text aligned with the package name */

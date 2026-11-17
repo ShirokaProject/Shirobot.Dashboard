@@ -19,8 +19,10 @@ function collapse(el: Element, done: () => void, entering: boolean) {
   if (inBurst() || node.closest('.page-swapping')) return done()
   // The parent's gap would stay behind a row squeezed to nothing, so the row gives it back too.
   const gap = node.parentElement ? parseFloat(getComputedStyle(node.parentElement).rowGap) || 0 : 0
-  const closed = { height: '0px', marginBottom: `${-gap}px`, opacity: 0 }
-  const open = { height: `${node.offsetHeight}px`, marginBottom: '0px', opacity: 1 }
+  // A margin of its own above the block folds away with it too, or it would snap at the end.
+  const marginTop = getComputedStyle(node).marginTop
+  const closed = { height: '0px', marginTop: '0px', marginBottom: `${-gap}px`, opacity: 0 }
+  const open = { height: `${node.offsetHeight}px`, marginTop, marginBottom: '0px', opacity: 1 }
   const frames = reduceMotion()
     ? (entering ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }])
     : (entering ? [closed, open] : [open, closed])
