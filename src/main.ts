@@ -11,6 +11,7 @@ import { forgetRememberedKey } from './auth/backends'
 import { clearDashboardSession, getDashboardSession, hasDashboardSession } from './auth/session'
 import { preloadDashboardPages } from './router/pageLoaders'
 import { installBusyGuard } from './features/busy'
+import { installInputModality } from './features/inputModality'
 
 // A key the backend no longer accepts ends the session and returns to the login page.
 setUnauthorizedHandler(() => {
@@ -22,6 +23,7 @@ setUnauthorizedHandler(() => {
 })
 
 installBusyGuard()
+installInputModality()
 
 const app = createApp(App)
 

@@ -410,8 +410,11 @@
 }
 
 .sort-control :deep(.el-select__wrapper) {
-  min-height: 36px;
-  padding-inline: var(--md-space-4);
+  /* Same height and track as the category segments beside it */
+  min-height: 32px;
+  padding-inline: var(--md-space-4) var(--md-space-3);
+  background: var(--app-toggle) !important;
+  color: var(--app-on-toggle);
   font: var(--md-sys-typescale-label-large);
 }
 
