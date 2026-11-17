@@ -2,9 +2,14 @@
  * 插件: one page, two tabs (已安装 / 发现), same list-detail layout for both.
  * Lists are for scanning (name + one line), the detail pane holds everything else.
  */
+/*
+ * Capped narrower than other pages: list rows are short (a name, a line of description and a
+ * switch), so extra width only opens a gap in the middle of each row. Collapsing the sidebar
+ * re-centres the hub instead of stretching it.
+ */
 .hub {
   display: flex;
-  width: min(100%, 1360px);
+  width: min(100%, 1240px);
   margin-inline: auto;
   flex-direction: column;
   gap: var(--md-space-3);
@@ -73,7 +78,8 @@
 
 .hub-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(340px, 32%, 440px);
+  /* The detail pane holds the facts and actions, so it takes the larger share of the width */
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 42%, 520px);
   gap: var(--md-space-3);
   align-items: stretch;
 }
@@ -107,7 +113,7 @@
 
 /* 发现: source rail | list | detail */
 .hub-body.with-rail {
-  grid-template-columns: 256px minmax(0, 1fr) clamp(340px, 30%, 420px);
+  grid-template-columns: 240px minmax(0, 1fr) clamp(340px, 34%, 460px);
 }
 
 .rail-pane {
