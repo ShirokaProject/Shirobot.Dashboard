@@ -439,7 +439,8 @@ function triggerAvatarSpin() {
   background: var(--md-sys-color-secondary-container);
   pointer-events: none;
   transition:
-    transform var(--app-motion-travel) var(--app-ease-in-out),
+    /* Same curve as the page it opens and landing with it, so the two read as one move */
+    transform 260ms var(--app-ease-out),
     opacity var(--md-sys-motion-duration-short3) var(--app-ease-out),
     left var(--drawer-motion-duration) var(--drawer-motion-easing),
     width var(--drawer-motion-duration) var(--drawer-motion-easing),

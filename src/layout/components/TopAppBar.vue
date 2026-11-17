@@ -1,7 +1,9 @@
 <template>
   <header class="md3-top-app-bar">
     <div class="title-block">
-      <h1 class="md3-page-title">{{ title }}</h1>
+      <Transition name="title-swap" mode="out-in">
+        <h1 :key="title" class="md3-page-title">{{ title }}</h1>
+      </Transition>
     </div>
     <div class="top-actions-row">
       <SessionStatusChip v-if="BACKEND_SWITCHING_ENABLED" />
@@ -48,6 +50,20 @@ function logout() {
 
 .title-block {
   min-width: 0;
+}
+
+/* The title changes with the page, on the page's timing, instead of a frame ahead of it */
+.title-swap-leave-active {
+  transition: opacity 90ms var(--app-ease-out);
+}
+
+.title-swap-enter-active {
+  transition: opacity 180ms var(--app-ease-out);
+}
+
+.title-swap-leave-to,
+.title-swap-enter-from {
+  opacity: 0;
 }
 
 .top-actions-row {

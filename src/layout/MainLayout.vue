@@ -8,7 +8,7 @@
       <main class="md3-content-area">
         <div class="md3-content-frame">
           <router-view v-slot="{ Component, route: viewRoute }">
-            <PageTransition :component="Component" :transition-key="routeTransitionKey(viewRoute)" />
+            <PageTransition :component="Component" :transition-key="routeTransitionKey(viewRoute)" :name="transitionName" />
           </router-view>
         </div>
       </main>
@@ -36,9 +36,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
-import PageTransition from './components/PageTransition.vue'
+import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
 import { menuItems, navigationItems } from './navigation'
 import NavigationUpdateBadge from './components/NavigationUpdateBadge.vue'
@@ -69,6 +69,24 @@ onMounted(() => {
 onBeforeUnmount(() => window.clearTimeout(enteringTimer))
 
 const route = useRoute()
+const router = useRouter()
+
+// Where a path sits in the sidebar, or -1 when the sidebar does not show it.
+function navIndex(path: string) {
+  return menuItems.findIndex(item => item.path === '/' ? path === '/' : path.startsWith(item.path))
+}
+
+// Pages follow the sidebar indicator's direction; anything else fades. Set in a guard so the
+// name is in place before the old page starts to leave.
+const transitionName = ref<PageTransitionName>('page-fade')
+const removeGuard = router.beforeEach((to, from) => {
+  const next = navIndex(to.path)
+  const previous = navIndex(from.path)
+  transitionName.value = next < 0 || previous < 0 || next === previous
+    ? 'page-fade'
+    : next > previous ? 'page-down' : 'page-up'
+})
+onBeforeUnmount(removeGuard)
 
 // The overview's own greeting card is its headline, so the app bar stays untitled there.
 const currentPageName = computed(() => {
