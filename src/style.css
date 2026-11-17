@@ -433,10 +433,12 @@ textarea {
 }
 
 .el-select-dropdown__item {
+  /* The font shorthand resets line-height, so the label is centred by flex, not by line-height */
+  display: flex;
+  align-items: center;
   height: 36px;
   margin: 2px var(--md-space-1);
   padding: 0 var(--md-space-3);
-  line-height: 36px;
   font: var(--md-sys-typescale-label-large);
   border-radius: var(--md-sys-shape-corner-full);
   color: var(--md-sys-color-on-surface);
@@ -593,17 +595,31 @@ textarea {
   animation: app-dialog-out 160ms var(--app-ease-out);
 }
 
-/* Select menus and other poppers grow out of their trigger instead of unrolling from nothing */
-.el-zoom-in-top-enter-active,
+/*
+ * Select menus and other poppers drop out of their trigger: they start a little smaller and a
+ * little higher, tucked under it, and settle into place as they fade in. Leaving is quicker.
+ * Element Plus sets transform-origin to the trigger's side (top, or bottom when placed above).
+ */
+.el-zoom-in-top-enter-active {
+  transition:
+    opacity 180ms var(--app-ease-out),
+    transform 220ms var(--app-ease-out);
+}
+
 .el-zoom-in-top-leave-active {
   transition:
-    opacity 160ms var(--app-ease-out),
-    transform 160ms var(--app-ease-out);
+    opacity 120ms var(--app-ease-out),
+    transform 140ms var(--app-ease-out);
 }
 
 .el-zoom-in-top-enter-from,
 .el-zoom-in-top-leave-active {
-  transform: scale(0.96);
+  transform: translateY(-6px) scale(0.92);
+}
+
+.el-zoom-in-top-enter-from[data-popper-placement^='top'],
+.el-zoom-in-top-leave-active[data-popper-placement^='top'] {
+  transform: translateY(6px) scale(0.92);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -621,7 +637,9 @@ textarea {
   }
 
   .el-zoom-in-top-enter-from,
-  .el-zoom-in-top-leave-active {
+  .el-zoom-in-top-leave-active,
+  .el-zoom-in-top-enter-from[data-popper-placement^='top'],
+  .el-zoom-in-top-leave-active[data-popper-placement^='top'] {
     transform: none;
   }
 }
