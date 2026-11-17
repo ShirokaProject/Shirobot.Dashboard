@@ -1,8 +1,9 @@
 <template>
   <header class="md3-top-app-bar">
     <div class="title-block">
-      <Transition name="title-swap" mode="out-in">
-        <h1 :key="title" class="md3-page-title">{{ title }}</h1>
+      <!-- The title scrolls in its slot with the page below it, same direction and timing -->
+      <Transition :name="`title-${direction}`">
+        <h1 :key="title" class="md3-page-title">{{ title || '\u00a0' }}</h1>
       </Transition>
     </div>
     <div class="top-actions-row">
@@ -22,9 +23,13 @@ import { BACKEND_SWITCHING_ENABLED } from '../../auth/backends'
 import { confirmLogout } from '../../auth/logout'
 import ThemeControls from './ThemeControls.vue'
 
-defineProps<{
+withDefaults(defineProps<{
   title: string
-}>()
+  /** Which way the page under the bar is moving: matches PageTransition's names */
+  direction?: 'fade' | 'down' | 'up'
+}>(), {
+  direction: 'fade'
+})
 
 const router = useRouter()
 
@@ -49,21 +54,62 @@ function logout() {
 }
 
 .title-block {
+  position: relative;
   min-width: 0;
+  /* Wide enough for any title, so a long one leaving is not cut to a short one's width */
+  flex: 1;
+  /* The slot the title scrolls through; the old one leaves past its edge */
+  overflow: clip;
 }
 
-/* The title changes with the page, on the page's timing, instead of a frame ahead of it */
-.title-swap-leave-active {
-  transition: opacity 90ms var(--app-ease-out);
+.title-block .md3-page-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.title-swap-enter-active {
-  transition: opacity 150ms var(--app-ease-out);
+/* Both titles share the slot for the switch, on the page's 240ms curve */
+.title-fade-leave-active,
+.title-down-leave-active,
+.title-up-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition:
+    opacity 140ms var(--app-ease-out),
+    transform 240ms var(--app-ease-out);
 }
 
-.title-swap-leave-to,
-.title-swap-enter-from {
+.title-fade-enter-active,
+.title-down-enter-active,
+.title-up-enter-active {
+  transition:
+    opacity 200ms var(--app-ease-out),
+    transform 240ms var(--app-ease-out);
+}
+
+.title-fade-leave-to,
+.title-fade-enter-from,
+.title-down-leave-to,
+.title-down-enter-from,
+.title-up-leave-to,
+.title-up-enter-from {
   opacity: 0;
+}
+
+/* Its own height is the whole distance: the title rolls out of its slot as the next rolls in */
+.title-down-leave-to { transform: translateY(-100%); }
+.title-down-enter-from { transform: translateY(100%); }
+.title-up-leave-to { transform: translateY(100%); }
+.title-up-enter-from { transform: translateY(-100%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .title-down-leave-to,
+  .title-down-enter-from,
+  .title-up-leave-to,
+  .title-up-enter-from {
+    transform: none;
+  }
 }
 
 .top-actions-row {
