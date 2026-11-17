@@ -81,11 +81,11 @@
     <template #footer>
       <div class="upload-dialog-footer">
         <button type="button" class="md3-dialog-action text" :disabled="busy" @click="emit('update:visible', false)">取消</button>
-        <button v-if="!preview" type="button" class="md3-dialog-action tonal" :disabled="!file || busy" @click="emit('submit')">
-          {{ busy ? '解析中...' : '预览安装' }}
+        <button v-if="!preview" type="button" class="md3-dialog-action tonal" :disabled="!file" :aria-busy="busy" @click="emit('submit')">
+          预览安装
         </button>
-        <button v-else type="button" class="md3-dialog-action tonal" :disabled="busy || (preview.conflict && !replace)" @click="emit('confirm')">
-          {{ busy ? '安装中...' : preview.conflict ? '确认替换并重载' : '确认安装' }}
+        <button v-else type="button" class="md3-dialog-action tonal" :disabled="preview.conflict && !replace" :aria-busy="busy" @click="emit('confirm')">
+          {{ preview.conflict ? '确认替换并重载' : '确认安装' }}
         </button>
       </div>
     </template>

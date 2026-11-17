@@ -241,6 +241,27 @@
   cursor: default;
 }
 
+/* Running: the row stays as it is and a ring turns at its trailing edge */
+.action-row[aria-busy='true'] {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-space-3);
+  cursor: progress;
+  pointer-events: none;
+}
+
+.action-row[aria-busy='true']::after {
+  content: '';
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 2px solid var(--md-sys-color-on-surface-variant);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: md-spin 700ms linear infinite;
+}
+
 .action-row span {
   display: flex;
   flex-direction: column;

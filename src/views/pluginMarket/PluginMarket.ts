@@ -378,7 +378,6 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
   }
 
   function installButtonLabel(plugin: MarketplacePlugin) {
-    if (preparingPluginId.value === plugin.id) return '准备中...'
     if (!canInstallPlugin(plugin)) return plugin.deprecated ? '已弃用' : '不可安装'
     if (!plugin.installed) return '安装'
     const comparison = compareVersions(plugin.installed.version, plugin.release.version!)

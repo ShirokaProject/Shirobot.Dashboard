@@ -5,8 +5,8 @@
       <strong>建议重启宿主</strong>
       <p v-for="reason in notice.reasons" :key="reason">{{ reason }}</p>
     </div>
-    <button type="button" class="md-button tonal" :disabled="pending" @click="restart">
-      {{ pending ? '处理中…' : '现在重启' }}
+    <button type="button" class="md-button tonal" :aria-busy="pending" @click="restart">
+      现在重启
     </button>
   </section>
 </template>

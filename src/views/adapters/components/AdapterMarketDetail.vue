@@ -29,8 +29,8 @@
     <p class="footnote">来自「{{ origin }}」· 安装时由 Shirobot 后端从仓库下载并校验，确认后会短暂重载适配器。</p>
 
     <footer class="detail-foot">
-      <button type="button" class="md-button filled wide" :disabled="!installable || preparing" @click="emit('install')">
-        <MdIcon name="download" />{{ preparing ? '准备中…' : installable ? (entry.installedVersion ? '更新' : '安装') : entry.installedVersion && healthy && !entry.deprecated ? '已安装' : '不可安装' }}
+      <button type="button" class="md-button filled wide" :disabled="!installable" :aria-busy="preparing" @click="emit('install')">
+        <MdIcon name="download" />{{ installable ? (entry.installedVersion ? '更新' : '安装') : entry.installedVersion && healthy && !entry.deprecated ? '已安装' : '不可安装' }}
       </button>
     </footer>
   </article>

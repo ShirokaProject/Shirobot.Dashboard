@@ -35,8 +35,8 @@
             >
               <MdIcon name="refresh" :class="{ spinning: checkingUpdate }" />检查宿主更新
             </button>
-            <button v-if="updateCheck?.update_available && updateCheck.can_apply" type="button" class="md-button filled" :disabled="applyingUpdate || restarting" @click="updateAndRestart">
-              <MdIcon name="download" />{{ restarting ? '正在重启…' : applyingUpdate ? '更新中…' : '更新并重启' }}
+            <button v-if="updateCheck?.update_available && updateCheck.can_apply" type="button" class="md-button filled" :aria-busy="applyingUpdate || restarting" @click="updateAndRestart">
+              <MdIcon name="download" />更新并重启
             </button>
           </div>
           <p v-if="restarting">新版本已安装，宿主正在重启。稍后刷新页面即可重新连接。</p>

@@ -42,11 +42,24 @@
     <p class="footnote">实例和连接配置保存在此适配器的 config.toml 中。</p>
 
     <footer class="detail-foot button-group">
-      <button v-if="controls" type="button" class="md-button tonal" :disabled="busy || !enabled" @click="emit('run', 'reload')">
-        <MdIcon name="refresh" />{{ operation === 'package-reload' ? '重载中…' : '重载' }}
+      <button
+        v-if="controls"
+        type="button"
+        class="md-button tonal"
+        :disabled="(busy && operation !== 'package-reload') || !enabled"
+        :aria-busy="operation === 'package-reload'"
+        @click="emit('run', 'reload')"
+      >
+        <MdIcon name="refresh" />重载
       </button>
-      <button type="button" class="md-button tonal danger" :disabled="busy" @click="emit('remove')">
-        <MdIcon name="delete" />{{ operation === 'delete-package' ? '删除中…' : '删除适配器包' }}
+      <button
+        type="button"
+        class="md-button tonal danger"
+        :disabled="busy && operation !== 'delete-package'"
+        :aria-busy="operation === 'delete-package'"
+        @click="emit('remove')"
+      >
+        <MdIcon name="delete" />删除适配器包
       </button>
     </footer>
   </article>

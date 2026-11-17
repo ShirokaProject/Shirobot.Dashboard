@@ -303,6 +303,56 @@
   to { transform: rotate(360deg); }
 }
 
+/*
+ * Busy (aria-busy, see features/busy.ts): the button keeps its fill, width and label, and a
+ * ring turns where its icon was. Without an icon the label is hidden in place (its width still
+ * holds the button open) and the ring sits in the middle. Clicks are ignored meanwhile.
+ */
+.md-button[aria-busy='true'],
+.md3-dialog-action[aria-busy='true'] {
+  position: relative;
+  cursor: progress;
+  pointer-events: none;
+}
+
+.md-button[aria-busy='true'] > .md-icon,
+.md-button[aria-busy='true'] > .el-icon {
+  display: none;
+}
+
+.md-button[aria-busy='true']::before,
+.md3-dialog-action[aria-busy='true']::before {
+  content: '';
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin: 1px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: md-spin 700ms linear infinite;
+}
+
+.md-button[aria-busy='true']:not(:has(> .md-icon, > .el-icon)),
+.md3-dialog-action[aria-busy='true'] {
+  -webkit-text-fill-color: transparent;
+}
+
+.md-button[aria-busy='true']:not(:has(> .md-icon, > .el-icon))::before,
+.md3-dialog-action[aria-busy='true']::before {
+  position: absolute;
+  top: calc(50% - 9px);
+  left: calc(50% - 9px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-button[aria-busy='true']::before,
+  .md3-dialog-action[aria-busy='true']::before {
+    animation-duration: 2s;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .md-icon.spinning {
     animation: none;

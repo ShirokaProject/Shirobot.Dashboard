@@ -46,8 +46,14 @@
       <button type="button" class="md-button tonal" :disabled="busy" @click="emit('config')">
         <MdIcon name="settings" />配置
       </button>
-      <button type="button" class="md-button tonal danger" :disabled="busy" @click="emit('run', 'delete')">
-        <MdIcon name="delete" />{{ operation === 'delete' ? '删除中…' : '删除' }}
+      <button
+        type="button"
+        class="md-button tonal danger"
+        :disabled="busy && operation !== 'delete'"
+        :aria-busy="operation === 'delete'"
+        @click="emit('run', 'delete')"
+      >
+        <MdIcon name="delete" />删除
       </button>
     </footer>
   </article>

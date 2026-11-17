@@ -26,9 +26,10 @@
       <button
         type="button"
         class="md-button compact filled"
-        :disabled="!canUpdate || Boolean(hostOperation) || Boolean(runningActionId)"
+        :disabled="!canUpdate || (Boolean(hostOperation) && hostOperation !== 'update') || Boolean(runningActionId)"
+        :aria-busy="hostOperation === 'update'"
         @click="emit('update', plugin)"
-      >{{ hostOperation === 'update' ? '更新中…' : '更新' }}</button>
+      >更新</button>
     </div>
 
     <MarketFacts
@@ -60,12 +61,13 @@
         :key="action.id"
         type="button"
         class="action-row"
-        :disabled="Boolean(runningActionId) || Boolean(hostOperation)"
+        :disabled="(Boolean(runningActionId) && runningActionId !== action.id) || Boolean(hostOperation)"
+        :aria-busy="runningActionId === action.id"
         @click="emit('action', plugin, action)"
       >
         <span>
           <strong>{{ action.label }}</strong>
-          <small>{{ runningActionId === action.id ? '执行中…' : action.description }}</small>
+          <small>{{ action.description }}</small>
         </span>
       </button>
     </section>
@@ -77,10 +79,11 @@
       <button
         type="button"
         class="md-button tonal danger"
-        :disabled="Boolean(hostOperation) || Boolean(runningActionId)"
+        :disabled="(Boolean(hostOperation) && hostOperation !== 'delete') || Boolean(runningActionId)"
+        :aria-busy="hostOperation === 'delete'"
         @click="emit('delete', plugin)"
       >
-        <MdIcon name="delete" />{{ hostOperation === 'delete' ? '卸载中…' : '卸载' }}
+        <MdIcon name="delete" />卸载
       </button>
     </footer>
   </article>

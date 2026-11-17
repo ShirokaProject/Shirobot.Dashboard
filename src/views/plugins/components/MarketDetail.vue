@@ -26,7 +26,8 @@
       <button
         type="button"
         class="md-button filled wide"
-        :disabled="!installable || preparing"
+        :disabled="!installable"
+        :aria-busy="preparing"
         @click="emit('install', plugin)"
       >
         <MdIcon name="download" />{{ installLabel }}

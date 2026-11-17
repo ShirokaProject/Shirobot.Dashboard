@@ -10,6 +10,7 @@ import { toastError } from './features/toast'
 import { forgetRememberedKey } from './auth/backends'
 import { clearDashboardSession, getDashboardSession, hasDashboardSession } from './auth/session'
 import { preloadDashboardPages } from './router/pageLoaders'
+import { installBusyGuard } from './features/busy'
 
 // A key the backend no longer accepts ends the session and returns to the login page.
 setUnauthorizedHandler(() => {
@@ -19,6 +20,8 @@ setUnauthorizedHandler(() => {
   clearDashboardSession()
   void router.replace({ name: 'Login', query: { expired: '', backend: session.backendId } })
 })
+
+installBusyGuard()
 
 const app = createApp(App)
 

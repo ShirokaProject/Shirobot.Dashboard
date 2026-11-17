@@ -115,11 +115,11 @@
         <button type="button" class="md3-dialog-action text" :disabled="installing || parsing" @click="emit('update:visible', false)">
           取消
         </button>
-        <button v-if="!uploadResult" type="button" class="md3-dialog-action tonal" :disabled="!selectedFile || parsing" @click="emit('submit')">
-          {{ parsing ? '解析中...' : '提交解析' }}
+        <button v-if="!uploadResult" type="button" class="md3-dialog-action tonal" :disabled="!selectedFile" :aria-busy="parsing" @click="emit('submit')">
+          提交解析
         </button>
-        <button v-else type="button" class="md3-dialog-action tonal" :disabled="installing" @click="emit('confirm')">
-          {{ installing ? '安装中...' : '确认安装' }}
+        <button v-else type="button" class="md3-dialog-action tonal" :aria-busy="installing" @click="emit('confirm')">
+          确认安装
         </button>
       </div>
     </template>

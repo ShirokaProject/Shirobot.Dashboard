@@ -42,7 +42,7 @@
                   <div class="item-body"><strong>{{ item.title }}</strong><p v-if="item.description">{{ item.description }}</p>
                     <p v-if="item.tags.length" class="item-tags">{{ item.tags.join(' · ') }}</p><small>{{ item.meta }}</small>
                     <div class="button-group"><button v-for="action in itemActions(item)" :key="action.id" type="button" class="md-button text compact"
-                      :class="{ danger: action.tone === 'danger' }" :disabled="busy" @click="execute(item, action)">{{ running === `${item.id}:${action.id}` ? '执行中…' : action.label }}</button></div>
+                      :class="{ danger: action.tone === 'danger' }" :disabled="busy && running !== `${item.id}:${action.id}`" :aria-busy="running === `${item.id}:${action.id}`" @click="execute(item, action)">{{ action.label }}</button></div>
                   </div>
                 </article>
               </div>

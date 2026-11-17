@@ -24,20 +24,22 @@
         <button
           type="button"
           class="md-button tonal"
-          :disabled="powerPending !== null"
+          :disabled="powerPending !== null && powerPending !== 'restart'"
+          :aria-busy="powerPending === 'restart'"
           @click="confirmPower('restart')"
         >
           <MdIcon name="restart_alt" />
-          <span>{{ powerPending === 'restart' ? '重启中…' : '重启' }}</span>
+          <span>重启</span>
         </button>
         <button
           type="button"
           class="md-button tonal danger"
-          :disabled="powerPending !== null"
+          :disabled="powerPending !== null && powerPending !== 'shutdown'"
+          :aria-busy="powerPending === 'shutdown'"
           @click="confirmPower('shutdown')"
         >
           <MdIcon name="power_settings_new" />
-          <span>{{ powerPending === 'shutdown' ? '关机中…' : '关机' }}</span>
+          <span>关机</span>
         </button>
         </div>
       </div>
@@ -82,10 +84,10 @@
                 <button
                   type="button"
                   class="md-button text compact"
-                  :disabled="busyAdapterId === adapter.id"
+                  :aria-busy="busyAdapterId === adapter.id"
                   @click="toggleAdapter(adapter)"
                 >
-                  {{ busyAdapterId === adapter.id ? '处理中…' : adapter.loaded ? '停止' : '启动' }}
+                  {{ adapter.loaded ? '停止' : '启动' }}
                 </button>
               </li>
             </ul>
