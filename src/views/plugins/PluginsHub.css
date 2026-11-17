@@ -192,9 +192,12 @@
 }
 
 .detail-pane {
+  /* Read by the detail's pinned footer (detail.css), which covers this padding at the bottom */
+  --pane-pad: var(--md-space-8);
+
   display: flex;
   flex-direction: column;
-  padding: var(--md-space-8);
+  padding: var(--pane-pad);
   border-bottom-right-radius: var(--corner-outer);
 }
 

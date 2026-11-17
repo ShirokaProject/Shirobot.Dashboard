@@ -287,6 +287,37 @@
   margin-top: var(--md-space-1);
 }
 
+/*
+ * Wide screens, where the detail pane scrolls on its own: the actions stay pinned to the
+ * bottom of the pane while the details scroll under them, so 配置 / 卸载 are in reach for every
+ * plugin without scrolling. The footer reaches down over the pane's bottom padding, and a short
+ * fade above it lets the content slip under instead of being cut by a hard edge.
+ */
+@media (min-width: 1024px) {
+  .detail-foot {
+    position: sticky;
+    bottom: calc(-1 * var(--pane-pad, 0px));
+    z-index: 1;
+    padding-top: var(--md-space-2);
+    padding-bottom: var(--pane-pad, 0px);
+    /* Takes the place of the pane's bottom padding, so the buttons sit at the same spot pinned
+       or scrolled to the end */
+    margin-bottom: calc(-1 * var(--pane-pad, 0px));
+    background: var(--app-card);
+  }
+
+  .detail-foot::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    height: var(--md-space-6);
+    background: linear-gradient(to bottom, transparent, var(--app-card));
+    pointer-events: none;
+  }
+}
+
 /* Equal columns that fill the pane: a label growing to "重载中…" can neither widen a button nor push
    the row past the card. */
 .detail-foot.button-group {
