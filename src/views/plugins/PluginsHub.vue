@@ -87,6 +87,13 @@
                   <strong>{{ plugin.name }}</strong>
                   <small>{{ plugin.description }}</small>
                 </span>
+                <!-- Shown once the list is wide enough to carry them; aligned across rows -->
+                <span class="row-cols" aria-hidden="true">
+                  <span class="row-col">{{ plugin.category }}</span>
+                  <span class="row-col mono">
+                    v{{ plugin.version }}<span v-if="plugin.hasUpdate" class="row-col-update"> → {{ plugin.latestVersion }}</span>
+                  </span>
+                </span>
               </button>
               <el-switch
                 class="row-switch"

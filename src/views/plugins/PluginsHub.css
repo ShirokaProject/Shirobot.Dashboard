@@ -3,13 +3,13 @@
  * Lists are for scanning (name + one line), the detail pane holds everything else.
  */
 /*
- * Capped narrower than other pages: list rows are short (a name, a line of description and a
- * switch), so extra width only opens a gap in the middle of each row. Collapsing the sidebar
- * re-centres the hub instead of stretching it.
+ * The hub fills the content area, up to a cap that only very wide screens reach. Extra width
+ * goes to the list, which shows category and version columns once it is wide enough
+ * (see .row-cols), rather than to empty margins or an ever-wider detail pane.
  */
 .hub {
   display: flex;
-  width: min(100%, 1240px);
+  width: min(100%, 1600px);
   margin-inline: auto;
   flex-direction: column;
   gap: var(--md-space-3);
@@ -78,8 +78,8 @@
 
 .hub-body {
   display: grid;
-  /* The detail pane holds the facts and actions, so it takes the larger share of the width */
-  grid-template-columns: minmax(0, 1fr) clamp(340px, 42%, 520px);
+  /* The detail pane keeps a reading width: wider only stretches its label/value rows apart */
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30%, 420px);
   gap: var(--md-space-3);
   align-items: stretch;
 }
@@ -113,7 +113,7 @@
 
 /* 发现: source rail | list | detail */
 .hub-body.with-rail {
-  grid-template-columns: 240px minmax(0, 1fr) clamp(340px, 34%, 460px);
+  grid-template-columns: 240px minmax(0, 1fr) clamp(340px, 28%, 420px);
 }
 
 .rail-pane {
@@ -373,6 +373,38 @@
   line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Category and version as aligned columns between the description and the switch */
+.row-cols {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--md-space-6);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-small);
+}
+
+.row-col {
+  width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-col.mono {
+  width: 148px;
+  font-family: var(--font-mono);
+}
+
+.row-col-update {
+  color: var(--app-accent);
+}
+
+@container (min-width: 620px) {
+  .row-cols {
+    display: inline-flex;
+  }
 }
 
 .row-meta {
