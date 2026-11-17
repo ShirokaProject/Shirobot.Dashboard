@@ -1,5 +1,5 @@
 <template>
-  <nav class="rail" :aria-label="`${noun}源`">
+  <nav v-indicator class="rail" :aria-label="`${noun}源`">
     <h3>{{ noun }}目录</h3>
     <ul class="rail-list">
       <li v-for="source in sources" :key="source.id">
@@ -65,6 +65,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../../features/motion'
 import MdIcon from '../../../components/MdIcon.vue'
 import { CUSTOM_MARKET_SOURCES_ENABLED, type CatalogSource, type SourceType } from '../../../features/plugins/catalogSources'
 

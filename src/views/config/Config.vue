@@ -1,6 +1,6 @@
 <template>
   <div class="config-page">
-    <nav class="page-nav panel" aria-label="配置分类">
+    <nav v-indicator class="page-nav panel" aria-label="配置分类">
       <button
         v-for="group in groups"
         :key="group.key"
@@ -36,7 +36,7 @@
         </div>
       </header>
 
-      <div class="page-body">
+      <div v-swap="activeGroup" class="page-body">
         <div v-if="loadError" class="notice">
           <MdIcon name="error" class="notice-icon error" />
           <div>
@@ -70,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator, vSwap } from '../../features/motion'
 import { onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MdIcon from '../../components/MdIcon.vue'

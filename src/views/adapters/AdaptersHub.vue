@@ -8,7 +8,7 @@
     </div>
     <!-- Same shape as the 插件 page: tabs, one search box, upload -->
     <header class="hub-header panel">
-      <div class="button-group" role="tablist" aria-label="适配器视图">
+      <div v-indicator:toggle class="button-group" role="tablist" aria-label="适配器视图">
         <button
           v-for="item in tabs"
           :key="item.key"
@@ -49,7 +49,7 @@
         />
       </div>
 
-      <div class="list-pane panel">
+      <div v-indicator v-swap="tab" class="list-pane panel">
         <!-- 已安装 -->
         <template v-if="tab === 'installed'">
           <p v-if="installed.error.value" class="list-note">{{ installed.error.value }}</p>
@@ -210,7 +210,7 @@
           </header>
 
           <div class="list-filters">
-            <div class="button-group" role="radiogroup" aria-label="适配器平台">
+            <div v-indicator:toggle class="button-group" role="radiogroup" aria-label="适配器平台">
               <button v-for="platform in market.platforms.value" :key="platform" type="button" role="radio"
                 class="md-button compact toggle" :class="{ selected: market.activePlatform.value === platform }"
                 :aria-checked="market.activePlatform.value === platform" @click="market.activePlatform.value = platform">
@@ -368,10 +368,10 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator, vSwap } from '../../features/motion'
 import RestartNotice from '../../layout/components/RestartNotice.vue'
 import AutoUpdateToggle from '../../components/AutoUpdateToggle.vue'
 import { computed, ref, watch } from 'vue'
-import { vSwap } from '../../features/motion'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'

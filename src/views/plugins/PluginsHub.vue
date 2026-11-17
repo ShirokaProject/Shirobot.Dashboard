@@ -8,7 +8,7 @@
     </div>
     <!-- Header: tab switch, one search box, context action -->
     <header class="hub-header panel">
-      <div class="button-group" role="tablist" aria-label="插件视图">
+      <div v-indicator:toggle class="button-group" role="tablist" aria-label="插件视图">
         <button
           v-for="item in tabs"
           :key="item.key"
@@ -51,7 +51,7 @@
       </div>
 
       <!-- List pane: scan names first, details on the right -->
-      <div class="list-pane panel">
+      <div v-indicator v-swap="tab" class="list-pane panel">
         <template v-if="tab === 'installed'">
           <p v-if="installed.loadError.value" class="list-note">{{ installed.loadError.value }}</p>
           <AutoUpdateToggle kind="plugins" noun="插件" />
@@ -187,7 +187,7 @@
           </header>
 
           <div class="list-filters">
-            <div class="button-group" role="radiogroup" aria-label="插件分类">
+            <div v-indicator:toggle class="button-group" role="radiogroup" aria-label="插件分类">
               <button
                 v-for="category in market.categories.value"
                 :key="category"
@@ -327,11 +327,11 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator, vSwap } from '../../features/motion'
 import RestartNotice from '../../layout/components/RestartNotice.vue'
 import AutoUpdateToggle from '../../components/AutoUpdateToggle.vue'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { vSwap } from '../../features/motion'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'

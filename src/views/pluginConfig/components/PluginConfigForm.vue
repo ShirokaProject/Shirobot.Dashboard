@@ -70,7 +70,7 @@
               <strong>路由模式</strong>
               <p>决定插件在哪些群组里响应消息。</p>
             </div>
-            <div class="button-group" role="radiogroup" aria-label="路由模式">
+            <div v-indicator:toggle class="button-group" role="radiogroup" aria-label="路由模式">
               <button
                 v-for="mode in routeModes"
                 :key="mode.value"
@@ -136,6 +136,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../../features/motion'
 import { computed } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { PluginConfigMap, PluginConfigValue, PluginListeners, PluginRoutesConfig } from '../../../api'

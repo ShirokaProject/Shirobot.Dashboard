@@ -19,7 +19,7 @@
       <span v-if="pagesLoading" class="nav-note" role="status">插件页面加载中…</span>
       <template v-else-if="pagesError"><span class="nav-note error" role="alert">{{ pagesError }}</span><button type="button" class="md-button text compact" @click="emit('retry-pages')">重试</button></template>
     </div>
-    <div class="desktop-nav">
+    <div v-indicator class="desktop-nav">
     <section v-if="groups.length" class="nav-section" aria-label="配置分组">
       <span class="nav-section-label">配置</span>
     <button
@@ -86,6 +86,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../../features/motion'
 import { useId } from 'vue'
 import MdIcon from '../../../components/MdIcon.vue'
 import type { PluginPage } from '../../../api'

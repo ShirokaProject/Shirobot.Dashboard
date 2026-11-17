@@ -1,7 +1,7 @@
 <template>
   <div class="logs-page">
     <!-- Where the lines come from -->
-    <nav class="source-rail panel" aria-label="日志来源">
+    <nav v-indicator class="source-rail panel" aria-label="日志来源">
       <h3>来源</h3>
       <template v-for="group in [{ kind: 'all', label: '', items: [allSources] }, ...sourceGroups]" :key="group.kind">
         <h4 v-if="group.label" class="source-group">{{ group.label }}</h4>
@@ -57,7 +57,7 @@
           <MdIcon name="search" />
           <input v-model="keyword" type="search" placeholder="搜索日志内容或来源" />
         </label>
-        <div class="button-group" role="radiogroup" aria-label="级别">
+        <div v-indicator:toggle class="button-group" role="radiogroup" aria-label="级别">
           <button
             v-for="option in levelOptions"
             :key="option.value"
@@ -113,6 +113,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../features/motion'
 import { computed, nextTick, ref, watch } from 'vue'
 import MdIcon from '../../components/MdIcon.vue'
 import type { LogLevel } from '../../features/logs/types'

@@ -142,6 +142,76 @@
   border-bottom-right-radius: var(--md-sys-shape-corner-full);
 }
 
+/*
+ * Shared selection indicator (v-indicator, features/motion.ts). One highlight travels to the
+ * selected item; items give up their own selected fill so the two never show at once.
+ * It sits under the items' content and above the container's own background.
+ */
+.has-indicator {
+  position: relative;
+  isolation: isolate;
+}
+
+.sel-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  background: var(--md-sys-color-secondary-container);
+  opacity: 0;
+  pointer-events: none;
+  /* Lists are walked through quickly: the highlight keeps up rather than glides */
+  transition:
+    transform var(--md-sys-motion-duration-short4) var(--app-ease-out),
+    width var(--md-sys-motion-duration-short4) var(--app-ease-out),
+    height var(--md-sys-motion-duration-short4) var(--app-ease-out),
+    opacity var(--md-sys-motion-duration-short3) var(--app-ease-out);
+}
+
+/* Beats each page's own selected fill, scoped or not, so only the indicator paints it */
+.has-indicator .selected,
+.has-indicator .selected:hover {
+  background: transparent !important;
+}
+
+/* Segmented control: the group is one track, the indicator is the raised segment */
+.has-indicator.is-toggle {
+  gap: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--app-toggle);
+}
+
+.has-indicator.is-toggle > .sel-indicator {
+  background: var(--app-selected);
+  transition:
+    transform var(--app-motion-travel) var(--app-ease-in-out),
+    width var(--app-motion-travel) var(--app-ease-in-out),
+    height var(--app-motion-travel) var(--app-ease-in-out),
+    opacity var(--md-sys-motion-duration-short3) var(--app-ease-out);
+}
+
+.has-indicator.is-toggle > :not(.sel-indicator) {
+  border-radius: var(--md-sys-shape-corner-full);
+  background: transparent;
+  transition:
+    color var(--md-sys-motion-duration-short4) var(--app-ease-out),
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--app-motion-press) var(--app-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .has-indicator.is-toggle > :not(.sel-indicator, .selected):hover {
+    background: color-mix(in srgb, var(--app-on-toggle) var(--md-sys-state-hover-opacity), transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sel-indicator,
+  .has-indicator.is-toggle > .sel-indicator {
+    transition: opacity var(--md-sys-motion-duration-short3) linear;
+  }
+}
+
 /* Tonal segment: quiet fill, state layer on hover */
 .md-button.tonal {
   height: 36px;

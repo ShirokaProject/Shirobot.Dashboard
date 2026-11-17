@@ -8,7 +8,7 @@
     @update:model-value="emit('update:visible', $event)"
   >
     <form class="add-form" @submit.prevent="submit">
-      <div class="button-group type-toggle" role="radiogroup" aria-label="源类型">
+      <div v-indicator:toggle class="button-group type-toggle" role="radiogroup" aria-label="源类型">
         <button
           type="button"
           role="radio"
@@ -84,6 +84,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../../features/motion'
 import { computed, ref, watch } from 'vue'
 import GitHubIcon from '../../../components/GitHubIcon.vue'
 import MdIcon from '../../../components/MdIcon.vue'

@@ -14,7 +14,7 @@
       </div>
       <template v-for="section in targetSections" :key="section.kind">
         <h3>{{ section.label }}<span>{{ section.items.length }}</span></h3>
-        <ul class="target-list">
+        <ul v-indicator class="target-list">
           <li v-for="item in section.items" :key="`${section.kind}-${item.id}`">
             <button
               type="button"
@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../features/motion'
 import { computed, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

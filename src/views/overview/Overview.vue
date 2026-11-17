@@ -219,7 +219,7 @@
           </router-link>
         </div>
 
-        <div class="filter-chips button-group" role="radiogroup" aria-label="日志级别">
+        <div v-indicator:toggle class="filter-chips button-group" role="radiogroup" aria-label="日志级别">
           <button
             v-for="filter in logLevelFilters"
             :key="filter.key"
@@ -263,6 +263,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../features/motion'
 import {
   ArrowRight,
   Box,

@@ -67,7 +67,7 @@
         @update:model-value="emit('update:modelValue', Boolean($event))"
       />
 
-      <div v-else-if="field.enumOptions" class="button-group" role="radiogroup" :aria-label="field.label">
+      <div v-else-if="field.enumOptions" v-indicator:toggle class="button-group" role="radiogroup" :aria-label="field.label">
         <button
           v-for="option in field.enumOptions"
           :key="option.value"
@@ -140,6 +140,7 @@
 </template>
 
 <script setup lang="ts">
+import { vIndicator } from '../../../features/motion'
 import { computed } from 'vue'
 import type { PluginConfigMap, PluginConfigValue } from '../../../api'
 import { createConfigField, isConfigObject, isFieldVisible, type ConfigField } from '../usePluginConfig'
