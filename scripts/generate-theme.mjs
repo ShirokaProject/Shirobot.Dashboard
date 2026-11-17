@@ -30,9 +30,10 @@ const paper = {
   tertiarySoft: TonalPalette.fromHueAndChroma(Hct.fromInt(argbFromHex('#2f5d8c')).hue, 12),
   neutral: paperNeutral,
   neutralVariant: paletteOf('#faf7f2', 1.5),
-  // Print-like status; "healthy" reuses the ink-blue accent so green doesn't look foreign.
+  // Print-like status: a muted ink green for "healthy", so it never reads as the blue of
+  // links, switches and the current selection.
   status: [
-    { key: 'success', light: '#2f5d8c', dark: '#a6c8f0' },
+    { key: 'success', light: '#3d7a57', dark: '#9fd1ae' },
     { key: 'warning', light: '#a8751f', dark: '#e3c07c' },
     { key: 'error', light: '#b3432f', dark: '#eb9a88' }
   ],

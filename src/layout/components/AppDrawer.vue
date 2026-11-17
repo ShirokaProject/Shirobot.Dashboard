@@ -121,11 +121,11 @@ function triggerAvatarSpin() {
   position: sticky;
   top: 0;
   box-sizing: border-box;
-  width: 296px;
+  width: 264px;
   height: 100vh;
-  flex: 0 0 296px;
+  flex: 0 0 264px;
   overflow: hidden;
-  padding: var(--md-space-8) var(--md-space-3) var(--md-space-4);
+  padding: var(--md-space-6) var(--md-space-3) var(--md-space-4);
   display: flex;
   flex-direction: column;
   background: var(--app-bg);
@@ -157,14 +157,14 @@ function triggerAvatarSpin() {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: var(--md-space-3);
+  gap: var(--md-space-2);
   padding: 0 var(--md-space-2) var(--md-space-3);
   transition: gap var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .drawer-menu-button {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   margin-left: 0;
   display: grid;
   flex: 0 0 auto;
@@ -174,7 +174,7 @@ function triggerAvatarSpin() {
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  font-size: 24px;
+  font-size: 22px;
   transition:
     margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -295,7 +295,7 @@ function triggerAvatarSpin() {
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--md-space-2);
+  gap: var(--md-space-1);
   align-self: stretch;
   overflow-y: auto;
   margin-left: 0;
@@ -319,12 +319,12 @@ function triggerAvatarSpin() {
   cursor: pointer;
 }
 
-/* M3 navigation drawer item: 56dp height, full pill indicator */
+/* Navigation drawer item: full pill indicator, tightened from M3's 56dp so six items read as a list */
 .drawer-item {
   position: relative;
   /* Leave room on both sides for the focus outline inside the scroll container. */
   width: calc(100% - 2 * var(--md-space-2));
-  height: 56px;
+  height: 44px;
   margin-left: var(--md-space-2);
   border-radius: var(--md-sys-shape-corner-full);
   display: flex;
@@ -343,8 +343,9 @@ function triggerAvatarSpin() {
 }
 
 .md3-drawer.collapsed .drawer-item {
-  width: 56px;
-  margin-left: 8px;
+  width: 48px;
+  height: 48px;
+  margin-left: 12px;
   padding: 0;
   border-radius: var(--md-sys-shape-corner-large);
 }
@@ -418,12 +419,12 @@ function triggerAvatarSpin() {
 }
 
 .nav-icon {
-  width: 48px;
-  height: 40px;
+  width: 44px;
+  height: 36px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  font-size: 21px;
+  font-size: 20px;
   transition:
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
     height var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -431,9 +432,9 @@ function triggerAvatarSpin() {
 }
 
 .md3-drawer.collapsed .nav-icon {
-  width: 56px;
-  height: 56px;
-  font-size: 23px;
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
 }
 
 .md3-rail {

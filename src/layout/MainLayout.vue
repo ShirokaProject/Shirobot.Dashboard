@@ -166,7 +166,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 .md3-content-frame {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - 96px - var(--md-space-6) - var(--md-space-10));
+  min-height: calc(100vh - 80px - var(--md-space-6) - var(--md-space-10));
   overflow: visible;
 }
 

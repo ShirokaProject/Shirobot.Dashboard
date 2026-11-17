@@ -37,12 +37,12 @@ function logout() {
   top: 0;
   z-index: 30;
   isolation: isolate;
-  min-height: 96px;
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--md-space-6);
-  padding: var(--md-space-6) var(--md-space-8) var(--md-space-4);
+  padding: var(--md-space-5) var(--md-space-8) var(--md-space-3);
   background: var(--app-bg);
 }
 

@@ -56,7 +56,7 @@
   --md-sys-shape-corner-medium: 12px;
   --md-sys-shape-corner-large: 16px;
   --md-sys-shape-corner-large-increased: 20px;
-  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-extra-large: 20px;
   --md-sys-shape-corner-full: 9999px;
 
   /* Typography: one family everywhere; system mono only for code-like values */
@@ -65,11 +65,11 @@
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'SFMono-Regular', monospace;
   --md-ref-typeface-brand: var(--app-font-brand);
   --md-ref-typeface-plain: var(--app-font-plain);
-  --md-sys-typescale-display-small: 400 36px / 44px var(--md-ref-typeface-brand);
+  --md-sys-typescale-display-small: 400 30px / 38px var(--md-ref-typeface-brand);
   --md-sys-typescale-headline-large: 400 32px / 40px var(--md-ref-typeface-brand);
-  --md-sys-typescale-headline-medium: 400 28px / 36px var(--md-ref-typeface-brand);
-  --md-sys-typescale-headline-small: 400 24px / 32px var(--md-ref-typeface-brand);
-  --md-sys-typescale-title-large: 400 22px / 28px var(--md-ref-typeface-brand);
+  --md-sys-typescale-headline-medium: 400 24px / 32px var(--md-ref-typeface-brand);
+  --md-sys-typescale-headline-small: 400 20px / 28px var(--md-ref-typeface-brand);
+  --md-sys-typescale-title-large: 500 18px / 26px var(--md-ref-typeface-brand);
   --md-sys-typescale-title-medium: 500 16px / 24px var(--md-ref-typeface-plain);
   --md-sys-typescale-title-small: 500 14px / 20px var(--md-ref-typeface-plain);
   --md-sys-typescale-body-large: 400 16px / 24px var(--md-ref-typeface-plain);
@@ -243,6 +243,8 @@ body {
   background: var(--app-bg);
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-body-large);
+  /* Counts, versions and clocks keep their width while they change */
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

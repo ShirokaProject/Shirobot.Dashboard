@@ -34,7 +34,7 @@
 
 .panel {
   min-width: 0;
-  padding: var(--md-space-5) var(--md-space-6) var(--md-space-6);
+  padding: var(--md-space-4) var(--md-space-6) var(--md-space-5);
   border-radius: var(--corner-inner);
   background: var(--app-card);
   box-shadow: var(--app-card-shadow);
@@ -57,7 +57,7 @@
 /* ---------- greeting card (the page headline) ---------- */
 
 .hero-card {
-  padding: var(--md-space-8) var(--md-space-8) var(--md-space-6);
+  padding: var(--md-space-6) var(--md-space-8) var(--md-space-5);
 }
 
 .hero-top {
@@ -100,7 +100,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--md-space-2);
-  margin: var(--md-space-4) 0 0;
+  margin: var(--md-space-3) 0 0;
   color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-medium);
 }
@@ -110,7 +110,7 @@
   font-size: 18px;
 }
 
-.hero-status-icon.success { color: var(--app-accent); }
+.hero-status-icon.success { color: var(--md-sys-color-success); }
 .hero-status-icon.error { color: var(--md-sys-color-error); }
 
 .hero-status-label {
@@ -125,8 +125,8 @@
 .hero-facts {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin: var(--md-space-6) 0 0;
-  padding-top: var(--md-space-5);
+  margin: var(--md-space-5) 0 0;
+  padding-top: var(--md-space-4);
   border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
@@ -167,7 +167,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--md-space-4);
-  margin-bottom: var(--md-space-4);
+  margin-bottom: var(--md-space-3);
 }
 
 .panel-head h3 {
@@ -177,7 +177,7 @@
 }
 
 .panel-head p {
-  margin: var(--md-space-2) 0 0;
+  margin: 2px 0 0;
   color: var(--md-sys-color-outline);
   font: var(--md-sys-typescale-body-small);
 }
@@ -292,7 +292,7 @@
 /* ---------- plugins ---------- */
 
 .plugin-meter {
-  height: 8px;
+  height: 6px;
   display: flex;
   gap: 3px;
   overflow: hidden;
@@ -305,7 +305,8 @@
   background: var(--md-sys-color-outline-variant);
 }
 
-.meter-segment.primary { background: var(--app-accent); }
+.meter-segment.primary,
+.meter-segment.success { background: var(--md-sys-color-success); }
 .meter-segment.error { background: var(--md-sys-color-error); }
 
 .plugin-legend {
@@ -323,16 +324,22 @@
   gap: var(--md-space-2);
 }
 
+/* Enabled is a healthy state, so it shares the success hue with the meter */
+.plugin-legend .status-dot.primary {
+  background: var(--md-sys-color-success);
+}
+
 .plugin-legend strong {
   color: var(--md-sys-color-on-surface);
   font: var(--md-sys-typescale-title-small);
 }
 
+/* Rows on the card itself, split by hairlines: no tinted box inside the card */
 .attention-list {
   display: flex;
   flex-direction: column;
-  gap: var(--md-space-2);
   margin-top: var(--md-space-4);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .attention-row {
@@ -340,10 +347,12 @@
   grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--md-space-3);
-  min-height: 56px;
-  padding: var(--md-space-2) var(--md-space-2) var(--md-space-2) var(--md-space-4);
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--app-inset);
+  min-height: 52px;
+  padding: var(--md-space-2) 0;
+}
+
+.attention-row + .attention-row {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .attention-icon {
@@ -402,15 +411,14 @@
   font-size: 13px;
 }
 
-/* Memory gets its own tile: the one number here that changes while you watch */
+/* Memory gets its own column: the one number here that changes while you watch */
 .memory-card {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--md-space-1);
-  padding: var(--md-space-4);
-  border-radius: var(--md-sys-shape-corner-large);
-  background: var(--app-inset);
+  padding-left: var(--md-space-5);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .memory-label {
@@ -453,6 +461,11 @@
 @media (max-width: 839px) {
   .runtime-body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .memory-card {
+    padding: var(--md-space-3) 0 0;
+    border-left: 0;
   }
 }
 
@@ -569,12 +582,12 @@
 
 .filter-chips {
   align-self: flex-start;
-  margin-bottom: var(--md-space-4);
+  margin-bottom: var(--md-space-2);
 }
 
 /* Connected toggle group (replaces M3 segmented buttons): tonal off, ink when selected */
 .filter-chip {
-  height: 36px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   gap: var(--md-space-1);
@@ -614,10 +627,8 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: var(--md-space-3);
-  margin-bottom: var(--md-space-2);
-  padding: var(--md-space-3) var(--md-space-4);
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--app-inset);
+  padding: var(--md-space-3) 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
   color: var(--md-sys-color-on-surface);
 }
 
