@@ -48,6 +48,8 @@ export const rowLeave = (el: Element, done: () => void) => collapse(el, done, fa
 export const vSwap: Directive<HTMLElement, unknown> = {
   updated(el, binding) {
     if (binding.value === binding.oldValue) return
+    // New content starts from its top, not from wherever the old one was scrolled to
+    el.scrollTop = 0
     const frames = reduceMotion()
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }]

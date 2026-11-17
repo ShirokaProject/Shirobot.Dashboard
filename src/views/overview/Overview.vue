@@ -128,7 +128,7 @@
                     <strong>{{ plugin.name }}</strong>
                     <span class="row-sub">{{ plugin.errorMessage || '加载失败' }}</span>
                   </div>
-                  <router-link class="md-button text compact" :to="`/plugins/${encodeURIComponent(plugin.id)}/config`">处理</router-link>
+                  <router-link class="md-button text compact" :to="{ path: '/plugins', query: { config: plugin.id } }">处理</router-link>
                 </li>
                 <li v-if="pluginSummary.updates.length" class="attention-row">
                   <el-icon class="attention-icon primary"><Top /></el-icon>

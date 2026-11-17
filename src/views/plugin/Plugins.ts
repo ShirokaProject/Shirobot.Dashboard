@@ -126,7 +126,7 @@ export function usePluginsPage() {
   }
 
   function openPluginConfig(plugin: Plugin) {
-    router.push(`/plugins/${plugin.id}/config`)
+    router.push({ path: '/plugins', query: { config: plugin.id } })
   }
 
   async function loadPluginActions(plugin: Plugin | null | undefined) {

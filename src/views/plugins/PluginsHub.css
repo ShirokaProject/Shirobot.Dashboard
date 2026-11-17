@@ -78,6 +78,33 @@
   align-items: stretch;
 }
 
+/*
+ * Wide screens: the hub fills the viewport and every pane scrolls on its own, so choosing
+ * another item, or a detail of a different length, never changes the page's height.
+ * 80px is the top app bar; the two spaces are the content area's own padding.
+ */
+@media (min-width: 1024px) {
+  .hub {
+    height: calc(100vh - 80px - var(--md-space-6) - var(--md-space-10));
+    height: calc(100dvh - 80px - var(--md-space-6) - var(--md-space-10));
+    min-height: 480px;
+  }
+
+  .hub-body {
+    min-height: 0;
+    flex: 1;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .rail-pane,
+  .list-pane,
+  .detail-pane {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 /* 发现: source rail | list | detail */
 .hub-body.with-rail {
   grid-template-columns: 256px minmax(0, 1fr) clamp(340px, 30%, 420px);

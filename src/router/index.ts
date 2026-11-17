@@ -8,7 +8,6 @@ import {
   loadLoginPage,
   loadLogsPage,
   loadOverviewPage,
-  loadPluginConfigPage,
   loadPluginsPage
 } from './pageLoaders'
 
@@ -41,9 +40,9 @@ const router = createRouter({
           redirect: { path: '/plugins', query: { tab: 'discover' } }
         },
         {
+          // Config is edited in a window on the 插件 page; keep old links working.
           path: 'plugins/:pluginId/config',
-          name: 'PluginConfig',
-          component: loadPluginConfigPage
+          redirect: to => ({ path: '/plugins', query: { config: String(to.params.pluginId) } })
         },
         {
           path: 'adapters',
@@ -51,10 +50,8 @@ const router = createRouter({
           component: loadAdaptersPage
         },
         {
-          // Same config editor as plugins, without routes
           path: 'adapters/:adapterId/config',
-          name: 'AdapterConfig',
-          component: loadPluginConfigPage
+          redirect: to => ({ path: '/adapters', query: { config: String(to.params.adapterId) } })
         },
         {
           // The catalog is now the 发现 tab of the Adapter page; keep old links working.

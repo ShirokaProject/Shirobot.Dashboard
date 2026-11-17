@@ -3,7 +3,6 @@ const routeComponentLoaders = {
   '/login': () => import('../views/login/Login.vue'),
   // 插件 hub: installed + catalog as two tabs of one page
   '/plugins': () => import('../views/plugins/PluginsHub.vue'),
-  '/plugins/:pluginId/config': () => import('../views/pluginConfig/PluginConfig.vue'),
   // Adapter hub: installed + catalog as two tabs of one page
   '/adapters': () => import('../views/adapters/AdaptersHub.vue'),
   '/logs': () => import('../views/logs/Logs.vue'),
@@ -19,7 +18,6 @@ function resolvePreloadPath(path: string): RouteComponentPath | null {
   const cleanPath = path.split('?')[0]?.replace(/\/$/, '') || '/'
 
   if (cleanPath === '') return '/'
-  if (/^\/(plugins|adapters)\/[^/]+\/config$/.test(cleanPath)) return '/plugins/:pluginId/config'
 
   return cleanPath in routeComponentLoaders ? cleanPath as RouteComponentPath : null
 }
@@ -46,10 +44,6 @@ export function loadOverviewPage() {
 
 export function loadPluginsPage() {
   return preloadByKey('/plugins')
-}
-
-export function loadPluginConfigPage() {
-  return preloadByKey('/plugins/:pluginId/config')
 }
 
 export function loadAdaptersPage() {
@@ -79,8 +73,7 @@ export function preloadDashboardPages() {
     '/logs',
     '/adapters',
     '/config',
-    '/about',
-    '/plugins/:pluginId/config'
+    '/about'
   ]
 
   return Promise.allSettled(preloadOrder.map(path => preloadByKey(path)))

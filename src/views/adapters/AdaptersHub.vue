@@ -540,6 +540,17 @@ const discoverEmptyText = computed(() => market.entries.value.length ? '没有�
 
 const configOpen = ref(false)
 
+// A link such as /adapters?config=<id> opens the window for that instance once the list
+// has it, then drops the query so a reload stays put.
+watch([() => route.query.config, () => installed.adapters.value], ([id, adapters]) => {
+  if (typeof id !== 'string' || !id || !adapters.length) return
+  if (adapters.some(item => item.id === id)) {
+    installed.selectedId.value = id
+    configOpen.value = true
+  }
+  void router.replace({ path: '/adapters' })
+}, { immediate: true })
+
 // ---------- 发现: source rail ----------
 
 /** What the middle list shows: the active catalog, or the directly added repositories. */

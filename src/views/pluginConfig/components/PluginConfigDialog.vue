@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="visible"
     class="config-workspace"
-    width="880px"
+    width="1080px"
     append-to-body
     align-center
     :show-close="false"
@@ -14,13 +14,21 @@
           <h2>{{ pluginName }}</h2>
           <p>{{ target === 'adapter' ? '适配器配置' : '插件配置' }}</p>
         </div>
+        <button v-if="!activePage && (state.rawConfigAvailable.value || rawMode)" type="button" class="md-button text ws-raw-toggle" @click="toggleRawMode">
+          <MdIcon :name="rawMode ? 'settings' : 'code'" />{{ rawMode ? '表单编辑' : '编辑 config.toml' }}
+        </button>
         <button type="button" class="md-button text icon-only compact" aria-label="关闭" @click="requestClose()">
           <MdIcon name="close" />
         </button>
       </div>
     </template>
 
-    <p v-if="state.loadError.value" class="ws-note error">{{ state.loadError.value }}</p>
+    <!-- Raw config.toml: every key in the file, including ones the form does not describe -->
+    <div v-if="rawMode" class="ws-raw">
+      <p v-if="raw.loading.value && !raw.content.value" class="ws-note">正在读取 config.toml…</p>
+      <RawConfigEditor v-else v-model="raw.content.value" :error="raw.error.value" :readonly="raw.saving.value" />
+    </div>
+    <p v-else-if="state.loadError.value" class="ws-note error">{{ state.loadError.value }}</p>
     <div v-else-if="state.loading.value" class="ws-note">正在读取配置…</div>
     <!-- Categories on the left as pills; only the chosen one is shown on the right -->
     <div v-else class="ws-body">
@@ -53,10 +61,7 @@
 
     <template #footer>
       <div class="ws-foot">
-        <button type="button" class="md-button text" @click="openFullPage">
-          <MdIcon name="open_in_new" />在完整页面打开
-        </button>
-        <span v-if="state.saveMessage.value && !dirty" class="ws-saved" :class="state.saveMessageType.value" :title="state.saveMessage.value">
+        <span v-if="state.saveMessage.value && !dirty && !rawMode" class="ws-saved" :class="state.saveMessageType.value" :title="state.saveMessage.value">
           {{ state.saveMessageType.value === 'error' ? '保存失败' : state.saveMessage.value }}
         </span>
         <span v-else-if="dirty" class="ws-dirty"><span class="status-dot warning" aria-hidden="true"></span>有未保存的修改</span>
@@ -66,7 +71,7 @@
             v-if="!activePage"
             type="button"
             class="md-button filled"
-            :disabled="!dirty || state.saving.value || instanceSaving || Boolean(instanceDirty && idError)"
+            :disabled="!dirty || state.saving.value || raw.saving.value || instanceSaving || Boolean(!rawMode && instanceDirty && idError)"
             @click="save"
           >保存</button>
         </div>
@@ -77,11 +82,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getApiErrorMessage, updateAdapterInstance } from '../../../api'
 import MdIcon from '../../../components/MdIcon.vue'
-import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
+import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, applyStatusMessage, usePluginConfig, type ConfigTarget } from '../usePluginConfig'
+import { useRawConfig } from '../useRawConfig'
+import RawConfigEditor from './RawConfigEditor.vue'
 import ConfigNav from './ConfigNav.vue'
 import PluginConfigForm from './PluginConfigForm.vue'
 import PluginPagePanel from '../../pluginPages/PluginPagePanel.vue'
@@ -93,8 +99,6 @@ const emit = defineEmits<{
   /** An adapter instance's name / ID was saved; carries its (possibly new) ID */
   'instance-saved': [id: string]
 }>()
-
-const router = useRouter()
 
 // Only load while open; reopening the same plugin reloads fresh values.
 const activeId = computed(() => props.visible ? props.pluginId : '')
@@ -138,7 +142,18 @@ const idError = computed(() => {
   if (!id) return '实例 ID 不能为空。'
   return /^[A-Za-z0-9._-]{1,64}$/.test(id) ? '' : '实例 ID 最多 64 个字符，只能使用英文字母、数字、点、横线和下划线。'
 })
-const dirty = computed(() => state.dirty.value || instanceDirty.value)
+// Editing config.toml as text instead of the form; every opening starts on the form.
+const raw = useRawConfig(activeId, () => props.target)
+const rawMode = ref(false)
+watch(() => [props.visible, props.pluginId, props.target], () => { rawMode.value = false })
+const dirty = computed(() => rawMode.value ? raw.dirty.value : state.dirty.value || instanceDirty.value)
+
+async function toggleRawMode() {
+  if (!(await confirmDiscard())) return
+  rawMode.value = !rawMode.value
+  // Leaving the text editor drops discarded form edits and shows what it saved.
+  await (rawMode.value ? raw.load() : state.load())
+}
 
 async function confirmDiscard() {
   if (!dirty.value) return true
@@ -163,6 +178,11 @@ async function requestClose(done?: () => void) {
 // Stay open after saving so several changes can be made in one sitting.
 // Config first, under the current ID; then the name / ID, which may restart the instance under a new one.
 async function save() {
+  if (rawMode.value) {
+    const status = await raw.save()
+    if (status !== null) ElMessage.success(applyStatusMessage(status) || '配置已保存')
+    return
+  }
   if (state.dirty.value && !(await state.save())) return
   if (instanceDirty.value) {
     if (idError.value) { view.value = INSTANCE_VIEW; return }
@@ -177,14 +197,6 @@ async function save() {
     } finally { instanceSaving.value = false }
   }
   ElMessage.success('配置已保存')
-}
-
-async function openFullPage() {
-  if (!(await confirmDiscard())) return
-  emit('update:visible', false)
-  const base = props.target === 'adapter' ? 'adapters' : 'plugins'
-  void router.push({ path: `/${base}/${encodeURIComponent(props.pluginId)}/config`,
-    query: activePage.value ? { page: activePage.value.id } : {} })
 }
 </script>
 
@@ -224,13 +236,14 @@ async function openFullPage() {
   color: var(--md-sys-color-on-surface-variant);
 }
 
-/* Nav | content; height follows the content (no empty well under short categories),
-   capped so long ones scroll inside while header and footer stay put */
+/* Nav | content inside a window of fixed size: the two columns scroll on their own, so
+   choosing another category never resizes the window around the pointer */
 .ws-body {
   min-height: 0;
   width: 100%;
+  height: 100%;
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 208px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: var(--md-space-5);
@@ -239,7 +252,6 @@ async function openFullPage() {
 .ws-nav,
 .ws-content {
   min-height: 0;
-  max-height: min(65vh, 760px);
   overscroll-behavior: contain;
   overflow-y: auto;
 }
@@ -261,8 +273,27 @@ async function openFullPage() {
   }
 
   .ws-nav { overflow: visible; }
+}
 
-  .ws-content { max-height: none; }
+.ws-raw {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--md-space-4);
+}
+
+.ws-raw > .raw-editor {
+  flex: 1;
+}
+
+.ws-raw-toggle {
+  flex: none;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.ws-raw-toggle .md-icon {
+  font-size: 18px;
 }
 
 .ws-note {
@@ -280,10 +311,6 @@ async function openFullPage() {
   display: flex;
   align-items: center;
   gap: var(--md-space-3);
-}
-
-.ws-foot > .md-button.text {
-  margin-left: calc(var(--md-space-3) * -1);
 }
 
 .ws-foot .md-icon {
@@ -317,8 +344,9 @@ async function openFullPage() {
   display: flex;
   flex-direction: column;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 32px);
-  max-height: calc(100dvh - 32px);
+  /* One size for every category and every plugin, bounded by the viewport */
+  height: min(760px, calc(100vh - 48px));
+  height: min(760px, calc(100dvh - 48px));
   overflow: hidden;
   padding: 0;
 }
@@ -331,6 +359,7 @@ async function openFullPage() {
 
 :global(.config-workspace .el-dialog__body) {
   display: flex;
+  flex: 1;
   min-height: 0;
   overflow: hidden;
   padding: 0 var(--md-space-4);
@@ -345,8 +374,8 @@ async function openFullPage() {
 @media (max-width: 599px) {
   :global(.config-workspace.el-dialog) {
     max-width: calc(100vw - 16px);
-    max-height: calc(100vh - 16px);
-    max-height: calc(100dvh - 16px);
+    height: calc(100vh - 16px);
+    height: calc(100dvh - 16px);
   }
 
   :global(.config-workspace .el-dialog__header) {
@@ -354,7 +383,6 @@ async function openFullPage() {
   }
 
   .ws-foot { flex-wrap: wrap; gap: var(--md-space-2); }
-  .ws-foot > .md-button.text { margin-left: 0; padding-inline: var(--md-space-2); }
   .ws-dirty, .ws-saved { order: 1; flex-basis: 100%; margin-left: 0; }
   .ws-dirty + .button-group, .ws-saved + .button-group { margin-left: auto; }
 }

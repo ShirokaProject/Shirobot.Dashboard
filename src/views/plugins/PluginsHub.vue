@@ -311,7 +311,7 @@
       @confirm="market.confirmMarketInstall"
     />
 
-    <!-- Config workspace: edit in place; "在完整页面打开" leads to the full page -->
+    <!-- Config workspace: edit in place; /plugins?config=<id> opens it for that plugin -->
     <PluginConfigDialog
       v-model:visible="configOpen"
       :plugin-id="configPlugin?.id ?? ''"
@@ -439,6 +439,18 @@ function openConfig(plugin: Plugin) {
   configPlugin.value = plugin
   configOpen.value = true
 }
+
+// A link such as /plugins?config=<id> (the overview's 处理, old full-page links) opens the
+// window for that plugin once the list has it, then drops the query so a reload stays put.
+watch([() => route.query.config, () => installed.installedPlugins.value], ([id, plugins]) => {
+  if (typeof id !== 'string' || !id || !plugins.length) return
+  const plugin = plugins.find(item => item.id === id)
+  if (plugin) {
+    installed.selectPlugin(plugin)
+    openConfig(plugin)
+  }
+  void router.replace({ path: '/plugins' })
+}, { immediate: true })
 
 // ---------- 发现: source rail ----------
 
