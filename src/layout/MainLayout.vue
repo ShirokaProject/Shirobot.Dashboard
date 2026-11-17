@@ -3,7 +3,7 @@
     <AppDrawer />
 
     <section class="md3-main-area">
-      <TopAppBar :title="currentPageName" :direction="titleDirection" />
+      <TopAppBar :title="currentPageName" />
 
       <main class="md3-content-area">
         <div class="md3-content-frame">
@@ -87,9 +87,8 @@ const removeGuard = router.beforeEach((to, from) => {
     : next > previous ? 'page-down' : 'page-up'
 })
 onBeforeUnmount(removeGuard)
-const titleDirection = computed(() => ({ 'page-down': 'down', 'page-up': 'up', 'page-fade': 'fade' } as const)[transitionName.value])
 
-// The overview's own greeting card is its headline, so the app bar stays untitled there.
+// The page's name for the hidden heading; the overview's greeting card is its own headline.
 const currentPageName = computed(() => {
   if (route.name === 'Overview') return ''
   return menuItems.find(item => isActiveRoute(item.path))?.label ?? 'Shirobot'

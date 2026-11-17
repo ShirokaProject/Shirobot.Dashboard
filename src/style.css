@@ -748,18 +748,6 @@ textarea {
   outline-offset: 2px;
 }
 
-.md3-page-title {
-  margin: 0;
-  font: var(--md-sys-typescale-headline-medium);
-  color: var(--md-sys-color-on-surface);
-}
-
-.md3-page-subtitle {
-  margin: var(--md-space-1) 0 0;
-  font: var(--md-sys-typescale-body-medium);
-  color: var(--md-sys-color-on-surface-variant);
-}
-
 .md3-section-title {
   margin: 0 0 var(--md-space-4);
   font: var(--md-sys-typescale-title-large);

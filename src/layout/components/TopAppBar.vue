@@ -1,11 +1,7 @@
 <template>
   <header class="md3-top-app-bar">
-    <div class="title-block">
-      <!-- The title scrolls in its slot with the page below it, same direction and timing -->
-      <Transition :name="`title-${direction}`">
-        <h1 :key="title" class="md3-page-title">{{ title || '\u00a0' }}</h1>
-      </Transition>
-    </div>
+    <!-- The sidebar already names the page; the heading stays for screen readers and outlines -->
+    <h1 class="page-heading">{{ title }}</h1>
     <div class="top-actions-row">
       <SessionStatusChip v-if="BACKEND_SWITCHING_ENABLED" />
       <button v-else type="button" class="logout-button" aria-label="退出登录" title="退出登录" @click="logout">
@@ -23,13 +19,9 @@ import { BACKEND_SWITCHING_ENABLED } from '../../auth/backends'
 import { confirmLogout } from '../../auth/logout'
 import ThemeControls from './ThemeControls.vue'
 
-withDefaults(defineProps<{
+defineProps<{
   title: string
-  /** Which way the page under the bar is moving: matches PageTransition's names */
-  direction?: 'fade' | 'down' | 'up'
-}>(), {
-  direction: 'fade'
-})
+}>()
 
 const router = useRouter()
 
@@ -47,69 +39,20 @@ function logout() {
   min-height: 80px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Only the actions are visible, at the trailing edge */
+  justify-content: flex-end;
   gap: var(--md-space-6);
   padding: var(--md-space-5) var(--md-space-8) var(--md-space-3);
   background: var(--app-bg);
 }
 
-.title-block {
-  position: relative;
-  min-width: 0;
-  /* Wide enough for any title, so a long one leaving is not cut to a short one's width */
-  flex: 1;
-  /* The slot the title scrolls through; the old one leaves past its edge */
-  overflow: clip;
-}
-
-.title-block .md3-page-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Both titles share the slot for the switch, on the page's 240ms curve */
-.title-fade-leave-active,
-.title-down-leave-active,
-.title-up-leave-active {
+.page-heading {
   position: absolute;
-  top: 0;
-  left: 0;
-  transition:
-    opacity 140ms var(--app-ease-out),
-    transform 240ms var(--app-ease-out);
-}
-
-.title-fade-enter-active,
-.title-down-enter-active,
-.title-up-enter-active {
-  transition:
-    opacity 200ms var(--app-ease-out),
-    transform 240ms var(--app-ease-out);
-}
-
-.title-fade-leave-to,
-.title-fade-enter-from,
-.title-down-leave-to,
-.title-down-enter-from,
-.title-up-leave-to,
-.title-up-enter-from {
-  opacity: 0;
-}
-
-/* Its own height is the whole distance: the title rolls out of its slot as the next rolls in */
-.title-down-leave-to { transform: translateY(-100%); }
-.title-down-enter-from { transform: translateY(100%); }
-.title-up-leave-to { transform: translateY(100%); }
-.title-up-enter-from { transform: translateY(-100%); }
-
-@media (prefers-reduced-motion: reduce) {
-  .title-down-leave-to,
-  .title-down-enter-from,
-  .title-up-leave-to,
-  .title-up-enter-from {
-    transform: none;
-  }
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .top-actions-row {
@@ -132,14 +75,6 @@ function logout() {
     flex-direction: row;
     gap: var(--md-space-2);
     padding: calc(var(--md-space-3) + env(safe-area-inset-top, 0px)) var(--md-space-4) var(--md-space-3);
-  }
-
-  .title-block {
-    flex: 1;
-  }
-
-  .md3-page-title {
-    font-size: 22px;
   }
 
   .top-actions-row {
