@@ -168,7 +168,7 @@
               <strong class="memory-value">{{ memory.total }}</strong>
               <template v-if="memory.heap">
                 <div class="memory-meter" role="img" :aria-label="`GC 堆 ${memory.heap}，占 ${Math.round(memory.heapRatio * 100)}%`">
-                  <span :style="{ width: `${memory.heapRatio * 100}%` }"></span>
+                  <span :style="{ transform: `translateX(${(memory.heapRatio - 1) * 100}%)` }"></span>
                 </div>
                 <span class="memory-sub">GC 堆 {{ memory.heap }}</span>
               </template>

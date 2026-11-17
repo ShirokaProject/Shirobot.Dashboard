@@ -189,6 +189,11 @@
   margin-top: var(--md-space-6);
 }
 
+/* 需要处理 and its rows leave as one block when the last item is dealt with */
+.list-group {
+  display: flow-root;
+}
+
 .rows {
   display: flex;
   flex-direction: column;

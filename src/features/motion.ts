@@ -2,6 +2,44 @@ import type { Directive } from 'vue'
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)'
+
+// A search can add or drop dozens of rows in one go; past a handful, moving them all is noise.
+const BURST_LIMIT = 12
+let burst = 0
+function inBurst() {
+  if (burst === 0) requestAnimationFrame(() => { burst = 0 })
+  return ++burst > BURST_LIMIT
+}
+
+function collapse(el: Element, done: () => void, entering: boolean) {
+  const node = el as HTMLElement
+  if (inBurst()) return done()
+  // The parent's gap would stay behind a row squeezed to nothing, so the row gives it back too.
+  const gap = node.parentElement ? parseFloat(getComputedStyle(node.parentElement).rowGap) || 0 : 0
+  const closed = { height: '0px', marginBottom: `${-gap}px`, opacity: 0 }
+  const open = { height: `${node.offsetHeight}px`, marginBottom: '0px', opacity: 1 }
+  const frames = reduceMotion()
+    ? (entering ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }])
+    : (entering ? [closed, open] : [open, closed])
+  node.style.overflow = 'hidden'
+  const animation = node.animate(frames, { duration: entering ? 220 : 180, easing: EASE_OUT })
+  const finish = () => {
+    node.style.overflow = ''
+    done()
+  }
+  animation.onfinish = finish
+  animation.oncancel = finish
+}
+
+/**
+ * Hooks for `<Transition>` / `<TransitionGroup :css="false">`: a row opens its own height as
+ * it arrives and closes it as it leaves, so what sits below slides instead of jumping.
+ * Height is animated on purpose: nothing else moves the following content with it.
+ */
+export const rowEnter = (el: Element, done: () => void) => collapse(el, done, true)
+export const rowLeave = (el: Element, done: () => void) => collapse(el, done, false)
+
 /**
  * `v-swap="key"`: when the key changes, the element's content settles in instead of
  * teleporting, so a detail pane that now shows something else reads as changed.
@@ -14,7 +52,7 @@ export const vSwap: Directive<HTMLElement, unknown> = {
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }]
     for (const child of Array.from(el.children)) {
-      child.animate(frames, { duration: 180, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' })
+      child.animate(frames, { duration: 180, easing: EASE_OUT })
     }
   }
 }
@@ -47,8 +85,16 @@ function placeIndicator(el: HTMLElement) {
   const { thumb } = state
   // A re-render may have reordered the children; the thumb always stays first, under them.
   if (el.firstElementChild !== thumb) el.prepend(thumb)
+  // The container itself may keep its size while its sections grow or shrink (a scrolling
+  // pane, rows collapsing above the selection), so every section is watched as well.
+  for (const child of Array.from(el.children)) {
+    if (child !== thumb) state.observer.observe(child)
+  }
 
   const target = el.querySelector<HTMLElement>('.selected')
+  // Travel only when the selection itself changed. When the same item merely shifts (rows
+  // above it opening or closing, a resize) the highlight stays glued to it.
+  const travel = state.placed && target !== state.target
   if (target !== state.target) {
     if (state.target) state.observer.unobserve(state.target)
     if (target) state.observer.observe(target)
@@ -62,16 +108,16 @@ function placeIndicator(el: HTMLElement) {
   }
 
   // Appearing from nowhere: land in place, then fade in, rather than fly in from the corner.
-  if (!state.placed) thumb.style.transition = 'none'
+  if (!travel) thumb.style.transition = 'none'
   thumb.style.transform = `translate(${offset.x}px, ${offset.y}px)`
   thumb.style.width = `${target.offsetWidth}px`
   thumb.style.height = `${target.offsetHeight}px`
   thumb.style.borderRadius = getComputedStyle(target).borderRadius
-  if (!state.placed) {
+  if (!travel) {
     void thumb.offsetWidth
     thumb.style.transition = ''
-    state.placed = true
   }
+  state.placed = true
   thumb.style.opacity = '1'
 }
 

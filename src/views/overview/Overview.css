@@ -303,6 +303,7 @@
   flex: 1 1 0;
   min-width: 8px;
   background: var(--md-sys-color-outline-variant);
+  transition: flex-grow var(--app-motion-travel) var(--app-ease-out);
 }
 
 .meter-segment.primary,
@@ -446,11 +447,13 @@
   background: var(--app-chart-track);
 }
 
+/* A full-width fill slid into the clipped track, so growing it never touches layout */
 .memory-meter span {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: var(--app-chart-accent);
+  transition: transform var(--app-motion-travel) var(--app-ease-out);
 }
 
 .memory-sub {
@@ -559,7 +562,10 @@
   margin-inline: auto;
   border-radius: var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small);
   background: var(--app-chart-track);
-  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  /* Height, not a scale: scaling would squash the bar's rounded cap */
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    height var(--app-motion-travel) var(--app-ease-out);
 }
 
 /* Chart accent, not raw primary: in the mono theme primary is pure black */
@@ -767,5 +773,13 @@
   .hero-fact:nth-child(2n + 1) {
     padding-left: 0;
     border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-segment,
+  .memory-meter span,
+  .bar {
+    transition: none;
   }
 }

@@ -55,23 +55,25 @@
           <p v-if="installed.error.value" class="list-note">{{ installed.error.value }}</p>
           <AutoUpdateToggle kind="adapters" noun="适配器" />
 
-          <template v-if="attention.length">
-            <h3 class="list-label">需要处理<span>{{ attention.length }}</span></h3>
-            <ul class="rows">
-              <li v-for="item in attention" :key="`attention-${item.adapter.id}-${item.kind}`">
-                <button type="button" class="row" @click="selectAttention(item)">
-                  <MdIcon :name="item.kind === 'error' ? 'error' : item.kind === 'update' ? 'arrow_upward' : 'restart_alt'" :class="['row-icon', item.kind]" />
-                  <span class="row-text">
-                    <strong>{{ item.kind === 'update' ? `程序集 · ${item.adapter.packageId || item.adapter.id}` : item.adapter.name }}</strong>
-                    <small>{{ item.reason }}</small>
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </template>
+          <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
+            <div v-if="attention.length" class="list-group">
+              <h3 class="list-label">需要处理<span>{{ attention.length }}</span></h3>
+              <TransitionGroup tag="ul" class="rows" :css="false" @enter="rowEnter" @leave="rowLeave">
+                <li v-for="item in attention" :key="`attention-${item.adapter.id}-${item.kind}`">
+                  <button type="button" class="row" @click="selectAttention(item)">
+                    <MdIcon :name="item.kind === 'error' ? 'error' : item.kind === 'update' ? 'arrow_upward' : 'restart_alt'" :class="['row-icon', item.kind]" />
+                    <span class="row-text">
+                      <strong>{{ item.kind === 'update' ? `程序集 · ${item.adapter.packageId || item.adapter.id}` : item.adapter.name }}</strong>
+                      <small>{{ item.reason }}</small>
+                    </span>
+                  </button>
+                </li>
+              </TransitionGroup>
+            </div>
+          </Transition>
 
           <h3 class="list-label">适配器<span>{{ packageGroups.length }}</span></h3>
-          <ul v-if="packageGroups.length" class="rows">
+          <TransitionGroup v-if="packageGroups.length" tag="ul" class="rows" :css="false" @enter="rowEnter" @leave="rowLeave">
             <li v-for="group in packageGroups" :key="group.package.id" class="package-item">
               <button
                 type="button"
@@ -117,7 +119,7 @@
                 </li>
               </ul>
             </li>
-          </ul>
+          </TransitionGroup>
           <div v-else-if="!installed.loading.value" class="list-empty">
             <MdIcon name="extension" />
             <strong>{{ keyword ? '没有匹配的适配器' : '还没有安装适配器' }}</strong>
@@ -143,7 +145,7 @@
             </button>
           </header>
 
-          <ul v-if="directList.length" class="rows">
+          <TransitionGroup v-if="directList.length" tag="ul" class="rows" :css="false" @enter="rowEnter" @leave="rowLeave">
             <li v-for="item in directList" :key="item.repo.id">
               <button
                 type="button"
@@ -174,7 +176,7 @@
                 <MdIcon name="close" />
               </button>
             </li>
-          </ul>
+          </TransitionGroup>
           <div v-else class="list-empty">
             <MdIcon name="code" />
             <strong>{{ keyword ? '没有匹配的仓库' : '还没有直接添加的仓库' }}</strong>
@@ -227,7 +229,7 @@
 
           <p v-if="market.error.value" class="list-note">{{ market.error.value }}</p>
 
-          <ul v-if="discoverList.length" class="rows">
+          <TransitionGroup v-if="discoverList.length" tag="ul" class="rows" :css="false" @enter="rowEnter" @leave="rowLeave">
             <li v-for="entry in discoverList" :key="entry.id">
               <button
                 type="button"
@@ -243,7 +245,7 @@
                 <span v-else-if="entry.downloadCount !== null" class="row-meta"><MdIcon name="download" />{{ entry.downloadCount }}</span>
               </button>
             </li>
-          </ul>
+          </TransitionGroup>
           <div v-else-if="!market.loading.value" class="list-empty">
             <MdIcon name="search" />
             <strong>{{ discoverEmptyText }}</strong>
@@ -368,7 +370,7 @@
 </template>
 
 <script setup lang="ts">
-import { vIndicator, vSwap } from '../../features/motion'
+import { rowEnter, rowLeave, vIndicator, vSwap } from '../../features/motion'
 import RestartNotice from '../../layout/components/RestartNotice.vue'
 import AutoUpdateToggle from '../../components/AutoUpdateToggle.vue'
 import { computed, ref, watch } from 'vue'
