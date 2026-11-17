@@ -52,7 +52,17 @@ export const vSwap: Directive<HTMLElement, unknown> = {
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }]
     for (const child of Array.from(el.children)) {
-      child.animate(frames, { duration: 180, easing: EASE_OUT })
+      const timing = { duration: 180, easing: EASE_OUT }
+      // The selection highlight is placed by its own transform. Replacing that would park it
+      // in the corner for the length of the swap, so its rise is added on top instead.
+      if (child.classList.contains('sel-indicator')) {
+        child.animate([{ opacity: 0 }, { opacity: 1 }], timing)
+        if (!reduceMotion()) {
+          child.animate([{ transform: 'translateY(4px)' }, { transform: 'translateY(0)' }], { ...timing, composite: 'add' })
+        }
+        continue
+      }
+      child.animate(frames, timing)
     }
   }
 }
@@ -91,10 +101,13 @@ function placeIndicator(el: HTMLElement) {
     if (child !== thumb) state.observer.observe(child)
   }
 
-  const target = el.querySelector<HTMLElement>('.selected')
-  // Travel only when the selection itself changed. When the same item merely shifts (rows
-  // above it opening or closing, a resize) the highlight stays glued to it.
-  const travel = state.placed && target !== state.target
+  // A group nested inside this one has its own highlight; its selection is not ours.
+  const target = Array.from(el.querySelectorAll<HTMLElement>('.selected'))
+    .find(item => item.closest('.has-indicator') === el) ?? null
+  // Travel only from one live item to another. When the same item merely shifts (rows above
+  // it opening or closing, a resize) the highlight stays glued to it, and when the old item
+  // is gone (the list was swapped for another) it lands on the new one without crossing over.
+  const travel = state.placed && target !== state.target && Boolean(state.target?.isConnected)
   if (target !== state.target) {
     if (state.target) state.observer.unobserve(state.target)
     if (target) state.observer.observe(target)
