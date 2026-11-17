@@ -252,7 +252,7 @@
         </template>
       </div>
 
-      <div class="detail-pane panel">
+      <div v-swap="detailSwapKey" class="detail-pane panel">
         <AdapterDetail
           v-if="tab === 'installed' && installed.selected.value"
           :adapter="installed.selected.value"
@@ -371,6 +371,7 @@
 import RestartNotice from '../../layout/components/RestartNotice.vue'
 import AutoUpdateToggle from '../../components/AutoUpdateToggle.vue'
 import { computed, ref, watch } from 'vue'
+import { vSwap } from '../../features/motion'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
@@ -452,6 +453,10 @@ watch(installed.selectedId, id => {
   if (!expandedPackages.value.includes(selectedPackageId.value)) expandedPackages.value.push(selectedPackageId.value)
 })
 const selectedPackage = computed(() => installed.packages.value.find(item => item.id === selectedPackageId.value) ?? installed.packages.value[0] ?? null)
+// What the detail pane is showing; when it changes the pane's content settles in.
+const detailSwapKey = computed(() => tab.value === 'installed'
+  ? `installed:${installed.selectedId.value || `package:${selectedPackage.value?.id ?? ''}`}`
+  : `discover:${selectedEntry.value?.id ?? ''}`)
 function selectAttention(item: { adapter: AdapterStatus; kind: string }) {
   if (item.kind === 'update' || !installed.adapters.value.some(adapter => adapter.id === item.adapter.id)) {
     const id = packageOf(item.adapter)

@@ -52,7 +52,14 @@
   font: var(--md-sys-typescale-label-large);
   text-decoration: none;
   white-space: nowrap;
-  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--app-motion-press) var(--app-ease-out);
+}
+
+/* Every button gives a little under the pointer, so a press is felt before its result shows */
+.md-button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .md-button .el-icon {
@@ -116,7 +123,8 @@
   border-radius: var(--corner-seam);
   transition:
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    border-radius var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized);
+    border-radius var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized),
+    transform var(--app-motion-press) var(--app-ease-out);
 }
 
 /* Shape morph: the selected segment becomes a full pill */
@@ -228,5 +236,9 @@
 @media (prefers-reduced-motion: reduce) {
   .md-icon.spinning {
     animation: none;
+  }
+
+  .md-button:active:not(:disabled) {
+    transform: none;
   }
 }

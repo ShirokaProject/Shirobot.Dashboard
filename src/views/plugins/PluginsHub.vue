@@ -237,7 +237,7 @@
       </div>
 
       <!-- Detail pane -->
-      <div class="detail-pane panel">
+      <div v-swap="detailSwapKey" class="detail-pane panel">
         <InstalledDetail
           v-if="tab === 'installed'"
           :plugin="selectedInstalledPlugin"
@@ -331,6 +331,7 @@ import RestartNotice from '../../layout/components/RestartNotice.vue'
 import AutoUpdateToggle from '../../components/AutoUpdateToggle.vue'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { vSwap } from '../../features/motion'
 import { useRoute, useRouter } from 'vue-router'
 import GitHubIcon from '../../components/GitHubIcon.vue'
 import MdIcon from '../../components/MdIcon.vue'
@@ -386,6 +387,11 @@ const marketEntries = computed(() => [
   ...market.directEntries.value.map(entry => entry.plugin)
 ])
 const installedList = computed(() => installed.filteredInstalled.value.map(plugin => withPluginUpdate(plugin, marketEntries.value)))
+// What the detail pane is showing; when it changes the pane's content settles in.
+const detailSwapKey = computed(() => tab.value === 'installed'
+  ? `installed:${installed.selectedPlugin.value?.id ?? ''}`
+  : `market:${market.selectedPlugin.value?.id ?? ''}`)
+
 const selectedInstalledPlugin = computed(() => installed.selectedPlugin.value
   ? withPluginUpdate(installed.selectedPlugin.value, marketEntries.value)
   : null)

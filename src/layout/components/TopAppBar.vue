@@ -96,7 +96,13 @@ function logout() {
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition:
+    background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--app-motion-press) var(--app-ease-out);
+}
+
+.logout-button:active {
+  transform: scale(0.95);
 }
 
 .logout-button:hover {

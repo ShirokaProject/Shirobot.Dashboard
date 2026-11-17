@@ -597,6 +597,11 @@
   color: var(--app-on-toggle);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
+  transition: transform var(--app-motion-press) var(--app-ease-out);
+}
+
+.filter-chip:active {
+  transform: scale(0.97);
 }
 
 .filter-chip:hover {

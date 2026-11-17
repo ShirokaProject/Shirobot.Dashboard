@@ -96,6 +96,15 @@
   --md-sys-motion-duration-long2: 500ms;
 
   /*
+   * App motion. One strong ease-out for anything that enters or answers a press, one
+   * ease-in-out for a part that travels across the screen, and the two durations those share.
+   */
+  --app-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --app-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --app-motion-press: 140ms;
+  --app-motion-travel: 250ms;
+
+  /*
    * State layers (M3 spec). These are the only opacities pages may put in color-mix():
    *   color-mix(in srgb, <on-color> var(--md-sys-state-hover-opacity), <container | transparent>)
    */
@@ -518,9 +527,79 @@ textarea {
   will-change: auto !important;
 }
 
+/* The box grows a hair as it fades in; the transform exists only while animating, so the
+   resting dialog still sits on whole pixels. */
 @keyframes msgbox-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes app-dialog-in {
+  from { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes app-dialog-out {
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+.fade-in-linear-enter-active,
+.fade-in-linear-enter-active .el-overlay-message-box,
+.dialog-fade-enter-active {
+  animation-duration: 220ms;
+  animation-timing-function: var(--app-ease-out);
+}
+
+.dialog-fade-enter-active .el-overlay-dialog {
+  animation: app-dialog-in 220ms var(--app-ease-out);
+}
+
+/* Leaving is quicker than arriving: the decision is already made */
+.fade-in-linear-leave-active,
+.fade-in-linear-leave-active .el-overlay-message-box,
+.dialog-fade-leave-active {
+  animation-duration: 160ms;
+  animation-timing-function: var(--app-ease-out);
+}
+
+.dialog-fade-leave-active .el-overlay-dialog {
+  animation: app-dialog-out 160ms var(--app-ease-out);
+}
+
+/* Select menus and other poppers grow out of their trigger instead of unrolling from nothing */
+.el-zoom-in-top-enter-active,
+.el-zoom-in-top-leave-active {
+  transition:
+    opacity 160ms var(--app-ease-out),
+    transform 160ms var(--app-ease-out);
+}
+
+.el-zoom-in-top-enter-from,
+.el-zoom-in-top-leave-active {
+  transform: scale(0.96);
+}
+
+.el-zoom-in-top-enter-active {
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes msgbox-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes app-dialog-in {
+    from { opacity: 0; }
+  }
+
+  @keyframes app-dialog-out {
+    to { opacity: 0; }
+  }
+
+  .el-zoom-in-top-enter-from,
+  .el-zoom-in-top-leave-active {
+    transform: none;
+  }
 }
 
 /*

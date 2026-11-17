@@ -34,6 +34,12 @@
     </div>
 
     <nav class="drawer-tree">
+      <span
+        class="drawer-indicator"
+        :class="{ hidden: activeIndex < 0 }"
+        :style="{ transform: `translateY(${indicatorIndex * NAV_ITEM_PITCH}px)` }"
+        aria-hidden="true"
+      ></span>
       <button
         v-for="item in navigationItems"
         :key="item.path"
@@ -79,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Box } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
@@ -99,6 +105,17 @@ function isActiveRoute(path: string) {
   if (path === '/') return route.path === '/'
   return route.path.startsWith(path)
 }
+
+// Item height plus the gap between items; keep in sync with .drawer-item and .drawer-tree.
+const NAV_ITEM_PITCH = 48
+
+const activeIndex = computed(() => navigationItems.value.findIndex(item => isActiveRoute(item.path)))
+// On a page outside the navigation the indicator fades where it last stood, so coming back
+// to a nav page it fades in there instead of flying in from the top.
+const indicatorIndex = ref(Math.max(activeIndex.value, 0))
+watch(activeIndex, index => {
+  if (index >= 0) indicatorIndex.value = index
+})
 
 function preloadNavTarget(path: string) {
   void preloadRouteComponent(path)
@@ -291,6 +308,7 @@ function triggerAvatarSpin() {
 }
 
 .drawer-tree {
+  position: relative;
   display: flex;
   min-height: 0;
   flex: 1 1 auto;
@@ -336,6 +354,7 @@ function triggerAvatarSpin() {
   transition:
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     color var(--md-sys-motion-duration-short4),
+    transform var(--app-motion-press) var(--app-ease-out),
     width var(--drawer-motion-duration) var(--drawer-motion-easing),
     height var(--drawer-motion-duration) var(--drawer-motion-easing),
     margin-left var(--drawer-motion-duration) var(--drawer-motion-easing),
@@ -344,7 +363,6 @@ function triggerAvatarSpin() {
 
 .md3-drawer.collapsed .drawer-item {
   width: 48px;
-  height: 48px;
   margin-left: 12px;
   padding: 0;
   border-radius: var(--md-sys-shape-corner-large);
@@ -402,10 +420,50 @@ function triggerAvatarSpin() {
   background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
 }
 
-/* M3 active indicator: secondary-container */
+/* The active fill is one shared indicator that travels between items (see .drawer-indicator) */
 .drawer-item.active {
-  background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
+}
+
+.drawer-item:active {
+  transform: scale(0.98);
+}
+
+.drawer-indicator {
+  position: absolute;
+  top: var(--md-space-1);
+  left: var(--md-space-2);
+  width: calc(100% - 2 * var(--md-space-2));
+  height: 44px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  pointer-events: none;
+  transition:
+    transform var(--app-motion-travel) var(--app-ease-in-out),
+    opacity var(--md-sys-motion-duration-short3) var(--app-ease-out),
+    left var(--drawer-motion-duration) var(--drawer-motion-easing),
+    width var(--drawer-motion-duration) var(--drawer-motion-easing),
+    border-radius var(--drawer-motion-duration) var(--drawer-motion-easing);
+}
+
+.drawer-indicator.hidden {
+  opacity: 0;
+}
+
+.md3-drawer.collapsed .drawer-indicator {
+  left: 12px;
+  width: 48px;
+  border-radius: var(--md-sys-shape-corner-large);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-indicator {
+    transition: opacity var(--md-sys-motion-duration-short3) linear;
+  }
+
+  .drawer-item:active {
+    transform: none;
+  }
 }
 
 .md3-drawer.collapsed .drawer-item:hover {
@@ -414,7 +472,6 @@ function triggerAvatarSpin() {
 }
 
 .md3-drawer.collapsed .drawer-item.active {
-  background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
 
@@ -433,7 +490,7 @@ function triggerAvatarSpin() {
 
 .md3-drawer.collapsed .nav-icon {
   width: 48px;
-  height: 48px;
+  height: 44px;
   font-size: 22px;
 }
 

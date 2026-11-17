@@ -1,6 +1,7 @@
 <template>
   <!-- Expanded: three-state pill. Collapsed: the pill shrinks to the active icon, which cycles the states. -->
   <div class="mode-switch" :class="{ collapsed }" role="radiogroup" aria-label="明暗模式">
+    <span class="mode-thumb" :style="{ transform: `translateX(${activeIndex * 42}px)` }" aria-hidden="true"></span>
     <button
       v-for="mode in modes"
       :key="mode.key"
@@ -24,12 +25,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { activeColorMode, colorModes, commitColorMode, type ColorModeKey } from '../../theme'
 
 const props = defineProps<{ collapsed: boolean }>()
 
 // Light, dark, then follow-the-system, matching the reference pill
 const modes = [colorModes[1], colorModes[2], colorModes[0]]
+
+// Option width plus the gap between options; keep in sync with .mode-option.
+const activeIndex = computed(() => Math.max(modes.findIndex(mode => mode.key === activeColorMode.value), 0))
 
 function choose(key: ColorModeKey) {
   if (!props.collapsed) {
@@ -46,6 +51,7 @@ function choose(key: ColorModeKey) {
   --switch-duration: var(--drawer-motion-duration, 0.24s);
   --switch-easing: var(--drawer-motion-easing, cubic-bezier(0.4, 0, 0.2, 1));
 
+  position: relative;
   width: fit-content;
   display: inline-flex;
   padding: 4px;
@@ -56,7 +62,34 @@ function choose(key: ColorModeKey) {
     background var(--switch-duration) var(--switch-easing);
 }
 
+/* One raised thumb travels to the chosen mode */
+.mode-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 40px;
+  height: 36px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: var(--md-sys-elevation-soft);
+  pointer-events: none;
+  transition:
+    transform var(--app-motion-travel) var(--app-ease-in-out),
+    opacity 140ms var(--app-ease-out);
+}
+
+.mode-switch.collapsed .mode-thumb {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-thumb {
+    transition: opacity 140ms linear;
+  }
+}
+
 .mode-option {
+  position: relative;
   width: 40px;
   height: 36px;
   flex: 0 0 auto;
@@ -74,7 +107,7 @@ function choose(key: ColorModeKey) {
     opacity 140ms ease,
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    box-shadow var(--switch-duration) var(--switch-easing);
+    transform var(--app-motion-press) var(--app-ease-out);
 }
 
 .mode-option + .mode-option {
@@ -85,7 +118,7 @@ function choose(key: ColorModeKey) {
     opacity 140ms ease,
     background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    box-shadow var(--switch-duration) var(--switch-easing);
+    transform var(--app-motion-press) var(--app-ease-out);
 }
 
 .mode-option:hover:not(.active) {
@@ -93,9 +126,11 @@ function choose(key: ColorModeKey) {
 }
 
 .mode-option.active {
-  background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface);
-  box-shadow: var(--md-sys-elevation-soft);
+}
+
+.mode-option:active {
+  transform: scale(0.94);
 }
 
 .mode-option:focus-visible {
