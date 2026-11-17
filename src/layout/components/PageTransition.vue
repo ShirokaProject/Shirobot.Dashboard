@@ -1,5 +1,10 @@
 <template>
-  <Transition :name="name" mode="out-in">
+  <Transition
+    :name="name"
+    @before-leave="startSwap"
+    @after-enter="endSwap"
+    @enter-cancelled="endSwap"
+  >
     <component :is="component" :key="transitionKey" class="page-route-view" />
   </Transition>
 </template>
@@ -8,9 +13,10 @@
 import type { Component } from 'vue'
 
 /**
- * page-down / page-up follow the sidebar indicator: moving to an item further down, the old
- * page lifts away and the new one rises in from below, and the other way round. page-fade is
- * for changes the sidebar does not show (a link inside a page, leaving the login).
+ * page-down / page-up scroll the content the way the sidebar indicator moves: picking an item
+ * further down pushes the old page up and out while the new one rises in under it, together,
+ * like one strip being scrolled. page-fade crossfades changes the sidebar does not show
+ * (a link inside a page, the first page after login).
  */
 export type PageTransitionName = 'page-fade' | 'page-down' | 'page-up'
 
@@ -21,6 +27,18 @@ withDefaults(defineProps<{
 }>(), {
   name: 'page-fade'
 })
+
+// While two pages share the frame, it clips vertically, so the pages slide under its edges
+// instead of pushing a scrollbar into view. At rest it clips nothing (shadows, popovers).
+let swaps = 0
+function startSwap(el: Element) {
+  swaps++
+  el.parentElement?.classList.add('page-swapping')
+}
+function endSwap(el: Element) {
+  swaps = Math.max(0, swaps - 1)
+  if (!swaps) el.parentElement?.classList.remove('page-swapping')
+}
 </script>
 
 <style scoped>
@@ -31,26 +49,34 @@ withDefaults(defineProps<{
   opacity: 1;
 }
 
+:global(.page-swapping) {
+  overflow-y: clip;
+}
+
 /*
- * Timed against the sidebar indicator (250ms): the old page is gone in 90ms, the new one
- * settles over 180ms, so content and indicator land within a few frames of each other.
- * Leaving is quicker than arriving; both ease out, so the motion starts the moment you click.
- * Transforms exist only while animating, so text never rests on a resampled layer.
+ * Both pages are on screen at once. The leaving one is lifted out of the flow at the spot it
+ * occupied, so the arriving one takes its place underneath without a jump.
+ * 240ms on the same ease-out as the sidebar indicator, so the two land together. The old page
+ * fades faster than it moves, so the overlap never reads as two pages stacked.
  */
 :global(.page-fade-leave-active),
 :global(.page-down-leave-active),
 :global(.page-up-leave-active) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
   transition:
-    opacity 90ms var(--app-ease-out),
-    transform 90ms var(--app-ease-out);
+    opacity 140ms var(--app-ease-out),
+    transform 240ms var(--app-ease-out);
 }
 
 :global(.page-fade-enter-active),
 :global(.page-down-enter-active),
 :global(.page-up-enter-active) {
   transition:
-    opacity 180ms var(--app-ease-out),
-    transform 180ms var(--app-ease-out);
+    opacity 200ms var(--app-ease-out),
+    transform 240ms var(--app-ease-out);
 }
 
 :global(.page-fade-leave-to),
@@ -62,11 +88,10 @@ withDefaults(defineProps<{
   opacity: 0;
 }
 
-/* The content travels the way the indicator does, a short distance, so it reads as one move */
-:global(.page-down-leave-to) { transform: translateY(-6px); }
-:global(.page-down-enter-from) { transform: translateY(10px); }
-:global(.page-up-leave-to) { transform: translateY(6px); }
-:global(.page-up-enter-from) { transform: translateY(-10px); }
+:global(.page-down-leave-to) { transform: translateY(-40px); }
+:global(.page-down-enter-from) { transform: translateY(40px); }
+:global(.page-up-leave-to) { transform: translateY(40px); }
+:global(.page-up-enter-from) { transform: translateY(-40px); }
 
 @media (prefers-reduced-motion: reduce) {
   :global(.page-down-leave-to),

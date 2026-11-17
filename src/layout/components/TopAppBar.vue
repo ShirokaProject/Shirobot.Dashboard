@@ -58,7 +58,7 @@ function logout() {
 }
 
 .title-swap-enter-active {
-  transition: opacity 180ms var(--app-ease-out);
+  transition: opacity 150ms var(--app-ease-out);
 }
 
 .title-swap-leave-to,

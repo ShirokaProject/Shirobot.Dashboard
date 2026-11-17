@@ -14,7 +14,9 @@ function inBurst() {
 
 function collapse(el: Element, done: () => void, entering: boolean) {
   const node = el as HTMLElement
-  if (inBurst()) return done()
+  // Rows that fill in while their page is still sliding in are part of that arrival; unfolding
+  // them as well would put two motions on one moment.
+  if (inBurst() || node.closest('.page-swapping')) return done()
   // The parent's gap would stay behind a row squeezed to nothing, so the row gives it back too.
   const gap = node.parentElement ? parseFloat(getComputedStyle(node.parentElement).rowGap) || 0 : 0
   const closed = { height: '0px', marginBottom: `${-gap}px`, opacity: 0 }
