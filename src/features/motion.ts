@@ -74,6 +74,8 @@ interface IndicatorState {
   observer: ResizeObserver
   target: HTMLElement | null
   placed: boolean
+  /** The geometry last written to the thumb, so an unchanged layout leaves it untouched */
+  geometry: string
 }
 
 const indicators = new WeakMap<HTMLElement, IndicatorState>()
@@ -119,8 +121,16 @@ function placeIndicator(el: HTMLElement) {
   if (!target || !offset) {
     thumb.style.opacity = '0'
     state.placed = false
+    state.geometry = ''
     return
   }
+
+  // The resize observer reports every newly observed element once, a frame after the click
+  // that selected it. Rewriting the same geometry then, with transitions off, would cancel
+  // the slide that just started; when nothing moved there is nothing to do.
+  const geometry = `${offset.x},${offset.y},${target.offsetWidth},${target.offsetHeight}`
+  if (geometry === state.geometry) return
+  state.geometry = geometry
 
   // Appearing from nowhere: land in place, then fade in, rather than fly in from the corner.
   if (!travel) thumb.style.transition = 'none'
@@ -152,7 +162,7 @@ export const vIndicator: Directive<HTMLElement, unknown, string, 'toggle'> = {
     el.prepend(thumb)
     const observer = new ResizeObserver(() => placeIndicator(el))
     observer.observe(el)
-    indicators.set(el, { thumb, observer, target: null, placed: false })
+    indicators.set(el, { thumb, observer, target: null, placed: false, geometry: '' })
     placeIndicator(el)
   },
   updated(el) {
