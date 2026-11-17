@@ -22,10 +22,18 @@
             <dd>{{ fact.value }}</dd>
           </div>
         </dl>
-        <div class="host-update" aria-live="polite">
+        <div class="host-update" :class="{ checking: checkingUpdate }" aria-live="polite">
           <div class="button-group">
-            <button type="button" class="md-button tonal" :disabled="checkingUpdate || applyingUpdate || restarting" @click="checkUpdate">
-              <MdIcon name="refresh" />{{ checkingUpdate ? '检查中…' : '检查宿主更新' }}
+            <!-- Busy rather than disabled while checking: the label and fill stay put, the icon turns -->
+            <button
+              type="button"
+              class="md-button tonal"
+              :disabled="applyingUpdate || restarting"
+              :aria-busy="checkingUpdate"
+              :aria-label="checkingUpdate ? '正在检查宿主更新' : undefined"
+              @click="checkUpdate"
+            >
+              <MdIcon name="refresh" :class="{ spinning: checkingUpdate }" />检查宿主更新
             </button>
             <button v-if="updateCheck?.update_available && updateCheck.can_apply" type="button" class="md-button filled" :disabled="applyingUpdate || restarting" @click="updateAndRestart">
               <MdIcon name="download" />{{ restarting ? '正在重启…' : applyingUpdate ? '更新中…' : '更新并重启' }}

@@ -63,11 +63,13 @@ export function useAboutPage() {
   async function checkUpdate() {
     if (checkingUpdate.value || applyingUpdate.value || restarting.value) return
     checkingUpdate.value = true
-    updateError.value = ''
-    updateCheck.value = null
+    // The previous answer stays on screen until the new one arrives, so the button beside it
+    // and the lines below do not vanish and reappear for the length of the request.
     try {
       updateCheck.value = await checkHostUpdate()
+      updateError.value = ''
     } catch (error) {
+      updateCheck.value = null
       updateError.value = getApiErrorMessage(error, '检查宿主更新失败')
     } finally {
       checkingUpdate.value = false
