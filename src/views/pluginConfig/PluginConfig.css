@@ -55,7 +55,7 @@
 }
 
 .page-targets h3 span {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-small);
 }
 
@@ -187,7 +187,7 @@
 
 .sep {
   margin: 0 var(--md-space-1);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
 }
 
 .page-body {

@@ -41,7 +41,7 @@
   --md-sys-color-on-success: #ffffff;
   --md-sys-color-success-container: #dcf0e0;
   --md-sys-color-on-success-container: #003e23;
-  --md-sys-color-warning: #a8751f;
+  --md-sys-color-warning: #8f6212;
   --md-sys-color-on-warning: #ffffff;
   --md-sys-color-warning-container: #ffe7cb;
   --md-sys-color-on-warning-container: #4a2f00;
@@ -53,6 +53,7 @@
   --app-card: #fffefa;
   --app-card-outline: #e7e5de;
   --app-inset: #f7f6f3;
+  --app-text-muted: #6e6d68;
   --app-card-shadow: none;
   --app-card-shadow-hover: var(--md-sys-elevation-level1);
   --app-accent: var(--md-sys-color-tertiary);
@@ -61,7 +62,8 @@
   --app-on-selected: var(--md-sys-color-on-primary);
   --app-toggle: var(--md-sys-color-secondary-container);
   --app-on-toggle: var(--md-sys-color-on-secondary-container);
-  --app-chart-accent: var(--md-sys-color-tertiary);
+  --app-chart-accent: var(--md-sys-color-on-surface-variant);
+  --app-chart-track: var(--md-sys-color-surface-container-highest);
 }
 
 :root[data-color='chrome'] {
@@ -96,10 +98,10 @@
   --md-sys-color-inverse-on-surface: #f0f0f3;
   --md-sys-color-shadow: #3c4043;
   --md-sys-color-scrim: #000000;
-  --md-sys-color-success: #1e8e3e;
+  --md-sys-color-success: #188038;
   --md-sys-color-on-success: #ffffff;
   --md-sys-color-success-container: #dff0db;
-  --md-sys-color-on-success-container: #003e14;
+  --md-sys-color-on-success-container: #003e15;
   --md-sys-color-warning: #b06000;
   --md-sys-color-on-warning: #ffffff;
   --md-sys-color-warning-container: #ffe6d6;
@@ -112,6 +114,7 @@
   --app-card: #ffffff;
   --app-card-outline: #e0e6ec;
   --app-inset: #f6f6f9;
+  --app-text-muted: #676e73;
   --app-card-shadow: 0 1px 2px 0 color-mix(in srgb, var(--md-sys-color-shadow) 22%, transparent), 0 1px 4px 1px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
   --app-card-shadow-hover: 0 1px 3px 0 color-mix(in srgb, var(--md-sys-color-shadow) 26%, transparent), 0 4px 10px 3px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent);
   --app-accent: var(--md-sys-color-primary);
@@ -121,6 +124,7 @@
   --app-toggle: var(--md-sys-color-surface-container-high);
   --app-on-toggle: var(--md-sys-color-on-surface-variant);
   --app-chart-accent: var(--md-sys-color-primary);
+  --app-chart-track: var(--md-sys-color-tertiary-container);
 }
 
 :root[data-mode='dark'] {
@@ -138,21 +142,21 @@
   --md-sys-color-on-tertiary: #003258;
   --md-sys-color-tertiary-container: #3b434e;
   --md-sys-color-on-tertiary-container: #d1e4ff;
-  --md-sys-color-surface: #171816;
-  --md-sys-color-on-surface: #e9e8e5;
+  --md-sys-color-surface: #1a1714;
+  --md-sys-color-on-surface: #efe7e1;
   --md-sys-color-surface-variant: #42423d;
   --md-sys-color-on-surface-variant: #c2c1ba;
-  --md-sys-color-surface-container-lowest: #101110;
-  --md-sys-color-surface-container-low: #1b1c1a;
-  --md-sys-color-surface-container: #212220;
-  --md-sys-color-surface-container-high: #292a29;
-  --md-sys-color-surface-container-highest: #343533;
-  --md-sys-color-surface-dim: #171816;
-  --md-sys-color-surface-bright: #383938;
+  --md-sys-color-surface-container-lowest: #13100d;
+  --md-sys-color-surface-container-low: #1e1b17;
+  --md-sys-color-surface-container: #24211d;
+  --md-sys-color-surface-container-high: #2d2925;
+  --md-sys-color-surface-container-highest: #383430;
+  --md-sys-color-surface-dim: #1a1714;
+  --md-sys-color-surface-bright: #3c3834;
   --md-sys-color-outline: #8c8c85;
   --md-sys-color-outline-variant: #3e3e39;
-  --md-sys-color-inverse-surface: #e3e2df;
-  --md-sys-color-inverse-on-surface: #2f312f;
+  --md-sys-color-inverse-surface: #e9e1db;
+  --md-sys-color-inverse-on-surface: #34302c;
   --md-sys-color-shadow: #000000;
   --md-sys-color-scrim: #000000;
   --md-sys-color-success: #9fd1ae;
@@ -160,17 +164,18 @@
   --md-sys-color-success-container: #314136;
   --md-sys-color-on-success-container: #a0eebc;
   --md-sys-color-warning: #e3c07c;
-  --md-sys-color-on-warning: #362100;
+  --md-sys-color-on-warning: #362200;
   --md-sys-color-warning-container: #4a3b26;
-  --md-sys-color-on-warning-container: #ffd6a0;
+  --md-sys-color-on-warning-container: #ffd69f;
   --md-sys-color-error: #eb9a88;
   --md-sys-color-on-error: #4b1108;
   --md-sys-color-error-container: #513733;
   --md-sys-color-on-error-container: #ffd3ca;
-  --app-bg: #121412;
-  --app-card: #1f201e;
+  --app-bg: #16130f;
+  --app-card: #221f1b;
   --app-card-outline: #30312c;
-  --app-inset: #343533;
+  --app-inset: #383430;
+  --app-text-muted: #979690;
   --app-card-shadow: none;
   --app-card-shadow-hover: var(--md-sys-elevation-level1);
   --app-accent: var(--md-sys-color-tertiary);
@@ -179,7 +184,8 @@
   --app-on-selected: var(--md-sys-color-on-primary);
   --app-toggle: var(--md-sys-color-secondary-container);
   --app-on-toggle: var(--md-sys-color-on-secondary-container);
-  --app-chart-accent: var(--md-sys-color-tertiary);
+  --app-chart-accent: var(--md-sys-color-on-surface-variant);
+  --app-chart-track: var(--md-sys-color-surface-container-highest);
 }
 
 :root[data-mode='dark'][data-color='chrome'] {
@@ -217,7 +223,7 @@
   --md-sys-color-success: #81c995;
   --md-sys-color-on-success: #002d0d;
   --md-sys-color-success-container: #334133;
-  --md-sys-color-on-success-container: #acecae;
+  --md-sys-color-on-success-container: #acecaf;
   --md-sys-color-warning: #fdd663;
   --md-sys-color-on-warning: #3d1e00;
   --md-sys-color-warning-container: #4e3929;
@@ -230,6 +236,7 @@
   --app-card: #1e2022;
   --app-card-outline: #2b3136;
   --app-inset: #333537;
+  --app-text-muted: #90979c;
   --app-card-shadow: none;
   --app-card-shadow-hover: var(--md-sys-elevation-level1);
   --app-accent: var(--md-sys-color-primary);
@@ -239,6 +246,7 @@
   --app-toggle: var(--md-sys-color-surface-container-high);
   --app-on-toggle: var(--md-sys-color-on-surface-variant);
   --app-chart-accent: var(--md-sys-color-primary);
+  --app-chart-track: var(--md-sys-color-tertiary-container);
 }
 
 /* System mode follows the OS until the user picks light or dark explicitly. */
@@ -259,21 +267,21 @@
     --md-sys-color-on-tertiary: #003258;
     --md-sys-color-tertiary-container: #3b434e;
     --md-sys-color-on-tertiary-container: #d1e4ff;
-    --md-sys-color-surface: #171816;
-    --md-sys-color-on-surface: #e9e8e5;
+    --md-sys-color-surface: #1a1714;
+    --md-sys-color-on-surface: #efe7e1;
     --md-sys-color-surface-variant: #42423d;
     --md-sys-color-on-surface-variant: #c2c1ba;
-    --md-sys-color-surface-container-lowest: #101110;
-    --md-sys-color-surface-container-low: #1b1c1a;
-    --md-sys-color-surface-container: #212220;
-    --md-sys-color-surface-container-high: #292a29;
-    --md-sys-color-surface-container-highest: #343533;
-    --md-sys-color-surface-dim: #171816;
-    --md-sys-color-surface-bright: #383938;
+    --md-sys-color-surface-container-lowest: #13100d;
+    --md-sys-color-surface-container-low: #1e1b17;
+    --md-sys-color-surface-container: #24211d;
+    --md-sys-color-surface-container-high: #2d2925;
+    --md-sys-color-surface-container-highest: #383430;
+    --md-sys-color-surface-dim: #1a1714;
+    --md-sys-color-surface-bright: #3c3834;
     --md-sys-color-outline: #8c8c85;
     --md-sys-color-outline-variant: #3e3e39;
-    --md-sys-color-inverse-surface: #e3e2df;
-    --md-sys-color-inverse-on-surface: #2f312f;
+    --md-sys-color-inverse-surface: #e9e1db;
+    --md-sys-color-inverse-on-surface: #34302c;
     --md-sys-color-shadow: #000000;
     --md-sys-color-scrim: #000000;
     --md-sys-color-success: #9fd1ae;
@@ -281,17 +289,18 @@
     --md-sys-color-success-container: #314136;
     --md-sys-color-on-success-container: #a0eebc;
     --md-sys-color-warning: #e3c07c;
-    --md-sys-color-on-warning: #362100;
+    --md-sys-color-on-warning: #362200;
     --md-sys-color-warning-container: #4a3b26;
-    --md-sys-color-on-warning-container: #ffd6a0;
+    --md-sys-color-on-warning-container: #ffd69f;
     --md-sys-color-error: #eb9a88;
     --md-sys-color-on-error: #4b1108;
     --md-sys-color-error-container: #513733;
     --md-sys-color-on-error-container: #ffd3ca;
-    --app-bg: #121412;
-    --app-card: #1f201e;
+    --app-bg: #16130f;
+    --app-card: #221f1b;
     --app-card-outline: #30312c;
-    --app-inset: #343533;
+    --app-inset: #383430;
+    --app-text-muted: #979690;
     --app-card-shadow: none;
     --app-card-shadow-hover: var(--md-sys-elevation-level1);
     --app-accent: var(--md-sys-color-tertiary);
@@ -300,7 +309,8 @@
     --app-on-selected: var(--md-sys-color-on-primary);
     --app-toggle: var(--md-sys-color-secondary-container);
     --app-on-toggle: var(--md-sys-color-on-secondary-container);
-    --app-chart-accent: var(--md-sys-color-tertiary);
+    --app-chart-accent: var(--md-sys-color-on-surface-variant);
+    --app-chart-track: var(--md-sys-color-surface-container-highest);
   }
 
   :root:not([data-mode='light'])[data-color='chrome'] {
@@ -338,7 +348,7 @@
     --md-sys-color-success: #81c995;
     --md-sys-color-on-success: #002d0d;
     --md-sys-color-success-container: #334133;
-    --md-sys-color-on-success-container: #acecae;
+    --md-sys-color-on-success-container: #acecaf;
     --md-sys-color-warning: #fdd663;
     --md-sys-color-on-warning: #3d1e00;
     --md-sys-color-warning-container: #4e3929;
@@ -351,6 +361,7 @@
     --app-card: #1e2022;
     --app-card-outline: #2b3136;
     --app-inset: #333537;
+    --app-text-muted: #90979c;
     --app-card-shadow: none;
     --app-card-shadow-hover: var(--md-sys-elevation-level1);
     --app-accent: var(--md-sys-color-primary);
@@ -360,6 +371,7 @@
     --app-toggle: var(--md-sys-color-surface-container-high);
     --app-on-toggle: var(--md-sys-color-on-surface-variant);
     --app-chart-accent: var(--md-sys-color-primary);
+    --app-chart-track: var(--md-sys-color-tertiary-container);
   }
 }
 

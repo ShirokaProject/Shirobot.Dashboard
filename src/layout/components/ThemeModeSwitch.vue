@@ -70,7 +70,8 @@ function choose(key: ColorModeKey) {
   width: 40px;
   height: 36px;
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-lowest);
+  /* Brighter than the pill in both modes; container-lowest would read as a hole in dark */
+  background: var(--md-sys-color-surface-bright);
   box-shadow: var(--md-sys-elevation-soft);
   pointer-events: none;
   transition:

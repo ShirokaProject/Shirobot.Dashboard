@@ -134,7 +134,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--md-space-1);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: 400 11px / 16px var(--font-mono);
   text-decoration: none;
   transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
@@ -181,7 +181,7 @@
 }
 
 .list-label span {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -327,7 +327,7 @@
 .row-text small {
   overflow: hidden;
   margin-top: 2px;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font-size: 11px;
   line-height: 16px;
   text-overflow: ellipsis;
@@ -339,7 +339,7 @@
   flex: 0 0 auto;
   align-items: center;
   gap: var(--md-space-1);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-medium);
 }
 

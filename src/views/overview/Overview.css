@@ -82,7 +82,7 @@
 /* Kaomoji beside the greeting: smaller and quieter than the headline */
 .hero-face {
   margin-left: var(--md-space-3);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font-size: 0.5em;
   font-weight: 400;
   letter-spacing: 0;
@@ -101,12 +101,12 @@
   align-items: center;
   gap: var(--md-space-2);
   margin: var(--md-space-3) 0 0;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-medium);
 }
 
 .hero-status-icon {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font-size: 18px;
 }
 
@@ -141,7 +141,7 @@
 }
 
 .hero-fact dt {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -178,7 +178,7 @@
 
 .panel-head p {
   margin: 2px 0 0;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -245,7 +245,7 @@
 }
 
 .row-title .mono {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font-size: 12px;
 }
 
@@ -254,13 +254,13 @@
   align-items: center;
   gap: var(--md-space-2);
   margin-top: 2px;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
 .row-sub {
   overflow: hidden;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -314,7 +314,7 @@
   flex-wrap: wrap;
   gap: var(--md-space-5);
   margin-top: var(--md-space-3);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-medium);
 }
 
@@ -389,7 +389,7 @@
   display: flex;
   align-items: center;
   gap: var(--md-space-2);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -425,7 +425,7 @@
   display: flex;
   align-items: center;
   gap: var(--md-space-2);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -443,18 +443,18 @@
   height: 6px;
   overflow: hidden;
   border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-tertiary-container);
+  background: var(--app-chart-track);
 }
 
 .memory-meter span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--app-accent);
+  background: var(--app-chart-accent);
 }
 
 .memory-sub {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -553,12 +553,12 @@
   transform: translate(0, 0);
 }
 
-/* Slim rounded bars in a pale accent tint, so only the solid peak draws the eye */
+/* Slim rounded bars in the quiet track tone, so only the solid peak draws the eye */
 .bar {
   width: min(60%, 18px);
   margin-inline: auto;
   border-radius: var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small);
-  background: var(--md-sys-color-tertiary-container);
+  background: var(--app-chart-track);
   transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
@@ -572,7 +572,7 @@
 .bar-time {
   height: 16px;
   margin-top: var(--md-space-2);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-small);
   text-align: center;
   white-space: nowrap;
@@ -655,7 +655,7 @@
 }
 
 .latest-error-main span {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -688,7 +688,7 @@
 }
 
 .log-time {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font-size: 11px;
 }
 

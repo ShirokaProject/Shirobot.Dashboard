@@ -176,7 +176,7 @@
   --el-text-color-primary: var(--md-sys-color-on-surface);
   --el-text-color-regular: var(--md-sys-color-on-surface-variant);
   --el-text-color-secondary: var(--md-sys-color-on-surface-variant);
-  --el-text-color-placeholder: var(--md-sys-color-outline);
+  --el-text-color-placeholder: var(--app-text-muted);
   --el-text-color-disabled: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-disabled-content-opacity), transparent);
   --el-border-color: var(--md-sys-color-outline-variant);
   --el-border-color-light: var(--md-sys-color-outline-variant);

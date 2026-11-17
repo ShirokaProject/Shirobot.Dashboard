@@ -647,7 +647,7 @@ watch(() => market.message.value, text => toast(text, market.messageType.value, 
 .field-hint {
   margin: 0;
   padding-inline: var(--md-space-4);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font-size: 12px;
   line-height: 18px;
 }

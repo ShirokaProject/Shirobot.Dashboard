@@ -169,7 +169,7 @@ function submit() {
 }
 
 .text-field small {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 

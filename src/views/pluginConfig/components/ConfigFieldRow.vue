@@ -231,7 +231,7 @@ const stacked = computed(() => editor.value !== 'scalar' ||
 
 /* The raw key, for people matching fields against config files */
 .field-key {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: 400 11px / 16px var(--font-mono);
   opacity: 0.75;
   transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);

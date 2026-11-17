@@ -17,7 +17,7 @@
 
 .sep {
   margin: 0 var(--md-space-1);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
 }
 
 .detail-head {
@@ -42,7 +42,7 @@
 
 .detail-title p {
   margin: var(--md-space-2) 0 0;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -81,7 +81,7 @@
 }
 
 .notice span {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
@@ -139,7 +139,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--md-space-2);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-medium);
 }
 
@@ -217,7 +217,7 @@
 
 .actions h3 {
   margin: 0 0 var(--md-space-2);
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-label-large);
 }
 
@@ -251,13 +251,13 @@
 }
 
 .action-row small {
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 
 .footnote {
   margin: 0;
-  color: var(--md-sys-color-outline);
+  color: var(--app-text-muted);
   font: var(--md-sys-typescale-body-small);
 }
 

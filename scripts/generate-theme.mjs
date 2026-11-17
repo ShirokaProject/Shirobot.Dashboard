@@ -18,6 +18,9 @@ const paletteOf = (color, chromaScale = 1) => {
 // Built from reference paper colors: at chroma ~2 HCT hue drifts, and hand-picked hues
 // came out peach/pink. The paper's own hue keeps every tone a clean warm grey.
 const paperNeutral = paletteOf('#f7f6f3')
+// The paper's hue sits near green; at dark tones that shows as an olive cast, so dark mode
+// takes its greys from a warm hue instead and stays in the same family as the light paper.
+const paperNeutralDark = TonalPalette.fromHueAndChroma(75, 3)
 const paperAccent = paletteOf('#2f5d8c')
 
 const paper = {
@@ -29,12 +32,13 @@ const paper = {
   tertiary: paperAccent,
   tertiarySoft: TonalPalette.fromHueAndChroma(Hct.fromInt(argbFromHex('#2f5d8c')).hue, 12),
   neutral: paperNeutral,
+  neutralDark: paperNeutralDark,
   neutralVariant: paletteOf('#faf7f2', 1.5),
   // Print-like status: a muted ink green for "healthy", so it never reads as the blue of
   // links, switches and the current selection.
   status: [
     { key: 'success', light: '#3d7a57', dark: '#9fd1ae' },
-    { key: 'warning', light: '#a8751f', dark: '#e3c07c' },
+    { key: 'warning', light: '#8f6212', dark: '#e3c07c' },
     { key: 'error', light: '#b3432f', dark: '#eb9a88' }
   ],
   // Paper on a slightly darker desk: tone separation, no outline or shadow.
@@ -43,6 +47,9 @@ const paper = {
     dark: { bg: 6, card: 12, shadow: 'none', shadowHover: 'var(--md-sys-elevation-level1)' }
   },
   accent: 'var(--md-sys-color-tertiary)',
+  // Meters and charts are read, not pressed: they stay in ink so the blue keeps meaning
+  // "you can act on this". [fill, track]
+  chart: ['var(--md-sys-color-on-surface-variant)', 'var(--md-sys-color-surface-container-highest)'],
   // Switch "on" track: the same fountain-pen blue as links, status dots and the chart, so
   // it belongs to the paper palette instead of standing out as a foreign bright blue
   switchOn: 'var(--md-sys-color-tertiary)',
@@ -66,7 +73,7 @@ const chrome = {
   neutral: paletteOf('#f0f4f9', 0.6),
   neutralVariant: paletteOf('#f0f4f9', 1.2),
   status: [
-    { key: 'success', light: '#1e8e3e', dark: '#81c995' },
+    { key: 'success', light: '#188038', dark: '#81c995' },
     { key: 'warning', light: '#b06000', dark: '#fdd663' },
     { key: 'error', light: '#d93025', dark: '#f28b82' }
   ],
@@ -84,6 +91,7 @@ const chrome = {
     dark: { bg: 6, card: 12, shadow: 'none', shadowHover: 'var(--md-sys-elevation-level1)' }
   },
   accent: 'var(--md-sys-color-primary)',
+  chart: ['var(--md-sys-color-primary)', 'var(--md-sys-color-tertiary-container)'],
   switchOn: 'var(--md-sys-color-primary)',
   // Selected toggle segments: light blue with dark-blue text; solid blue stays for the rare primary button
   shadowColor: '#3c4043',
@@ -125,6 +133,8 @@ const roleMap = [
 
 function schemeTokens(theme, isDark) {
   const mode = isDark ? 'dark' : 'light'
+  // A theme may give a palette a dark-mode variant under `<key>Dark`
+  const paletteFor = key => (isDark && theme[`${key}Dark`]) || theme[key]
   const [p, onP, pc, onPc] = theme.primaryTones[mode]
   const tokens = [
     ['--md-sys-color-primary', hex(theme.primary, p)],
@@ -132,7 +142,7 @@ function schemeTokens(theme, isDark) {
     ['--md-sys-color-primary-container', hex(theme.primary, pc)],
     ['--md-sys-color-on-primary-container', hex(theme.primary, onPc)],
     ['--md-sys-color-inverse-primary', hex(theme.primary, isDark ? p - 50 : p + 40)],
-    ...roleMap.map(([role, palette, light, dark]) => [`--md-sys-color-${role}`, hex(theme[palette], isDark ? dark : light)])
+    ...roleMap.map(([role, palette, light, dark]) => [`--md-sys-color-${role}`, hex(paletteFor(palette), isDark ? dark : light)])
   ]
 
   for (const status of theme.status) {
@@ -155,13 +165,16 @@ function schemeTokens(theme, isDark) {
 
   const layer = theme.layer[mode]
   tokens.push(
-    ['--app-bg', hex(theme.neutral, layer.bg)],
-    ['--app-card', hex(theme.neutral, layer.card)],
+    ['--app-bg', hex(paletteFor('neutral'), layer.bg)],
+    ['--app-card', hex(paletteFor('neutral'), layer.card)],
     ['--app-card-outline', hex(theme.neutralVariant, isDark ? 20 : 91)],
     // Blocks nested inside a card or dialog (field groups, notices, fact lists). Light mode
     // tints them slightly below the white card; dark mode must go *lighter* than the
     // container, or they read as holes punched into it.
-    ['--app-inset', hex(theme.neutral, isDark ? 22 : 97)],
+    ['--app-inset', hex(paletteFor('neutral'), isDark ? 22 : 97)],
+    // Labels, captions and timestamps. Darker than outline, which is tuned for hairlines and
+    // is too faint for small text: this keeps 4.5:1 on both the card and the page.
+    ['--app-text-muted', hex(theme.neutralVariant, isDark ? 62 : 46)],
     ['--app-card-shadow', layer.shadow],
     ['--app-card-shadow-hover', layer.shadowHover],
     ['--app-accent', theme.accent],
@@ -170,7 +183,8 @@ function schemeTokens(theme, isDark) {
     ['--app-on-selected', theme.selected[1]],
     ['--app-toggle', theme.toggle[0]],
     ['--app-on-toggle', theme.toggle[1]],
-    ['--app-chart-accent', theme.accent]
+    ['--app-chart-accent', theme.chart[0]],
+    ['--app-chart-track', theme.chart[1]]
   )
   return tokens
 }
