@@ -47,7 +47,7 @@
   border: 0;
   border-radius: var(--md-sys-shape-corner-full);
   background: transparent;
-  color: var(--md-sys-color-primary);
+  color: var(--app-action-text);
   cursor: pointer;
   font: var(--md-sys-typescale-label-large);
   text-decoration: none;
@@ -67,11 +67,11 @@
 }
 
 .md-button:hover {
-  background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-hover-opacity), transparent);
+  background: color-mix(in srgb, var(--app-action-text) var(--md-sys-state-hover-opacity), transparent);
 }
 
 .md-button:active {
-  background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-pressed-opacity), transparent);
+  background: color-mix(in srgb, var(--app-action-text) var(--md-sys-state-pressed-opacity), transparent);
 }
 
 .md-button:disabled {
@@ -183,6 +183,7 @@
 
 .has-indicator.is-toggle > .sel-indicator {
   background: var(--app-selected);
+  box-shadow: var(--app-selected-shadow);
   transition:
     transform var(--app-motion-travel) var(--app-ease-in-out),
     width var(--app-motion-travel) var(--app-ease-in-out),

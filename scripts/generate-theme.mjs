@@ -55,21 +55,30 @@ const paper = {
   switchOn: 'var(--md-sys-color-tertiary)',
   // Selected toggle segments: solid ink, the one strong mark on paper
   selected: ['var(--md-sys-color-primary)', 'var(--md-sys-color-on-primary)'],
+  selectedShadow: 'none',
+  // Text buttons (停止, 处理, 管理…) speak in ink, like the rest of the page
+  actionText: 'var(--md-sys-color-primary)',
   // Unselected segments: the quiet warm grey
   toggle: ['var(--md-sys-color-secondary-container)', 'var(--md-sys-color-on-secondary-container)']
 }
 
-// ---------- Chrome: white page, cool greys, Google blue, soft elevated cards ----------
+// ---------- Chrome: white page, cool greys, one confident blue, soft elevated cards ----------
+// Blue is spent only where something can be done or is switched on: filled buttons, switches,
+// links, focus and the chart. Everything that merely shows a state (the current page, a
+// selected row, a quiet button) is a cool grey, so the blue keeps its meaning and the page
+// does not read as tinted throughout.
 const googleBlue = paletteOf('#0b57d0')
+const coolGrey = paletteOf('#f0f4f9', 1.2)
 
 const chrome = {
   key: 'chrome',
   primary: googleBlue,
   primaryTones: { light: [40, 100, 90, 10], dark: [80, 20, 30, 90] },
-  // Selected nav / chips: the light blue Chrome uses for its active item (#d3e3fd)
-  secondary: paletteOf('#d3e3fd'),
+  // Selected nav, selected rows and quiet (tonal) buttons
+  secondary: coolGrey,
   tertiary: googleBlue,
-  tertiarySoft: paletteOf('#d3e3fd'),
+  // Meter tracks and soft notices: a whisper of blue-grey, not a fill
+  tertiarySoft: TonalPalette.fromHueAndChroma(Hct.fromInt(argbFromHex('#0b57d0')).hue, 8),
   neutral: paletteOf('#f0f4f9', 0.6),
   neutralVariant: paletteOf('#f0f4f9', 1.2),
   status: [
@@ -93,9 +102,15 @@ const chrome = {
   accent: 'var(--md-sys-color-primary)',
   chart: ['var(--md-sys-color-primary)', 'var(--md-sys-color-tertiary-container)'],
   switchOn: 'var(--md-sys-color-primary)',
-  // Selected toggle segments: light blue with dark-blue text; solid blue stays for the rare primary button
   shadowColor: '#3c4043',
-  selected: ['var(--md-sys-color-secondary-container)', 'var(--md-sys-color-on-secondary-container)'],
+  // Selected toggle segment: a raised white key on a grey track, as in Chrome's own segmented
+  // controls; in dark mode the key is the lighter surface instead of the darkest one
+  selected: {
+    light: ['var(--md-sys-color-surface-container-lowest)', 'var(--md-sys-color-on-surface)'],
+    dark: ['var(--md-sys-color-surface-container-highest)', 'var(--md-sys-color-on-surface)']
+  },
+  selectedShadow: '0 1px 2px 0 color-mix(in srgb, var(--md-sys-color-shadow) 18%, transparent), 0 1px 3px 1px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent)',
+  actionText: 'var(--md-sys-color-on-surface)',
   // Unselected segments: neutral grey, so light blue means "selected" and nothing else
   toggle: ['var(--md-sys-color-surface-container-high)', 'var(--md-sys-color-on-surface-variant)']
 }
@@ -179,8 +194,10 @@ function schemeTokens(theme, isDark) {
     ['--app-card-shadow-hover', layer.shadowHover],
     ['--app-accent', theme.accent],
     ['--app-switch-on', typeof theme.switchOn === 'string' ? theme.switchOn : theme.switchOn[isDark ? 'dark' : 'light']],
-    ['--app-selected', theme.selected[0]],
-    ['--app-on-selected', theme.selected[1]],
+    ['--app-selected', (Array.isArray(theme.selected) ? theme.selected : theme.selected[mode])[0]],
+    ['--app-on-selected', (Array.isArray(theme.selected) ? theme.selected : theme.selected[mode])[1]],
+    ['--app-selected-shadow', theme.selectedShadow],
+    ['--app-action-text', theme.actionText],
     ['--app-toggle', theme.toggle[0]],
     ['--app-on-toggle', theme.toggle[1]],
     ['--app-chart-accent', theme.chart[0]],
