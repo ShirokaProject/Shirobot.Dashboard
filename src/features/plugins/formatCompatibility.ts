@@ -29,3 +29,19 @@ export function formatLicense(license?: string | null) {
   if (/^none$/i.test(value)) return '无'
   return value
 }
+
+/** Return a reason for ABI rejection; product/release versions are deliberately not used. */
+export function contractAbiRejection(required: Record<string, string> | undefined, host: Record<string, string> | null): string {
+  for (const [rawName, version] of Object.entries(required ?? {})) {
+    const name = rawName.startsWith('ShiroBot.') ? rawName : `ShiroBot.${rawName}`
+    if (!host) return '无法确认宿主 ABI，请更新宿主或稍后重试'
+    const installed = host[name]
+    if (!installed) return `宿主缺少 ${name} 契约`
+    const parse = (value: string) => /^\d+(?:\.\d+){1,3}$/.test(value) ? value.split('.').map(Number) : null
+    const wanted = parse(version), current = parse(installed)
+    if (!wanted || !current) return `${name} ABI 信息无效，无法确认兼容性`
+    const newer = [0, 1, 2, 3].map(i => (wanted[i] ?? 0) - (current[i] ?? 0)).find(delta => delta !== 0) ?? 0
+    if (wanted[0] !== current[0] || newer > 0) return `需要 ${name} ABI ${version}，当前宿主为 ${installed}`
+  }
+  return ''
+}

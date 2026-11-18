@@ -65,7 +65,13 @@ const emptyRoutes: PluginRoutesConfig = {
   effective_mode: 'blacklist',
   effective_groups: [],
   default_mode: 'blacklist',
-  default_groups: []
+  default_groups: [],
+  prefix_mode: undefined,
+  custom_prefix: undefined,
+  effective_prefix: undefined,
+  message_prefix: undefined,
+  default_require_prefix: undefined,
+  effective_require_prefix: undefined
 }
 
 function inferValueType(value: PluginConfigValue | undefined): string {
@@ -302,7 +308,8 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
   })
 
   const currentState = () => JSON.stringify({
-    config, mode: routes.mode, groups: routeGroups.value, priority: routes.priority_configured ? routes.priority : null
+    config, mode: routes.mode, groups: routeGroups.value, priority: routes.priority_configured ? routes.priority : null,
+    prefix_mode: routes.prefix_mode, custom_prefix: routes.custom_prefix
   })
   const dirty = computed(() => Boolean(snapshot.value) && currentState() !== snapshot.value)
 
@@ -379,7 +386,9 @@ export function usePluginConfig(pluginId: Ref<string>, target: MaybeRefOrGetter<
             mode: routes.mode,
             groups: routeGroups.value,
             // Hosts without priorities do not report one; leave the field out for them.
-            ...(routes.declared_priority === undefined ? {} : { priority: routes.priority_configured ? routes.priority : null })
+            ...(routes.declared_priority === undefined ? {} : { priority: routes.priority_configured ? routes.priority : null }),
+            ...(routes.prefix_mode === undefined ? {} : { prefix_mode: routes.prefix_mode }),
+            ...(routes.custom_prefix === undefined ? {} : { custom_prefix: routes.custom_prefix })
           }
         })
         if (response) assignUpdateResponse(response)

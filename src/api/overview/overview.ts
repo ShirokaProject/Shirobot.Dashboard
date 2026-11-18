@@ -34,8 +34,13 @@ export interface OverviewMessageFrequency {
 
 /** Host / process facts for the 运行环境 card. Every field is optional; missing ones are hidden. */
 export interface OverviewRuntime {
-  /** How Shirobot runs, e.g. `docker`, `systemd`, `native` */
+  /** How Shirobot runs, e.g. `docker`, `podman`, `container`, `systemd`, `native` */
   mode?: string
+  is_container?: boolean
+  container_engine?: string | null
+  container_runtime?: string | null
+  container_host?: string | null
+  orchestrator?: string | null
   /** OS name and version, e.g. `Debian GNU/Linux 12 (bookworm)` */
   os?: string
   /** CPU architecture, e.g. `x64`, `arm64` */
@@ -48,7 +53,7 @@ export interface OverviewRuntime {
   memory_bytes?: number
   /** Managed (GC) heap in bytes */
   gc_heap_bytes?: number
-  /** When the container image was built (ISO 8601); docker only */
+  /** Build time (ISO 8601), also available outside containers */
   build_time?: string
 }
 

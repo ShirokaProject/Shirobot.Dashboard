@@ -71,8 +71,6 @@ export function getLogStreamUrl() {
     ? new URL(path, `${baseUrl.replace(/\/$/, '')}/`)
     : new URL(path, window.location.origin)
 
-  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-
   if (session?.token.trim()) {
     url.searchParams.set('token', session.token.trim())
   }

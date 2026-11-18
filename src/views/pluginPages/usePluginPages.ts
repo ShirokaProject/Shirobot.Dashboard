@@ -7,7 +7,7 @@ export const pluginPageView = (id: string) => PAGE_VIEW_PREFIX + encodeURICompon
 export const selectedPluginPage = (pages: PluginPage[], view: string) => pages.find(page => pluginPageView(page.id) === view)
 
 /** Page navigation is separate from configuration schema and does not enter config save payloads. */
-export function usePluginPages(pluginId: MaybeRefOrGetter<string>, enabled: MaybeRefOrGetter<boolean>) {
+export function usePluginPages(pluginId: MaybeRefOrGetter<string>, enabled: MaybeRefOrGetter<boolean>, target: MaybeRefOrGetter<string> = 'plugin') {
   const pages = ref<PluginPage[]>([])
   const loading = ref(false)
   const error = ref('')
@@ -19,7 +19,7 @@ export function usePluginPages(pluginId: MaybeRefOrGetter<string>, enabled: Mayb
     const controller = request = new AbortController()
     loading.value = true
     try {
-      const response = await getPluginPages(id, controller.signal)
+      const response = await getPluginPages(id, controller.signal, toValue(target) === 'adapter' ? 'adapters' : 'plugins')
       if (!controller.signal.aborted) pages.value = response.pages ?? []
     } catch (cause) {
       // Older hosts and unloaded plugins have no page endpoint; configuration still works.
@@ -27,7 +27,7 @@ export function usePluginPages(pluginId: MaybeRefOrGetter<string>, enabled: Mayb
         error.value = getApiErrorMessage(cause, '插件页面加载失败。')
     } finally { if (!controller.signal.aborted) loading.value = false }
   }
-  watch(() => [toValue(pluginId), toValue(enabled)], () => void load(), { immediate: true })
+  watch(() => [toValue(pluginId), toValue(enabled), toValue(target)], () => void load(), { immediate: true })
   onScopeDispose(() => request?.abort())
   return { pages, loading, error, load }
 }

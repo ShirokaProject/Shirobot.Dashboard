@@ -24,47 +24,49 @@ export interface PluginPageData {
   items: PluginPageItem[]; total?: number | null; has_more: boolean
   metrics: Array<{ label: string; value: string; hint?: string }>
 }
-export function pluginPagesPath(pluginId: string) {
-  return `/api/v1/plugins/${encodeURIComponent(pluginId)}/pages`
+export type PageOwnerKind = 'plugins' | 'adapters'
+
+export function pluginPagesPath(pluginId: string, kind: PageOwnerKind = 'plugins') {
+  return `/api/v1/${kind}/${encodeURIComponent(pluginId)}/pages`
 }
-export function pluginPagePath(pluginId: string, pageId: string) {
-  return `${pluginPagesPath(pluginId)}/${encodeURIComponent(pageId)}`
+export function pluginPagePath(pluginId: string, pageId: string, kind: PageOwnerKind = 'plugins') {
+  return `${pluginPagesPath(pluginId, kind)}/${encodeURIComponent(pageId)}`
 }
-export function getPluginPages(pluginId: string, signal?: AbortSignal) {
-  return apiRequest<{ pages: PluginPage[] }>(pluginPagesPath(pluginId), { signal })
+export function getPluginPages(pluginId: string, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiRequest<{ pages: PluginPage[] }>(pluginPagesPath(pluginId, kind), { signal })
 }
 export function getPluginPageData(pluginId: string, pageId: string, page: number, pageSize: number,
-  filters: Record<string, string>, signal?: AbortSignal) {
+  filters: Record<string, string>, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
   const query = new URLSearchParams(filters)
   query.set('page', String(page)); query.set('page_size', String(pageSize))
-  return apiRequest<PluginPageData>(`${pluginPagePath(pluginId, pageId)}/data?${query}`, { signal })
+  return apiRequest<PluginPageData>(`${pluginPagePath(pluginId, pageId, kind)}/data?${query}`, { signal })
 }
-export function runPluginPageAction(pluginId: string, pageId: string, actionId: string, itemId: string, signal?: AbortSignal) {
+export function runPluginPageAction(pluginId: string, pageId: string, actionId: string, itemId: string, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
   const query = new URLSearchParams({ item: itemId })
-  return apiRequest<PluginActionResponse>(`${pluginPagePath(pluginId, pageId)}/actions/${encodeURIComponent(actionId)}?${query}`,
+  return apiRequest<PluginActionResponse>(`${pluginPagePath(pluginId, pageId, kind)}/actions/${encodeURIComponent(actionId)}?${query}`,
     { method: 'POST', signal })
 }
-export function getPluginPageImage(pluginId: string, pageId: string, fileId: string, signal?: AbortSignal) {
-  return apiBlobRequest(`${pluginPagePath(pluginId, pageId)}/files?${new URLSearchParams({ id: fileId })}`, { signal })
+export function getPluginPageImage(pluginId: string, pageId: string, fileId: string, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiBlobRequest(`${pluginPagePath(pluginId, pageId, kind)}/files?${new URLSearchParams({ id: fileId })}`, { signal })
 }
 
-export function getPluginWebPage(pluginId: string, pageId: string, signal?: AbortSignal) {
-  return apiRequest<{ html: string }>(`${pluginPagePath(pluginId, pageId)}/web`, { signal })
+export function getPluginWebPage(pluginId: string, pageId: string, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiRequest<{ html: string }>(`${pluginPagePath(pluginId, pageId, kind)}/web`, { signal })
 }
-export function callPluginWebPage(pluginId: string, pageId: string, action: string, args: unknown, signal?: AbortSignal) {
-  return apiRequest<{ value: unknown }>(`${pluginPagePath(pluginId, pageId)}/web/call`, {
+export function callPluginWebPage(pluginId: string, pageId: string, action: string, args: unknown, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiRequest<{ value: unknown }>(`${pluginPagePath(pluginId, pageId, kind)}/web/call`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, arguments: args }), signal
   })
 }
-export function getPluginWebAsset(pluginId: string, pageId: string, path: string, signal?: AbortSignal) {
-  return apiBlobRequest(`${pluginPagePath(pluginId, pageId)}/web/assets?${new URLSearchParams({ path })}`, { signal })
+export function getPluginWebAsset(pluginId: string, pageId: string, path: string, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiBlobRequest(`${pluginPagePath(pluginId, pageId, kind)}/web/assets?${new URLSearchParams({ path })}`, { signal })
 }
-export function requestPluginWebPage(pluginId: string, pageId: string, path: string, init?: RequestInit) {
-  return apiPluginResponse(`${pluginPagePath(pluginId, pageId)}/web/request?${new URLSearchParams({ path })}`, init)
+export function requestPluginWebPage(pluginId: string, pageId: string, path: string, init?: RequestInit, kind: PageOwnerKind = 'plugins') {
+  return apiPluginResponse(`${pluginPagePath(pluginId, pageId, kind)}/web/request?${new URLSearchParams({ path })}`, init)
 }
 
-export function uploadPluginPageFile(pluginId: string, pageId: string, file: File, signal?: AbortSignal) {
-  return apiRequest<PluginActionResponse>(`${pluginPagePath(pluginId, pageId)}/upload?${new URLSearchParams({ name: file.name })}`,
+export function uploadPluginPageFile(pluginId: string, pageId: string, file: File, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiRequest<PluginActionResponse>(`${pluginPagePath(pluginId, pageId, kind)}/upload?${new URLSearchParams({ name: file.name })}`,
     { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file, signal })
 }
 
@@ -89,16 +91,16 @@ export interface PageEventResponse extends PageView {
   result: { ok: boolean; message?: string; details?: string; details_title?: string
     open_page?: { id: string; state: PageState }; open_form?: { id: string; values?: Record<string, unknown> } }
 }
-export function renderPluginPage(pluginId: string, pageId: string, state: PageState, signal?: AbortSignal) {
-  return apiRequest<PageView>(`${pluginPagePath(pluginId, pageId)}/render`,
+export function renderPluginPage(pluginId: string, pageId: string, state: PageState, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiRequest<PageView>(`${pluginPagePath(pluginId, pageId, kind)}/render`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state }), signal })
 }
-export function sendPluginPageEvent(pluginId: string, pageId: string, state: PageState, event: PageEvent, signal?: AbortSignal) {
-  return apiRequest<PageEventResponse>(`${pluginPagePath(pluginId, pageId)}/events`,
+export function sendPluginPageEvent(pluginId: string, pageId: string, state: PageState, event: PageEvent, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
+  return apiRequest<PageEventResponse>(`${pluginPagePath(pluginId, pageId, kind)}/events`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state, event }), signal })
 }
-export function uploadPluginPageElement(pluginId: string, pageId: string, state: PageState, element: string, file: File, signal?: AbortSignal) {
+export function uploadPluginPageElement(pluginId: string, pageId: string, state: PageState, element: string, file: File, signal?: AbortSignal, kind: PageOwnerKind = 'plugins') {
   const query = new URLSearchParams({ name: file.name, element, state: JSON.stringify(state) })
-  return apiRequest<PageEventResponse>(`${pluginPagePath(pluginId, pageId)}/upload?${query}`,
+  return apiRequest<PageEventResponse>(`${pluginPagePath(pluginId, pageId, kind)}/upload?${query}`,
     { method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file, signal })
 }

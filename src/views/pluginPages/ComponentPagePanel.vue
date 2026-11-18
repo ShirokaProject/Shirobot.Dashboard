@@ -1,13 +1,13 @@
 <template>
-  <WebPagePanel v-if="webPage" :plugin-id="pluginId" :definition="webPage" />
+  <WebPagePanel v-if="webPage" :plugin-id="pluginId" :owner-kind="ownerKind" :definition="webPage" />
   <section v-else class="component-page">
     <div class="page-toolbar"><h3>{{ activeTitle }}</h3><button type="button" class="md-button text compact" :disabled="busy" @click="load">刷新</button></div>
     <p v-if="error" role="alert">{{ error }}</p><p v-if="message" role="status">{{ message }}</p>
     <p v-if="loading">正在加载页面…</p>
     <div v-if="uploadStatus" role="status">{{ uploadStatus }} <button class="md-button text" type="button" @click="request?.abort()">取消上传</button></div>
-    <UiRenderer v-if="view" :node="view" :state="state" :plugin-id="pluginId" :page-id="activePage" :busy="busy" :pager-reset="pagerReset" :errors="fieldErrors" @state="changeState" @event="runEvent" @upload="upload" @navigate="navigate" />
+    <UiRenderer v-if="view" :node="view" :state="state" :plugin-id="pluginId" :owner-kind="ownerKind" :page-id="activePage" :busy="busy" :pager-reset="pagerReset" :errors="fieldErrors" @state="changeState" @event="runEvent" @upload="upload" @navigate="navigate" />
     <el-dialog v-model="dialogVisible" :title="dialogForm?.title || '填写表单'" width="min(600px, 94vw)" append-to-body :close-on-click-modal="!busy" :close-on-press-escape="!busy" :show-close="!busy">
-      <UiRenderer v-if="dialogForm" :key="dialogKey" :node="dialogForm" :state="state" :plugin-id="pluginId" :page-id="activePage" :busy="busy" :pager-reset="pagerReset" :errors="fieldErrors" :initial-values="dialogValues" dialog @event="runEvent" />
+      <UiRenderer v-if="dialogForm" :key="dialogKey" :node="dialogForm" :state="state" :plugin-id="pluginId" :owner-kind="ownerKind" :page-id="activePage" :busy="busy" :pager-reset="pagerReset" :errors="fieldErrors" :initial-values="dialogValues" dialog @event="runEvent" />
     </el-dialog>
   </section>
 </template>
@@ -18,7 +18,7 @@ import { ApiError, getApiErrorMessage } from '../../api/core/http'
 import { getPluginPages, renderPluginPage, sendPluginPageEvent, uploadPluginPageElement, type PluginPage, type UiNode, type PageState, type PageEvent, type PageEventResponse } from '../../api/plugins/pages'
 import UiRenderer from './UiRenderer.vue'
 import WebPagePanel from './WebPagePanel.vue'
-const props = defineProps<{ pluginId: string; definition: PluginPage }>()
+const props = defineProps<{ pluginId: string; definition: PluginPage; ownerKind?: 'plugins' | 'adapters' }>()
 const activePage = ref(''), activeTitle = ref(''), state = ref<PageState>({}), view = ref<UiNode | null>(null)
 const webPage = ref<PluginPage>()
 const loading = ref(false), busy = ref(false), error = ref(''), message = ref(''), uploadStatus = ref('')
@@ -35,17 +35,17 @@ function failure(cause: unknown, controller: AbortController) {
 }
 async function load() {
   const controller = begin(); loading.value = true
-  try { const response = await renderPluginPage(props.pluginId, activePage.value, state.value, controller.signal); if (!controller.signal.aborted) { view.value = response.view; state.value = response.state } }
+  try { const response = await renderPluginPage(props.pluginId, activePage.value, state.value, controller.signal, props.ownerKind); if (!controller.signal.aborted) { view.value = response.view; state.value = response.state } }
   catch (cause) { failure(cause, controller) } finally { finish(controller) }
 }
 function changeState(patch: PageState) { if (busy.value) return; state.value = { ...state.value, ...patch }; void load() }
 async function openPage(id: string, next: PageState, controller: AbortController) {
-  const pages = await getPluginPages(props.pluginId, controller.signal)
+  const pages = await getPluginPages(props.pluginId, controller.signal, props.ownerKind)
   const page = pages.pages.find(p => p.id === id)
   if (!page) throw new Error('目标页面不存在。')
   if (controller.signal.aborted) return
   if (page.kind === 'web') { webPage.value = page; dialogVisible.value = false; return }
-  const response = await renderPluginPage(props.pluginId, id, next, controller.signal)
+  const response = await renderPluginPage(props.pluginId, id, next, controller.signal, props.ownerKind)
   if (controller.signal.aborted) return
   activePage.value = page.id; activeTitle.value = page.title; state.value = response.state; view.value = response.view; dialogVisible.value = false
 }
@@ -71,7 +71,7 @@ async function runEvent(event: PageEvent, action?: { confirm?: string; label?: s
   try {
     if (action?.confirm) await ElMessageBox.confirm(action.confirm, action.label || '确认操作', { type: action.danger ? 'warning' : 'info', dangerouslyUseHTMLString: false })
     if (controller.signal.aborted) return
-    const response = await sendPluginPageEvent(props.pluginId, activePage.value, state.value, event, controller.signal)
+    const response = await sendPluginPageEvent(props.pluginId, activePage.value, state.value, event, controller.signal, props.ownerKind)
     if (!controller.signal.aborted && event.kind === 'submit' && response.result.ok) dialogVisible.value = false
     await apply(response, controller)
   } catch (cause) { if (cause !== 'cancel' && cause !== 'close') failure(cause, controller) } finally { finish(controller) }
@@ -83,13 +83,13 @@ async function upload(node: UiNode, files: File[]) {
     for (let i = 0; i < files.length && !controller.signal.aborted; i++) {
       const file = files[i]!; uploadStatus.value = `正在上传 ${i + 1}/${files.length}：${file.name}`
       if (file.size > (node.max_bytes || 20000000)) { failures.push(`${file.name}：文件超过大小限制。`); continue }
-      try { const response = await uploadPluginPageElement(props.pluginId, activePage.value, state.value, node.id, file, controller.signal); await apply(response, controller); if (response.result.ok) success++; else failures.push(`${file.name}：${response.result.message || '上传失败'}`) }
+      try { const response = await uploadPluginPageElement(props.pluginId, activePage.value, state.value, node.id, file, controller.signal, props.ownerKind); await apply(response, controller); if (response.result.ok) success++; else failures.push(`${file.name}：${response.result.message || '上传失败'}`) }
       catch (cause) { if (!controller.signal.aborted) failures.push(`${file.name}：${getApiErrorMessage(cause, '上传失败。')}`) }
     }
     if (request === controller) { message.value = `上传完成 ${success}/${files.length}${controller.signal.aborted ? '（已取消）' : ''}`; error.value = failures.join('\n') }
   } finally { finish(controller) }
 }
-watch(() => [props.pluginId, props.definition.id], () => { request?.abort(); webPage.value = undefined; activePage.value = props.definition.id; activeTitle.value = props.definition.title; state.value = {}; view.value = null; message.value = ''; dialogVisible.value = false; void load() }, { immediate: true })
+watch(() => [props.pluginId, props.definition.id, props.ownerKind], () => { request?.abort(); webPage.value = undefined; activePage.value = props.definition.id; activeTitle.value = props.definition.title; state.value = {}; view.value = null; message.value = ''; dialogVisible.value = false; void load() }, { immediate: true })
 onBeforeUnmount(() => request?.abort())
 </script>
 <style scoped>

@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: npm
 
       - name: Install dependencies
@@ -31,11 +31,22 @@ jobs:
       - name: Test uploads
         run: npm test
 
+      - name: Verify release ZIP tooling
+        run: python3 -m unittest discover -s scripts -p test_release_zip.py -v
+
       - name: Build
         run: npm run build
 
       - name: Verify build output
         run: test -f dist/index.html
+
+      - name: Verify repeatable build
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/dashboard-first-build"
+          cp -R dist "$baseline"
+          npm run build
+          diff -r "$baseline" dist
 
       - name: Package dist
         run: |
@@ -44,9 +55,7 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           archive="shirobot-dashboard-${version}.zip"
 
-          (cd dist && zip -9 -r "$GITHUB_WORKSPACE/$archive" .)
-          sha256sum "$archive" > "$archive.sha256"
-          cat "$archive.sha256"
+          python3 scripts/release_zip.py --root dist --output "$GITHUB_WORKSPACE/$archive"
 
           echo "ARCHIVE=$archive" >> "$GITHUB_ENV"
 
@@ -55,5 +64,4 @@ jobs:
         with:
           files: |
             ${{ env.ARCHIVE }}
-            ${{ env.ARCHIVE }}.sha256
           fail_on_unmatched_files: true

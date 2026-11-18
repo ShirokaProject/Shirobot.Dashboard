@@ -74,7 +74,7 @@
       </div>
 
       <p v-if="loadError && streamState !== 'live'" class="stream-error">
-        <MdIcon name="error" />{{ loadError }}，{{ autoRefresh ? '每 2 秒自动重试' : '点击继续后重试' }}。
+        <MdIcon name="error" />{{ loadError }}，{{ autoRefresh ? '正在自动重连' : '点击继续后重试' }}。
       </p>
 
       <div class="stream-body">

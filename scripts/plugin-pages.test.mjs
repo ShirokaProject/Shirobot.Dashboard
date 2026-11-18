@@ -187,3 +187,29 @@ test('component renderer escapes plugin content and only renders allowed row act
   assert.ok(!html.includes('Hidden save'))
   assert.ok(html.includes('共 25 条'))
 })
+
+test('adapter pages keep render, events, files and uploads under the adapter instance', async () => {
+  requests = []
+  response = json({ pages: [], view: null, state: {}, result: { ok: true }, value: null })
+  const controller = new AbortController()
+  await pages.getPluginPages('qq/main', controller.signal, 'adapters')
+  await pages.renderPluginPage('qq/main', 'panel/x', {}, controller.signal, 'adapters')
+  await pages.sendPluginPageEvent('qq/main', 'panel/x', {}, { kind: 'click', element: 'login' }, controller.signal, 'adapters')
+  await pages.uploadPluginPageElement('qq/main', 'panel/x', {}, 'upload', new File(['test'], 'test.txt'), controller.signal, 'adapters')
+  await pages.getPluginWebPage('qq/main', 'panel/x', controller.signal, 'adapters')
+  await pages.callPluginWebPage('qq/main', 'panel/x', 'status', {}, controller.signal, 'adapters')
+  response = () => new Response('image', { headers: { 'Content-Type': 'image/png' } })
+  await pages.getPluginPageImage('qq/main', 'panel/x', 'logo', controller.signal, 'adapters')
+  await pages.getPluginWebAsset('qq/main', 'panel/x', 'logo.png', controller.signal, 'adapters')
+  await pages.requestPluginWebPage('qq/main', 'panel/x', '/state', { signal: controller.signal }, 'adapters')
+  assert.equal(requests.length, 9)
+  for (const { url, init } of requests) {
+    assert.ok(url.startsWith('https://backend.example/shiro/api/v1/adapters/qq%2Fmain/pages'))
+    assert.equal(init.headers.get('Authorization'), 'Bearer test-key')
+    assert.equal(init.signal, controller.signal)
+  }
+  assert.ok(requests[1].url.endsWith('/panel%2Fx/render'))
+  assert.ok(requests[2].url.endsWith('/panel%2Fx/events'))
+  assert.ok(requests[3].url.includes('/panel%2Fx/upload?'))
+  assert.ok(requests[6].url.includes('/panel%2Fx/files?'))
+})

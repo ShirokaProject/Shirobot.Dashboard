@@ -2,6 +2,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getLogSources, getLogStreamUrl, type BackendLogLevel, type LogEntry, type LogSourceInfo, type LogSourceKind, type LogStreamMessage } from '../../api'
 import { isDemoMode } from '../../auth/session'
 import type { LogLevel, RuntimeLog } from '../../features/logs/types'
+import { createLogBuffer } from '../../features/logs/buffer'
+import { openLogEventStream } from '../../api/logs/stream'
 
 const maxLogLines = 1000
 
@@ -100,10 +102,9 @@ export function useLogsPage() {
     return source === 'system' ? 'System' : adapterSources.value.get(source)?.plugin_name || source
   }
   const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
-  let socket: WebSocket | null = null
+  let stopStream: (() => void) | null = null
   let stopDemoStream: (() => void) | null = null
   let sourceTimer: ReturnType<typeof window.setInterval> | undefined
-  let reconnectTimer: ReturnType<typeof window.setTimeout> | undefined
   let nextLogId = 1
   let disposed = false
 
@@ -196,12 +197,12 @@ export function useLogsPage() {
 
   const activeSourceLabel = computed(() => sourceFilters.value.find(source => source.key === activeSource.value)?.label ?? activeSource.value)
 
-  function appendLogs(entries: Array<LogEntry | string>) {
+  const pendingLogs = createLogBuffer<LogEntry | string>(entries => {
     const logs = entries.map(entry => typeof entry === 'string'
       ? parseLogLine(entry, nextLogId++)
       : createLogFromEntry(entry, nextLogId++))
     runtimeLogs.value = [...runtimeLogs.value, ...logs].slice(-maxLogLines)
-  }
+  }, maxLogLines)
 
   function handleStreamMessage(message: LogStreamMessage) {
     if (message.type === 'connected') {
@@ -211,25 +212,23 @@ export function useLogsPage() {
     }
 
     if (message.type === 'history') {
+      pendingLogs.clear()
       nextLogId = 1
       runtimeLogs.value = []
-      appendLogs(message.data)
+      pendingLogs.enqueue(message.data)
+      pendingLogs.flush()
       return
     }
 
-    appendLogs(message.data)
+    pendingLogs.enqueue(message.data)
   }
 
   function closeSocket() {
-    window.clearTimeout(reconnectTimer)
-    reconnectTimer = undefined
+    stopStream?.()
+    stopStream = null
+    pendingLogs.flush()
     stopDemoStream?.()
     stopDemoStream = null
-    if (socket) {
-      socket.onclose = null
-      socket.close()
-    }
-    socket = null
   }
 
   function connectStream() {
@@ -250,32 +249,18 @@ export function useLogsPage() {
       return
     }
 
-    socket = new WebSocket(getLogStreamUrl())
-
-    socket.onmessage = event => {
-      try {
-        handleStreamMessage(JSON.parse(event.data) as LogStreamMessage)
-      } catch {
-        loadError.value = '日志流返回了无法解析的数据'
-      }
-    }
-
-    socket.onopen = () => {
-      loadError.value = ''
-      streamState.value = 'live'
-    }
-
-    socket.onclose = () => {
-      socket = null
-      if (autoRefresh.value) {
+    stopStream = openLogEventStream(getLogStreamUrl(), {
+      message: handleStreamMessage,
+      open: () => {
+        loadError.value = ''
+        streamState.value = 'live'
+      },
+      error: () => {
         streamState.value = 'reconnecting'
-        reconnectTimer = window.setTimeout(connectStream, 2000)
-      }
-    }
-
-    socket.onerror = () => {
-      loadError.value = '无法连接日志流 /api/v1/logs/stream'
-    }
+        loadError.value = '无法连接日志流 /api/v1/logs/stream'
+      },
+      invalid: () => { loadError.value = '日志流返回了无法解析的数据' }
+    })
   }
 
   async function refreshSources() {
@@ -293,6 +278,7 @@ export function useLogsPage() {
 
   /** Local only: the backend keeps its own copy */
   function clearLogs() {
+    pendingLogs.clear()
     runtimeLogs.value = []
   }
 
@@ -326,6 +312,7 @@ export function useLogsPage() {
     disposed = true
     window.clearInterval(sourceTimer)
     closeSocket()
+    pendingLogs.clear()
   })
 
   return {
