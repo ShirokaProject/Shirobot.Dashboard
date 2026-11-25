@@ -431,8 +431,26 @@
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.list-filters .button-group {
+/*
+ * 分类数量不固定，窄栏里会换行。分段控件的整条胶囊轨道跨两行会变成一整块圆角色块，
+ * 所以这里不用共享轨道，改为每个分类各自一颗胶囊（M3 filter chips），选中指示器照常滑动。
+ */
+.list-filters .button-group.has-indicator.is-toggle {
   flex-wrap: wrap;
+  gap: var(--md-space-2);
+  min-width: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.list-filters .button-group.has-indicator.is-toggle > :not(.sel-indicator) {
+  background: var(--app-toggle);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .list-filters .button-group.has-indicator.is-toggle > :not(.sel-indicator, .selected):hover {
+    background: color-mix(in srgb, var(--app-on-toggle) var(--md-sys-state-hover-opacity), var(--app-toggle));
+  }
 }
 
 .sort-select {
