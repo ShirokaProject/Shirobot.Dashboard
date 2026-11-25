@@ -78,7 +78,7 @@
       </p>
 
       <div class="stream-body">
-        <div ref="scroller" class="stream-lines" :class="{ 'with-source': activeSource === 'ALL' }" role="log" aria-live="polite" @scroll="onScroll">
+        <div ref="scroller" class="stream-lines" :class="{ 'with-source': activeSource === 'ALL' }" role="log" aria-live="polite" @scroll="onScroll" @wheel.passive="stopJumping" @touchstart.passive="stopJumping" @pointerdown="stopJumping">
           <!-- One track for all lines, so a new line can glide the whole tail up as one piece -->
           <div ref="track" class="stream-track">
             <div
@@ -203,15 +203,32 @@ function scrollToBottom(smooth = false) {
   scroller.value?.scrollTo({ top: scroller.value.scrollHeight, behavior: smooth ? 'smooth' : 'auto' })
 }
 
+// A smooth jump to the latest line passes through positions above the bottom; those are not the
+// reader scrolling up, so they must not stop the view from following.
+let jumping = false
+
 function onScroll() {
   const element = scroller.value
   if (!element) return
-  following.value = element.scrollHeight - element.scrollTop - element.clientHeight < 32
+  // A glide in flight pushes the track down, which adds its offset to scrollHeight; leave it out,
+  // or a burst of two lines or more reads as the reader having scrolled away from the bottom.
+  const atBottom = element.scrollHeight - glideOffset() - element.scrollTop - element.clientHeight < 32
+  if (jumping) {
+    if (!atBottom) return
+    jumping = false
+  }
+  following.value = atBottom
   if (following.value) markSeen()
+}
+
+/** Wheel, touch or a press on the scrollbar during a jump hands the view back to the reader. */
+function stopJumping() {
+  jumping = false
 }
 
 function jumpToLatest() {
   following.value = true
+  jumping = true
   markSeen()
   scrollToBottom(true)
 }
@@ -256,6 +273,8 @@ watch(() => filteredLogs.value.at(-1)?.id, async (latest, previous) => {
   const anchor = previous === undefined ? null : track.value?.querySelector<HTMLElement>(`[data-id="${previous}"]`)
   const before = anchor?.getBoundingClientRect().top ?? 0
   await nextTick()
+  // A jump still on its way retargets to the new bottom instead of stopping short of it.
+  if (jumping) return scrollToBottom(true)
   scrollToBottom()
   // Only lines appended to a view already on screen glide; a first load or a new filter lands.
   if (anchor?.isConnected && previous !== undefined && latest !== undefined && latest > previous) {
@@ -267,6 +286,7 @@ watch(() => filteredLogs.value.at(-1)?.id, async (latest, previous) => {
 // A new filter is a new view: start from the latest line again.
 watch([activeSource, activeLevel, normalizedKeyword], async () => {
   following.value = true
+  jumping = false
   markSeen()
   await nextTick()
   scrollToBottom()
