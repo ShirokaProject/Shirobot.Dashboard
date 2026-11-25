@@ -99,8 +99,8 @@
           <div class="route-row">
             <div>
               <strong>触发前缀</strong>
-              <p>仅限制精确／前缀命令路由，匹配前去掉前缀。@ 机器人、整条消息监听和插件自定义判断照常接收原文。</p>
-              <p>全局前缀：{{ routes.message_prefix ? `「${routes.message_prefix}」` : '未设置，不限制触发' }}；全局默认{{ routes.default_require_prefix ? '要求前缀' : '不要求前缀' }}。</p>
+              <p>精确／前缀命令要求带前缀；带前缀的消息去掉前缀后再交给插件。@ 机器人、整条消息监听和插件自定义判断不要求前缀。</p>
+              <p>全局前缀：{{ routes.message_prefix ? `「${routes.message_prefix}」，跟随全局时要求这个前缀` : '未设置，跟随全局时不限制触发' }}。</p>
             </div>
             <div class="button-group" role="radiogroup" aria-label="触发前缀">
               <button

@@ -229,8 +229,7 @@ const demoConfig: AppConfigResponse = {
         { key: 'mode', label: '默认路由模式', type: 'string', options: ['blacklist', 'whitelist'], description: 'blacklist：除列表中的群外全部允许；whitelist：仅允许列表中的群。', order: 30 },
         { key: 'groups', label: '默认路由群组', type: 'array', item_type: 'string', description: '黑名单为空时允许所有群，白名单为空时不允许任何群。', order: 40 }
       ] },
-        { key: 'require_message_prefix', label: '默认要求触发前缀', type: 'boolean', description: '默认关闭。仅限制精确／前缀命令路由；@ 机器人、整条消息监听和自定义判断照常接收原文。', order: 10 },
-        { key: 'message_prefix', label: '消息触发前缀', type: 'string', description: '群聊和私聊命令的触发前缀，区分大小写；留空不限制。命令匹配前去掉前缀，@ 和整条消息监听不受限制。', order: 11 }
+        { key: 'message_prefix', label: '消息触发前缀', type: 'string', description: '群聊和私聊命令的触发前缀，区分大小写；留空不限制。设置后，精确／前缀命令路由要求带前缀，带前缀的消息去掉前缀后交给插件；@ 机器人、整条消息监听和自定义判断不要求前缀。可按插件改为不使用前缀或使用自己的前缀。', order: 11 }
       ]
     },
     {
@@ -270,7 +269,7 @@ const demoConfig: AppConfigResponse = {
     owner_list: ['milky-main:1034028486'],
     owner_notifications: true,
     admin_list: [],
-    plugin_routes: { default: { mode: 'blacklist', groups: [] }, message_prefix: '', require_message_prefix: false },
+    plugin_routes: { default: { mode: 'blacklist', groups: [] }, message_prefix: '' },
     api: {
       enable: true,
       listen_urls: ['http://localhost:8080'],
@@ -326,10 +325,10 @@ const demoPluginConfig: PluginConfigResponse = {
 }
 
 function updateDemoPrefix() {
-  const config = demoConfig.config.plugin_routes as { message_prefix?: string; require_message_prefix?: boolean }
+  const config = demoConfig.config.plugin_routes as { message_prefix?: string }
   const routes = demoPluginConfig.routes
   routes.message_prefix = config.message_prefix ?? ''
-  routes.default_require_prefix = config.require_message_prefix ?? false
+  routes.default_require_prefix = Boolean(routes.message_prefix.trim())
   routes.effective_prefix = routes.prefix_mode === 'required' && routes.custom_prefix?.trim()
     ? routes.custom_prefix : routes.message_prefix
   routes.effective_require_prefix = Boolean(routes.effective_prefix.trim()) &&
