@@ -54,7 +54,13 @@
       <div v-indicator v-swap="tab" class="list-pane panel">
         <template v-if="tab === 'installed'">
           <p v-if="installed.loadError.value" class="list-note">{{ installed.loadError.value }}</p>
-          <AutoUpdateToggle kind="plugins" noun="插件" />
+          <AutoUpdateToggle
+            kind="plugins"
+            noun="插件"
+            :update-count="pluginUpdateCount"
+            :checking="market.loading.value"
+            @check="market.refreshMarketplacePlugins"
+          />
 
           <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
             <div v-if="attention.length" class="list-group">
@@ -396,6 +402,9 @@ const marketEntries = computed(() => [
   ...market.directEntries.value.map(entry => entry.plugin)
 ])
 const installedList = computed(() => installed.filteredInstalled.value.map(plugin => withPluginUpdate(plugin, marketEntries.value)))
+// Over every installed plugin, not just the ones the search shows
+const pluginUpdateCount = computed(() => installed.installedPlugins.value
+  .filter(plugin => withPluginUpdate(plugin, marketEntries.value).hasUpdate).length)
 // What the detail pane is showing; when it changes the pane's content settles in.
 const detailSwapKey = computed(() => tab.value === 'installed'
   ? `installed:${installed.selectedPlugin.value?.id ?? ''}`

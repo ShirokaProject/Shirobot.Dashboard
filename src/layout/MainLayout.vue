@@ -15,6 +15,7 @@
     </section>
 
     <RememberKeyPrompt />
+    <HostUpdatedDialog />
 
     <nav class="md3-bottom-bar" aria-label="主导航">
       <button
@@ -43,6 +44,7 @@ import AppDrawer from './components/AppDrawer.vue'
 import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
 import RememberKeyPrompt from './components/RememberKeyPrompt.vue'
+import HostUpdatedDialog from './components/HostUpdatedDialog.vue'
 import { menuItems, navigationItems } from './navigation'
 import NavigationUpdateBadge from './components/NavigationUpdateBadge.vue'
 import { getInstalledPlugins } from '../api/plugins/plugins'

@@ -53,7 +53,13 @@
         <!-- 已安装 -->
         <template v-if="tab === 'installed'">
           <p v-if="installed.error.value" class="list-note">{{ installed.error.value }}</p>
-          <AutoUpdateToggle kind="adapters" noun="适配器" />
+          <AutoUpdateToggle
+            kind="adapters"
+            noun="适配器"
+            :update-count="adapterUpdateCount"
+            :checking="market.loading.value"
+            @check="market.refresh"
+          />
 
           <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
             <div v-if="attention.length" class="list-group">
@@ -507,6 +513,9 @@ function adapterLabel(adapter: AdapterStatus) {
   if (adapter.restartRequired) return '待重启'
   return adapter.loaded ? '运行中' : '已停止'
 }
+
+// Packages with a newer version in the catalog
+const adapterUpdateCount = computed(() => installed.packages.value.filter(pkg => updateFor(pkg)).length)
 
 const attention = computed(() => {
   const items: Array<{ adapter: AdapterStatus; kind: 'error' | 'update' | 'restart'; reason: string }> = []

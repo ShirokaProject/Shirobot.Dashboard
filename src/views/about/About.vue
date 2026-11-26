@@ -44,7 +44,7 @@
             <p v-if="updateCheck.update_available">发现新版本：{{ updateCheck.current_version }} → {{ updateCheck.latest_version }}</p>
             <p v-else-if="!updateCheck.reason">主程序已是最新版本（{{ updateCheck.current_version }}）。</p>
             <p v-if="updateCheck.reason">{{ updateCheck.reason }}</p>
-            <a v-if="updateCheck.release_url" :href="updateCheck.release_url" target="_blank" rel="noreferrer">查看版本发布说明</a>
+            <HostReleaseNotes :notes="updateCheck.release_notes" :url="updateCheck.release_url" />
           </template>
           <p v-if="updateError" class="update-error" role="alert">{{ updateError }}</p>
         </div>
@@ -82,6 +82,7 @@
 <script setup lang="ts">
 import avatarUrl from '../../assets/images/avatar.png'
 import GitHubIcon from '../../components/GitHubIcon.vue'
+import HostReleaseNotes from '../../components/HostReleaseNotes.vue'
 import MdIcon from '../../components/MdIcon.vue'
 import { DOCS_URL } from '../../features/docs'
 import { links, ORG_URL, useAboutPage } from './About'

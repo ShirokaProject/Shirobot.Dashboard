@@ -165,6 +165,7 @@ function triggerAvatarSpin() {
 .md3-drawer.collapsed .drawer-top {
   align-self: stretch;
   gap: 0;
+  padding-left: var(--md-space-2);
 }
 
 .md3-drawer.collapsed .drawer-menu-button {
@@ -177,13 +178,18 @@ function triggerAvatarSpin() {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: var(--md-space-2);
-  padding: 0 var(--md-space-2) var(--md-space-3);
-  transition: gap var(--drawer-motion-duration) var(--drawer-motion-easing);
+  gap: var(--md-space-1);
+  /* Puts the toggle in the same column as the nav icons below (item inset 8 + icon padding 8); the right side gives
+     that room back so the version pill is not clipped */
+  padding: 0 0 var(--md-space-3) var(--md-space-4);
+  transition:
+    gap var(--drawer-motion-duration) var(--drawer-motion-easing),
+    padding var(--drawer-motion-duration) var(--drawer-motion-easing);
 }
 
 .drawer-menu-button {
-  width: 40px;
+  /* As wide as .nav-icon, so its centre lines up with theirs */
+  width: 44px;
   height: 40px;
   margin-left: 0;
   display: grid;
@@ -312,6 +318,11 @@ function triggerAvatarSpin() {
   padding: var(--md-space-3) var(--md-space-2) var(--md-space-1);
 }
 
+/* First mode button in the nav icon column: switch at 20 + 4 padding + 20 half-width = 44, icons centre at 50 */
+.drawer-footer :deep(.mode-switch:not(.collapsed)) {
+  margin-left: 6px;
+}
+
 .drawer-tree {
   position: relative;
   display: flex;
@@ -345,6 +356,8 @@ function triggerAvatarSpin() {
 /* Navigation drawer item: full pill indicator, tightened from M3's 56dp so six items read as a list */
 .drawer-item {
   position: relative;
+  /* Never squeezed on a short window: the list scrolls instead, keeping the travelling indicator on its item */
+  flex-shrink: 0;
   /* Leave room on both sides for the focus outline inside the scroll container. */
   width: calc(100% - 2 * var(--md-space-2));
   height: 44px;
