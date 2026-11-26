@@ -1,6 +1,6 @@
 import { verifyApiKey, type ApiKeyCheck } from '../api'
-import { DEFAULT_BASE_URL, describeBaseUrl, findRememberedBackend, forgetRememberedKey, listBackends, saveBackend, type BackendProfile } from './backends'
-import { saveDashboardSession } from './session'
+import { DEFAULT_BASE_URL, describeBaseUrl, findRememberedBackend, forgetRememberedKey, getBackend, listBackends, saveBackend, type BackendProfile } from './backends'
+import { getDashboardSession, saveDashboardSession } from './session'
 
 export type SignInResult = { ok: true; profile: BackendProfile } | { ok: false; message: string }
 
@@ -38,13 +38,41 @@ export async function signInToBackend(
  * Sign in to this Dashboard's own backend with the key from a `?token=` link the host prints.
  * Reuses that backend's saved profile; the key is only remembered if one already was.
  */
-export function signInFromLink(token: string) {
+export async function signInFromLink(token: string) {
   const existing = listBackends().find(profile => profile.baseUrl === DEFAULT_BASE_URL)
-  return signInToBackend(
+  const remembered = Boolean(existing?.token)
+  const result = await signInToBackend(
     { id: existing?.id, name: existing?.name ?? describeBaseUrl(DEFAULT_BASE_URL), baseUrl: DEFAULT_BASE_URL },
     token,
-    Boolean(existing?.token)
+    remembered
   )
+  // The link skipped the login form and its "remember" toggle, so ask once inside the dashboard instead.
+  if (result.ok && !remembered) {
+    try { sessionStorage.setItem(OFFER_REMEMBER_FLAG, result.profile.id) } catch { /* just no prompt */ }
+  }
+  return result
+}
+
+const OFFER_REMEMBER_FLAG = 'shirobot.dashboard.offer-remember'
+
+/** Backend id whose key a `?token=` link signed in with but did not remember; returned exactly once. */
+export function consumeRememberOffer() {
+  try {
+    const id = sessionStorage.getItem(OFFER_REMEMBER_FLAG)
+    sessionStorage.removeItem(OFFER_REMEMBER_FLAG)
+    return id
+  } catch {
+    return null
+  }
+}
+
+/** Remember the current session's key on its backend profile, as the login form's toggle would. */
+export function rememberSessionKey(backendId: string) {
+  const session = getDashboardSession()
+  const profile = getBackend(backendId)
+  if (session?.mode !== 'api' || session.backendId !== backendId || !profile) return false
+  saveBackend({ ...profile, token: session.token }, true)
+  return true
 }
 
 let autoSignInTried = false

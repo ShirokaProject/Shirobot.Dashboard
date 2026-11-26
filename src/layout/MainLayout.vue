@@ -14,6 +14,8 @@
       </main>
     </section>
 
+    <RememberKeyPrompt />
+
     <nav class="md3-bottom-bar" aria-label="主导航">
       <button
         v-for="item in navigationItems"
@@ -40,6 +42,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AppDrawer from './components/AppDrawer.vue'
 import PageTransition, { type PageTransitionName } from './components/PageTransition.vue'
 import TopAppBar from './components/TopAppBar.vue'
+import RememberKeyPrompt from './components/RememberKeyPrompt.vue'
 import { menuItems, navigationItems } from './navigation'
 import NavigationUpdateBadge from './components/NavigationUpdateBadge.vue'
 import { getInstalledPlugins } from '../api/plugins/plugins'
@@ -230,7 +233,8 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
 
   .md3-main-area {
     min-height: 100dvh;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    /* Floating bar (64) plus its 12px gap above and below */
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
   .md3-content-area {
@@ -238,22 +242,26 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   }
 
   .md3-content-frame {
-    min-height: calc(100dvh - 136px - env(safe-area-inset-bottom, 0px) - var(--md-space-3) - var(--md-space-6));
+    min-height: calc(100dvh - 152px - env(safe-area-inset-bottom, 0px) - var(--md-space-3) - var(--md-space-6));
   }
 
+  /* Floating pill: inset from the screen edges, frosted over the content scrolling underneath */
   .md3-bottom-bar {
     position: fixed;
     z-index: 50;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    right: var(--md-space-3);
+    bottom: calc(var(--md-space-3) + env(safe-area-inset-bottom, 0px));
+    left: var(--md-space-3);
     display: flex;
-    width: 100%;
-    height: calc(72px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    border-top: 1px solid var(--md-sys-color-outline-variant);
+    height: 64px;
+    padding: 0 var(--md-space-1);
+    border: 1px solid var(--app-floating-bar-border);
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--app-floating-bar-bg);
+    -webkit-backdrop-filter: var(--app-frosted-blur);
+    backdrop-filter: var(--app-frosted-blur);
+    box-shadow: var(--app-floating-bar-shadow);
     box-sizing: border-box;
-    overflow: hidden;
     order: 2;
   }
 
@@ -264,6 +272,7 @@ function routeTransitionKey(viewRoute: RouteLocationNormalizedLoaded) {
   .bottom-item {
     min-height: 56px;
     justify-content: center;
+    gap: 2px;
     font-size: 11px;
   }
 }

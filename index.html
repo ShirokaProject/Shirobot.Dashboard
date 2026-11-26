@@ -15,6 +15,11 @@
         var mode = localStorage.getItem('shirobot-mode')
         if (mode === 'light' || mode === 'dark') document.documentElement.dataset.mode = mode
       } catch (error) {}
+      // iOS Safari zooms the page when focusing a field under 16px. maximum-scale stops that zoom while
+      // iOS still allows pinch zoom; other platforms keep the plain viewport so pinch zoom is untouched.
+      if (/iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+        document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover')
+      }
     </script>
   </head>
   <body>

@@ -2,32 +2,36 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { getDemoApiResponse as request } from '../src/api/demo.ts'
 
+// A non-empty global prefix is required by every plugin left on "default"; there is no separate switch.
 test('plugin prefix overrides are independent of group routes and inherit global changes', async () => {
   const patch = (url, body) => request(url, { method: 'PATCH', body: JSON.stringify(body) })
   const config = await request('/api/v1/config')
-  assert.equal(config.config.plugin_routes.require_message_prefix, false)
+  assert.equal(config.config.plugin_routes.require_message_prefix, undefined)
   const fields = config.schema.find(item => item.key === 'plugin_routes').fields
   assert.ok(fields.some(field => field.key === 'message_prefix'))
-  assert.ok(fields.some(field => field.key === 'require_message_prefix'))
-  await patch('/api/v1/config', { config: { plugin_routes: { message_prefix: '!', require_message_prefix: true } } })
+  assert.ok(!fields.some(field => field.key === 'require_message_prefix'))
+
+  await patch('/api/v1/config', { config: { plugin_routes: { message_prefix: '!' } } })
   let plugin = await request('/api/v1/plugins/JmParser/config')
   assert.equal(plugin.routes.prefix_mode, 'default')
   assert.equal(plugin.routes.effective_require_prefix, true)
   const groups = plugin.routes.groups
+
   await patch('/api/v1/plugins/JmParser/config', { routes: { prefix_mode: 'disabled' } })
   plugin = await request('/api/v1/plugins/JmParser/config')
   assert.equal(plugin.routes.effective_require_prefix, false)
   assert.deepEqual(plugin.routes.groups, groups)
-  await patch('/api/v1/config', { config: { plugin_routes: { require_message_prefix: false } } })
+
   await patch('/api/v1/plugins/JmParser/config', { routes: { prefix_mode: 'required' } })
   plugin = await request('/api/v1/plugins/JmParser/config')
   assert.equal(plugin.routes.effective_require_prefix, true)
+
+  // Clearing the global prefix turns it off for "default" plugins
+  await patch('/api/v1/config', { config: { plugin_routes: { message_prefix: '' } } })
   await patch('/api/v1/plugins/JmParser/config', { routes: { prefix_mode: 'default' } })
   plugin = await request('/api/v1/plugins/JmParser/config')
   assert.equal(plugin.routes.effective_require_prefix, false)
-  await patch('/api/v1/config', { config: { plugin_routes: { message_prefix: '', require_message_prefix: true } } })
-  plugin = await request('/api/v1/plugins/JmParser/config')
-  assert.equal(plugin.routes.effective_require_prefix, false)
+
   await patch('/api/v1/plugins/JmParser/config', { routes: { prefix_mode: 'required', custom_prefix: 'bot:' } })
   plugin = await request('/api/v1/plugins/JmParser/config')
   assert.equal(plugin.routes.custom_prefix, 'bot:')

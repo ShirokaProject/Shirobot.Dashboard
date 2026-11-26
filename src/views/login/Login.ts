@@ -103,8 +103,10 @@ export function useLoginPage() {
       errorMessage.value = '请填写后端地址。'
       return
     }
-    if (backends.value.some(profile => profile.baseUrl === baseUrl)) {
-      errorMessage.value = '这个后端已经添加过了。'
+    // The same address can front different hosts (SSH tunnels, several keys), so duplicates are allowed;
+    // they only need a name, or the list would show two identical entries.
+    if (!draft.name.trim() && backends.value.some(profile => profile.baseUrl === baseUrl)) {
+      errorMessage.value = '这个地址已经有一个后端了，起个名称方便区分。'
       return
     }
     const saved = saveBackend({ name: draft.name, baseUrl }, false)

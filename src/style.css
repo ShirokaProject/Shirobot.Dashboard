@@ -153,6 +153,15 @@
   /* --app-card-shadow(-hover) are per theme, in tokens.css: 纸墨 separates cards by tone
      alone, Chrome lifts white cards with elevation level 1. */
 
+  /* Phone navigation: frosted floating bottom bar and the top bar once content scrolls under it */
+  --app-frosted-blur: blur(20px) saturate(1.4);
+  --app-floating-bar-bg: color-mix(in srgb, var(--md-sys-color-surface-container) 82%, transparent);
+  --app-floating-bar-border: color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+  --app-floating-bar-shadow:
+    0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent),
+    0 8px 24px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent);
+  --app-top-bar-frosted-bg: color-mix(in srgb, var(--app-bg) 78%, transparent);
+
   /* Legacy app aliases (--app-bg / --app-card themselves come from tokens.css) */
   --app-panel: var(--app-card);
   --app-panel-soft: var(--md-sys-color-surface-container-low);
@@ -814,18 +823,6 @@ textarea {
   .el-card.interactive:hover,
   .md3-list-item:hover {
     background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), var(--app-card)) !important;
-  }
-}
-/* Keep mobile text controls at 16px so focusing them does not zoom the viewport. */
-@media (max-width: 839px), (hover: none) and (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
-  textarea,
-  select,
-  [contenteditable="true"],
-  .el-input__inner,
-  .el-textarea__inner,
-  .el-select__input {
-    font-size: 16px !important;
   }
 }
 

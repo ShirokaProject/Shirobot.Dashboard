@@ -251,6 +251,49 @@
   padding: var(--md-space-12) var(--md-space-10);
 }
 
+.pane-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-6);
+}
+
+.pane-swap-enter-active {
+  transition:
+    opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized-decelerate, var(--md-sys-motion-easing-standard)),
+    transform var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized-decelerate, var(--md-sys-motion-easing-standard));
+}
+
+.pane-swap-leave-active {
+  transition:
+    opacity var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard);
+}
+
+.pane-swap-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.pane-swap-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.brand-avatar {
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.brand-avatar.spinning {
+  animation: login-avatar-spin 720ms var(--md-sys-motion-easing-standard);
+}
+
+@keyframes login-avatar-spin {
+  from { transform: rotate(0deg) scale(1); }
+  45% { transform: rotate(220deg) scale(1.08); }
+  to { transform: rotate(360deg) scale(1); }
+}
+
 .form-header h1 {
   margin: 0;
   overflow: hidden;
@@ -297,7 +340,7 @@
   outline: 0;
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
-  font: var(--md-sys-typescale-body-large);
+  font: var(--md-sys-typescale-body-medium);
   transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 
@@ -468,6 +511,10 @@
 @media (prefers-reduced-motion: reduce) {
   .spinner { animation-duration: 2s; }
   .login-card { transition: none; }
+  .pane-swap-enter-active,
+  .pane-swap-leave-active { transition: opacity var(--md-sys-motion-duration-short3) linear; }
+  .pane-swap-enter-from,
+  .pane-swap-leave-to { transform: none; }
 }
 
 .filled-button:disabled {

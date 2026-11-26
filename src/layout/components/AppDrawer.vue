@@ -62,9 +62,13 @@
   </aside>
 
   <nav class="md3-rail" aria-label="主导航">
-    <div class="rail-brand">
-      <el-icon><Box /></el-icon>
-    </div>
+    <img
+      class="rail-brand"
+      :class="{ spinning: isAvatarSpinning }"
+      :src="avatarUrl"
+      alt="Shirobot"
+      @click="triggerAvatarSpin"
+    />
     <button
       v-for="item in navigationItems"
       :key="item.path"
@@ -87,7 +91,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Box } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
 import { preloadRouteComponent } from '../../router/pageLoaders'
 import { navigationItems } from '../navigation'
@@ -236,14 +239,16 @@ function triggerAvatarSpin() {
   color: var(--md-sys-color-on-secondary-container);
 }
 
-.brand-avatar {
+.brand-avatar,
+.rail-brand {
   flex: 0 0 auto;
   object-fit: cover;
   cursor: pointer;
   transform-origin: center;
 }
 
-.brand-avatar.spinning {
+.brand-avatar.spinning,
+.rail-brand.spinning {
   animation: avatar-spin 720ms var(--md-sys-motion-easing-standard);
 }
 

@@ -8,7 +8,7 @@
       <!-- Left: saved backends and their sign-in state -->
       <aside v-if="switchingEnabled" class="backend-pane">
         <header class="login-brand">
-          <img class="brand-avatar" :src="avatarUrl" alt="" />
+          <img class="brand-avatar" :class="{ spinning: avatarSpinning }" :src="avatarUrl" alt="" @click="spinAvatar" />
           <div>
             <strong>Shirobot</strong>
             <small>Dashboard</small>
@@ -55,84 +55,89 @@
       <!-- Right: sign in to the selected backend, or add a new one -->
       <section class="form-pane">
         <header v-if="!switchingEnabled" class="login-brand solo">
-          <img class="brand-avatar" :src="avatarUrl" alt="" />
+          <img class="brand-avatar" :class="{ spinning: avatarSpinning }" :src="avatarUrl" alt="" @click="spinAvatar" />
           <div>
             <strong>Shirobot</strong>
             <small>Dashboard</small>
           </div>
         </header>
 
-        <header class="form-header">
-          <h1>{{ adding ? '添加后端' : switchingEnabled ? `登录到 ${selectedName}` : '登录' }}</h1>
-          <p v-if="switchingEnabled">{{ adding ? (backends.length ? '填写另一台 Shirobot 的地址' : '填写要连接的 Shirobot 地址') : selectedAddress }}</p>
-          <p v-else>输入登录密钥以进入管理面板</p>
-        </header>
+        <!-- Switching backend or opening "add" swaps the form with a short slide -->
+        <Transition name="pane-swap" mode="out-in">
+          <div :key="adding ? 'add' : selectedId" class="pane-body">
+          <header class="form-header">
+            <h1>{{ adding ? '添加后端' : switchingEnabled ? `登录到 ${selectedName}` : '登录' }}</h1>
+            <p v-if="switchingEnabled">{{ adding ? (backends.length ? '填写另一台 Shirobot 的地址' : '填写要连接的 Shirobot 地址') : selectedAddress }}</p>
+            <p v-else>输入登录密钥以进入管理面板</p>
+          </header>
 
-        <form class="login-form" @submit.prevent="submitLogin">
-          <template v-if="adding">
-            <label class="text-field">
-              <span>地址</span>
-              <input
-                v-model="draft.baseUrl"
-                type="text"
-                inputmode="url"
-                placeholder="例如 http://10.0.0.5:8080"
-                autocomplete="url"
-                :disabled="verifying"
-                @input="errorMessage = ''"
-              />
-            </label>
-            <label class="text-field">
-              <span>名称 <small>可选</small></span>
-              <input v-model="draft.name" type="text" placeholder="例如：家里的服务器" :disabled="verifying" />
-            </label>
-          </template>
+          <form class="login-form" @submit.prevent="submitLogin">
+            <template v-if="adding">
+              <label class="text-field">
+                <span>地址</span>
+                <input
+                  v-model="draft.baseUrl"
+                  type="text"
+                  inputmode="url"
+                  placeholder="例如 http://10.0.0.5:8080"
+                  autocomplete="url"
+                  :disabled="verifying"
+                  @input="errorMessage = ''"
+                />
+              </label>
+              <label class="text-field">
+                <span>名称 <small>可选</small></span>
+                <input v-model="draft.name" type="text" placeholder="例如：家里的服务器" :disabled="verifying" />
+              </label>
+            </template>
 
-          <div v-if="!adding" class="key-row">
-            <div class="text-field key-field" :class="{ invalid: Boolean(errorMessage) }">
-              <input
-                v-model="form.token"
-                :type="showToken ? 'text' : 'password'"
-                autocomplete="current-password"
-                aria-label="登录密钥"
-                placeholder="登录密钥（后端未启用鉴权时可留空）"
-                :disabled="verifying"
-                @input="errorMessage = ''"
-              />
+            <div v-if="!adding" class="key-row">
+              <div class="text-field key-field" :class="{ invalid: Boolean(errorMessage) }">
+                <input
+                  v-model="form.token"
+                  :type="showToken ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  aria-label="登录密钥"
+                  placeholder="登录密钥（后端未启用鉴权时可留空）"
+                  :disabled="verifying"
+                  @input="errorMessage = ''"
+                />
+                <button
+                  type="button"
+                  class="visibility-toggle"
+                  :aria-label="showToken ? '隐藏密钥' : '显示密钥'"
+                  :title="showToken ? '隐藏密钥' : '显示密钥'"
+                  :aria-pressed="showToken"
+                  :disabled="verifying"
+                  @click="showToken = !showToken"
+                >
+                  <el-icon><Hide v-if="showToken" /><View v-else /></el-icon>
+                </button>
+              </div>
+
               <button
                 type="button"
-                class="visibility-toggle"
-                :aria-label="showToken ? '隐藏密钥' : '显示密钥'"
-                :title="showToken ? '隐藏密钥' : '显示密钥'"
-                :aria-pressed="showToken"
+                class="remember-toggle"
+                :class="{ on: form.remember }"
+                :aria-pressed="form.remember"
+                :title="`${form.remember ? '已开启' : '记住密钥'}：${switchingEnabled ? '保存在此设备上，切换后端时免输入' : '保存在此设备上，下次免输入'}`"
+                aria-label="记住密钥"
                 :disabled="verifying"
-                @click="showToken = !showToken"
+                @click="form.remember = !form.remember"
               >
-                <el-icon><Hide v-if="showToken" /><View v-else /></el-icon>
+                <el-icon><Key /></el-icon>
               </button>
             </div>
 
-            <button
-              type="button"
-              class="remember-toggle"
-              :class="{ on: form.remember }"
-              :aria-pressed="form.remember"
-              :title="`${form.remember ? '已开启' : '记住密钥'}：${switchingEnabled ? '保存在此设备上，切换后端时免输入' : '保存在此设备上，下次免输入'}`"
-              aria-label="记住密钥"
-              :disabled="verifying"
-              @click="form.remember = !form.remember"
-            >
-              <el-icon><Key /></el-icon>
+            <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
+
+            <button type="submit" class="filled-button" :class="{ loading: verifying || entering }" :aria-busy="verifying || entering">
+              <span v-if="verifying || entering" class="spinner" aria-hidden="true"></span>
+              <template v-else>{{ adding ? '添加' : '进入' }}</template>
             </button>
+          </form>
           </div>
-
-          <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
-
-          <button type="submit" class="filled-button" :class="{ loading: verifying || entering }" :aria-busy="verifying || entering">
-            <span v-if="verifying || entering" class="spinner" aria-hidden="true"></span>
-            <template v-else>{{ adding ? '添加' : '进入' }}</template>
-          </button>
-        </form>
+        </Transition>
 
         <footer v-if="switching || demoEntryVisible" class="login-footer">
           <button v-if="switching" type="button" class="text-button" @click="cancelSwitch">返回</button>
@@ -144,6 +149,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Close, Hide, Key, Plus, View } from '@element-plus/icons-vue'
 import avatarUrl from '../../assets/images/avatar.png'
 import ThemeControls from '../../layout/components/ThemeControls.vue'
@@ -173,6 +179,16 @@ const {
   enterDemoMode,
   cancelSwitch
 } = useLoginPage()
+
+// Same tap-to-spin as the dashboard brand
+const avatarSpinning = ref(false)
+function spinAvatar() {
+  if (avatarSpinning.value) return
+  avatarSpinning.value = true
+  window.setTimeout(() => {
+    avatarSpinning.value = false
+  }, 720)
+}
 </script>
 
 <style scoped src="./Login.css"></style>
