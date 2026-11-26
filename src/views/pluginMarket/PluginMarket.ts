@@ -277,7 +277,8 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
       const preview = await prepareGithubPluginInstall(plugin.repository, plugin.release.asset!)
       installPreview.value = preview
       installReplace.value = preview.conflict?.exists ? preview.conflict.action === 'replace' : false
-      installEnable.value = true
+      // An update keeps the plugin as it was: a disabled one stays disabled unless the owner turns it on here.
+      installEnable.value = preview.conflict?.installed_enabled ?? true
       installDialogVisible.value = true
     } catch (error) {
       feedbackType.value = 'error'

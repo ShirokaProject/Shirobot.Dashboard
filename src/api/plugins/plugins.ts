@@ -11,6 +11,8 @@ export interface PluginUploadPackageInfo {
 export interface PluginUploadConflictInfo {
   exists: boolean
   installed_version?: string
+  /** Whether the installed copy is enabled; a disabled plugin stays disabled by default when replaced. */
+  installed_enabled?: boolean | null
   uploaded_version?: string
   action?: 'replace' | string
 }

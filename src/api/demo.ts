@@ -948,6 +948,7 @@ export async function getDemoApiResponse<T>(path: string, init?: RequestInit): P
       conflict: {
         exists: Boolean(installed),
         installed_version: installed?.version,
+        installed_enabled: installed ? installed.enable : null,
         uploaded_version: marketPlugin.release.version,
         action: installed ? 'replace' : 'install'
       }

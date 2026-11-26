@@ -307,6 +307,7 @@ export function usePluginsPage() {
       }
 
       pluginUploadResult.value = response
+      pluginUploadEnable.value = response.conflict?.installed_enabled ?? true
       pluginUploadReplace.value = response.conflict?.exists ? response.conflict.action === 'replace' : false
     } catch (error) {
       pluginUploadError.value = getApiErrorMessage(error, '插件上传解析失败')
