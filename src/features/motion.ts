@@ -97,6 +97,19 @@ function offsetWithin(target: HTMLElement, root: HTMLElement) {
   return node === root ? { x, y } : null
 }
 
+/** Rows open and close by animating their height (see `collapse`); nothing else here does. */
+const isUnfolding = (animation: Animation) => animation.playState === 'running' &&
+  animation.effect instanceof KeyframeEffect && animation.effect.getKeyframes().some(frame => 'height' in frame)
+
+/** A row opening or closing around `target`: on it or an element between it and `root`. */
+function unfoldingAround(target: HTMLElement, root: HTMLElement) {
+  for (let node: HTMLElement | null = target; node && node !== root; node = node.parentElement) {
+    const animation = node.getAnimations().find(isUnfolding)
+    if (animation) return animation
+  }
+  return null
+}
+
 function placeIndicator(el: HTMLElement) {
   const state = indicators.get(el)
   if (!state) return
@@ -115,15 +128,30 @@ function placeIndicator(el: HTMLElement) {
   // Travel only from one live item to another. When the same item merely shifts (rows above
   // it opening or closing, a resize) the highlight stays glued to it, and when the old item
   // is gone (the list was swapped for another) it lands on the new one without crossing over.
-  const travel = state.placed && target !== state.target && Boolean(state.target?.isConnected)
+  // Nor while rows are opening or closing: both ends are moving then, and a slide aimed at where the
+  // new item is now would trail behind it; the highlight lands on it and follows it frame by frame.
+  const travel = state.placed && target !== state.target && Boolean(state.target?.isConnected) &&
+    !el.getAnimations({ subtree: true }).some(isUnfolding)
   if (target !== state.target) {
     if (state.target) state.observer.unobserve(state.target)
     if (target) state.observer.observe(target)
     state.target = target
   }
   const offset = target && target.offsetParent ? offsetWithin(target, el) : null
-  if (!target || !offset) {
+  // A row still opening or closing is only partly visible, while the highlight would already be its
+  // full size: it would show up over the rows around it and then slide into place. It goes at once
+  // and fades in on the row once it has settled.
+  const unfolding = target ? unfoldingAround(target, el) : null
+  if (unfolding) {
+    unfolding.finished.catch(() => {}).then(() => placeIndicator(el))
+    thumb.style.transition = 'none'
+  }
+  if (!target || !offset || unfolding) {
     thumb.style.opacity = '0'
+    if (unfolding) {
+      void thumb.offsetWidth
+      thumb.style.transition = ''
+    }
     state.placed = false
     state.geometry = ''
     return
@@ -170,7 +198,9 @@ export const vIndicator: Directive<HTMLElement, unknown, string, 'toggle'> = {
     placeIndicator(el)
   },
   updated(el) {
-    placeIndicator(el)
+    // Rows a re-render added or removed start opening or closing only after this hook; measured
+    // now they would still be full size. A frame later they are moving, and the highlight can tell.
+    requestAnimationFrame(() => placeIndicator(el))
   },
   unmounted(el) {
     const state = indicators.get(el)
