@@ -100,7 +100,7 @@
             <div>
               <strong>触发前缀</strong>
               <p>精确／前缀命令要求带前缀；带前缀的消息去掉前缀后再交给插件。@ 机器人、整条消息监听和插件自定义判断不要求前缀。</p>
-              <p>全局前缀：{{ routes.message_prefix ? `「${routes.message_prefix}」，跟随全局时要求这个前缀` : '未设置，跟随全局时不限制触发' }}。</p>
+              <p>全局前缀：{{ routes.message_prefix?.trim() ? `${quotePrefixes(routes.message_prefix)}，跟随全局时要求带上其中一个` : '未设置，跟随全局时不限制触发' }}。</p>
             </div>
             <div class="button-group" role="radiogroup" aria-label="触发前缀">
               <button
@@ -120,10 +120,10 @@
             <el-input
               id="route-custom-prefix"
               v-model="routes.custom_prefix"
-              :placeholder="routes.message_prefix ? `留空使用全局前缀「${routes.message_prefix}」` : '输入这个插件的触发前缀，例如 !'"
+              :placeholder="routes.message_prefix?.trim() ? `留空使用全局前缀${quotePrefixes(routes.message_prefix)}` : '输入这个插件的触发前缀，多个用空格分开，例如 ! /'"
               clearable
             />
-            <p>仅对这个插件生效。留空使用全局前缀；全局也为空时不限制触发。</p>
+            <p>仅对这个插件生效，多个前缀用空格分开，带上任意一个即可触发。留空使用全局前缀；全局也为空时不限制触发。</p>
           </div>
         </div>
 
@@ -160,7 +160,7 @@
           <div><dt>全局默认</dt><dd>{{ modeLabel(routes.default_mode) }}</dd></div>
           <div><dt>全局默认群组</dt><dd>{{ routes.default_groups.length ? routes.default_groups.join(', ') : '无' }}</dd></div>
           <div><dt>单独配置</dt><dd>{{ routes.configured ? '是' : '否，沿用全局默认' }}</dd></div>
-          <div v-if="routes.prefix_mode !== undefined"><dt>当前前缀要求</dt><dd>{{ routes.effective_require_prefix ? `要求「${routes.effective_prefix ?? routes.message_prefix}」` : '不要求前缀' }}</dd></div>
+          <div v-if="routes.prefix_mode !== undefined"><dt>当前前缀要求</dt><dd>{{ routes.effective_require_prefix ? `要求${quotePrefixes(routes.effective_prefix ?? routes.message_prefix)}${splitPrefixes(routes.effective_prefix ?? routes.message_prefix).length > 1 ? '之一' : ''}` : '不要求前缀' }}</dd></div>
           <div v-if="routes.declared_priority !== undefined"><dt>优先级来源</dt><dd>{{ routes.priority_configured ? '单独设置' : '插件声明' }}</dd></div>
         </dl>
       </section>
@@ -211,6 +211,15 @@ const emit = defineEmits<{
 }>()
 
 /** A section category edits the nested object `config[parentKey]`; other categories edit the root. */
+// Several prefixes are separated by whitespace, as the host reads them
+function splitPrefixes(value: string | null | undefined) {
+  return [...new Set((value ?? '').split(/\s+/).filter(Boolean))]
+}
+
+function quotePrefixes(value: string | null | undefined) {
+  return splitPrefixes(value).map(prefix => `「${prefix}」`).join('')
+}
+
 function valuesOf(group: ConfigGroup): PluginConfigMap {
   if (!group.parentKey) return props.config
   const section = props.config[group.parentKey]

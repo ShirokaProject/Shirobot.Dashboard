@@ -229,7 +229,7 @@ const demoConfig: AppConfigResponse = {
         { key: 'mode', label: '默认路由模式', type: 'string', options: ['blacklist', 'whitelist'], description: 'blacklist：除列表中的群外全部允许；whitelist：仅允许列表中的群。', order: 30 },
         { key: 'groups', label: '默认路由群组', type: 'array', item_type: 'string', description: '黑名单为空时允许所有群，白名单为空时不允许任何群。', order: 40 }
       ] },
-        { key: 'message_prefix', label: '消息触发前缀', type: 'string', description: '群聊和私聊命令的触发前缀，区分大小写；留空不限制。设置后，精确／前缀命令路由要求带前缀，带前缀的消息去掉前缀后交给插件；@ 机器人、整条消息监听和自定义判断不要求前缀。可按插件改为不使用前缀或使用自己的前缀。', order: 11 }
+        { key: 'message_prefix', label: '消息触发前缀', type: 'string', description: '群聊和私聊命令的触发前缀，区分大小写；多个前缀用空格分开（例如 ! / 。），任选其一即可触发；留空不限制。设置后，精确／前缀命令路由要求带前缀，带前缀的消息去掉前缀后交给插件；@ 机器人、整条消息监听和自定义判断不要求前缀。可按插件改为不使用前缀或使用自己的前缀。', order: 11 }
       ]
     },
     {
