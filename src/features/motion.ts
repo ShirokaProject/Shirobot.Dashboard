@@ -101,6 +101,9 @@ function offsetWithin(target: HTMLElement, root: HTMLElement) {
 const isUnfolding = (animation: Animation) => animation.playState === 'running' &&
   animation.effect instanceof KeyframeEffect && animation.effect.getKeyframes().some(frame => 'height' in frame)
 
+const isClosing = (animation: Animation) =>
+  (animation.effect as KeyframeEffect).getKeyframes().at(-1)?.height === '0px'
+
 /** A row opening or closing around `target`: on it or an element between it and `root`. */
 function unfoldingAround(target: HTMLElement, root: HTMLElement) {
   for (let node: HTMLElement | null = target; node && node !== root; node = node.parentElement) {
@@ -108,6 +111,11 @@ function unfoldingAround(target: HTMLElement, root: HTMLElement) {
     if (animation) return animation
   }
   return null
+}
+
+function leaving(item: HTMLElement, root: HTMLElement) {
+  const animation = unfoldingAround(item, root)
+  return animation !== null && isClosing(animation)
 }
 
 function placeIndicator(el: HTMLElement) {
@@ -123,8 +131,10 @@ function placeIndicator(el: HTMLElement) {
   }
 
   // A group nested inside this one has its own highlight; its selection is not ours.
+  // A row on its way out keeps the class it had while it closes, so for a moment the old selection
+  // and the new one are both marked; the one leaving is not the selection any more.
   const target = Array.from(el.querySelectorAll<HTMLElement>('.selected'))
-    .find(item => item.closest('.has-indicator') === el) ?? null
+    .find(item => item.closest('.has-indicator') === el && !leaving(item, el)) ?? null
   // Travel only from one live item to another. When the same item merely shifts (rows above
   // it opening or closing, a resize) the highlight stays glued to it, and when the old item
   // is gone (the list was swapped for another) it lands on the new one without crossing over.
@@ -138,29 +148,30 @@ function placeIndicator(el: HTMLElement) {
     state.target = target
   }
   const offset = target && target.offsetParent ? offsetWithin(target, el) : null
-  // A row still opening or closing is only partly visible, while the highlight would already be its
-  // full size: it would show up over the rows around it and then slide into place. It goes at once
-  // and fades in on the row once it has settled.
-  const unfolding = target ? unfoldingAround(target, el) : null
-  if (unfolding) {
-    unfolding.finished.catch(() => {}).then(() => placeIndicator(el))
-    thumb.style.transition = 'none'
-  }
-  if (!target || !offset || unfolding) {
+  if (!target || !offset) {
     thumb.style.opacity = '0'
-    if (unfolding) {
-      void thumb.offsetWidth
-      thumb.style.transition = ''
-    }
     state.placed = false
     state.geometry = ''
     return
   }
 
+  // A row still opening shows only part of itself. The highlight covers just that part, so it opens
+  // with the row instead of standing over its neighbours at full size.
+  let height = target.offsetHeight
+  const unfolding = unfoldingAround(target, el)
+  if (unfolding) {
+    const row = (unfolding.effect as KeyframeEffect).target as HTMLElement
+    const top = offsetWithin(target, row)?.y ?? 0
+    height = Math.max(0, Math.min(height, row.offsetHeight - top))
+    // Its size changes every frame; watch it, and settle once it stops.
+    state.observer.observe(row)
+    unfolding.finished.catch(() => {}).then(() => placeIndicator(el))
+  }
+
   // The resize observer reports every newly observed element once, a frame after the click
   // that selected it. Rewriting the same geometry then, with transitions off, would cancel
   // the slide that just started; when nothing moved there is nothing to do.
-  const geometry = `${offset.x},${offset.y},${target.offsetWidth},${target.offsetHeight}`
+  const geometry = `${offset.x},${offset.y},${target.offsetWidth},${height}`
   if (geometry === state.geometry) return
   state.geometry = geometry
 
@@ -168,7 +179,7 @@ function placeIndicator(el: HTMLElement) {
   if (!travel) thumb.style.transition = 'none'
   thumb.style.transform = `translate(${offset.x}px, ${offset.y}px)`
   thumb.style.width = `${target.offsetWidth}px`
-  thumb.style.height = `${target.offsetHeight}px`
+  thumb.style.height = `${height}px`
   thumb.style.borderRadius = getComputedStyle(target).borderRadius
   if (!travel) {
     void thumb.offsetWidth
