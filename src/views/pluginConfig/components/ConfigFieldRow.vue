@@ -40,6 +40,15 @@
         @update:model-value="emit('update:modelValue', $event)"
       />
 
+      <PrefixTagsEditor
+        v-else-if="editor === 'prefixes'"
+        :input-id="inputId"
+        :model-value="typeof modelValue === 'string' ? modelValue : ''"
+        :placeholder="field.item.placeholder"
+        :disabled="isDisabled"
+        @update:model-value="emit('update:modelValue', $event)"
+      />
+
       <ScalarListEditor
         v-else-if="editor === 'scalarList'"
         :input-id="inputId"
@@ -146,6 +155,7 @@ import type { PluginConfigMap, PluginConfigValue } from '../../../api'
 import { createConfigField, isConfigObject, isFieldVisible, type ConfigField } from '../usePluginConfig'
 import JsonValueEditor from './JsonValueEditor.vue'
 import ScalarListEditor from './ScalarListEditor.vue'
+import PrefixTagsEditor from '../../../components/PrefixTagsEditor.vue'
 import DirectoryPicker from '../../../components/DirectoryPicker.vue'
 import SectionListEditor from './SectionListEditor.vue'
 
@@ -175,6 +185,8 @@ const editor = computed(() => {
   // "users" (instanceId:userId) and "groups" lists pick from what the adapters can see.
   if ((item.type === 'users' || item.type === 'groups') && (value === undefined || value === null || Array.isArray(value)))
     return 'directory'
+  // Message prefixes: one whitespace-separated string, edited as tags
+  if (item.type === 'prefixes' && (value === undefined || value === null || typeof value === 'string')) return 'prefixes'
   if (item.type === 'section' && item.fields?.length && (value === undefined || value === null || isConfigObject(value)))
     return 'section'
   if (item.type === 'array' && item.item_type === 'section' && item.item_fields?.length) return 'sectionList'

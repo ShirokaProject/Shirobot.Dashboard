@@ -513,8 +513,17 @@ function triggerAvatarSpin() {
   font-size: 22px;
 }
 
+/* Stays put while the page scrolls, like the drawer; its own items scroll on a very short screen */
 .md3-rail {
   display: none;
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   width: 80px;
   flex: 0 0 80px;
   padding: var(--md-space-3) 0;

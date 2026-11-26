@@ -99,7 +99,7 @@
           <div class="route-row">
             <div>
               <strong>触发前缀</strong>
-              <p>精确／前缀命令要求带前缀；带前缀的消息去掉前缀后再交给插件。@ 机器人、整条消息监听和插件自定义判断不要求前缀。</p>
+              <p>跟随全局时，只有精确／前缀命令要求带前缀，链接解析这类自动触发照常工作。选「要求前缀」后，没带前缀也没 @ 机器人的消息一律不交给这个插件，自动触发也不例外。带前缀的消息都会去掉前缀再交给插件。</p>
               <p>全局前缀：{{ routes.message_prefix?.trim() ? `${quotePrefixes(routes.message_prefix)}，跟随全局时要求带上其中一个` : '未设置，跟随全局时不限制触发' }}。</p>
             </div>
             <div class="button-group" role="radiogroup" aria-label="触发前缀">
@@ -117,13 +117,13 @@
           </div>
           <div v-if="routes.prefix_mode === 'required' && routes.custom_prefix !== undefined" class="route-groups">
             <label for="route-custom-prefix"><strong>插件前缀</strong></label>
-            <el-input
-              id="route-custom-prefix"
+            <PrefixTagsEditor
               v-model="routes.custom_prefix"
-              :placeholder="routes.message_prefix?.trim() ? `留空使用全局前缀${quotePrefixes(routes.message_prefix)}` : '输入这个插件的触发前缀，多个用空格分开，例如 ! /'"
-              clearable
+              input-id="route-custom-prefix"
+              :placeholder="routes.message_prefix?.trim() ? `留空使用全局前缀${quotePrefixes(routes.message_prefix)}` : '输入前缀后回车，例如 !'"
+              :hint="null"
             />
-            <p>仅对这个插件生效，多个前缀用空格分开，带上任意一个即可触发。留空使用全局前缀；全局也为空时不限制触发。</p>
+            <p>仅对这个插件生效，可以设多个，带上任意一个即可触发。留空使用全局前缀；全局也为空时不限制触发。</p>
           </div>
         </div>
 
@@ -176,6 +176,7 @@ import type { PluginConfigMap, PluginConfigValue, PluginListeners, PluginRoutesC
 import { INSTANCE_VIEW, LISTENERS_VIEW, ROUTES_VIEW, isConfigObject, type ConfigField, type ConfigGroup } from '../usePluginConfig'
 import { groupPluginListeners } from '../../../features/plugins/listeners'
 import ConfigFieldRow from './ConfigFieldRow.vue'
+import PrefixTagsEditor from '../../../components/PrefixTagsEditor.vue'
 import { normalizeIdTags } from '../../../features/idTags'
 import DirectoryPicker from '../../../components/DirectoryPicker.vue'
 

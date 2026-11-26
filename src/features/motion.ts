@@ -59,12 +59,20 @@ export const vSwap: Directive<HTMLElement, unknown> = {
       : [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'translateY(0)' }]
     for (const child of Array.from(el.children)) {
       const timing = { duration: 180, easing: EASE_OUT }
-      // The selection highlight is placed by its own transform. Replacing that would park it
-      // in the corner for the length of the swap, so its rise is added on top instead.
+      // The selection highlight still marks an item of the old content. Hide it at once and forget that
+      // item: the new content's selection, if it has one, gets it landing in place and fading in. Fading it
+      // in here instead would flash it over the old item's spot, or leave it there when nothing is selected.
       if (child.classList.contains('sel-indicator')) {
-        child.animate([{ opacity: 0 }, { opacity: 1 }], timing)
-        if (!reduceMotion()) {
-          child.animate([{ transform: 'translateY(4px)' }, { transform: 'translateY(0)' }], { ...timing, composite: 'add' })
+        const state = indicators.get(el)
+        const thumb = child as HTMLElement
+        thumb.style.transition = 'none'
+        thumb.style.opacity = '0'
+        void thumb.offsetWidth
+        thumb.style.transition = ''
+        if (state) {
+          state.placed = false
+          state.target = null
+          state.geometry = ''
         }
         continue
       }
