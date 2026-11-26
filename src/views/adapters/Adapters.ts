@@ -74,7 +74,21 @@ export function useAdaptersPage() {
     if (action === 'delete') {
       try { await ElMessageBox.confirm('将停止并删除此实例及其配置。其他实例和适配器包继续保留。此操作无法撤销。', '删除适配器', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
     }
-    await execute(`${id}:${action}`, action, () => action === 'start' ? startAdapter(id) : action === 'stop' ? stopAdapterById(id) : action === 'reload' ? reloadAdapterById(id) : deleteAdapter(id))
+    await execute(`${id}:${action}`, action, () => action === 'start' ? startInstance(id) : action === 'stop' ? stopAdapterById(id) : action === 'reload' ? reloadAdapterById(id) : deleteAdapter(id))
+  }
+  /**
+   * The instance switch is the only one. Current hosts turn a closed package on when one of its instances
+   * starts; an older host refuses instead, so the package is turned on first there.
+   */
+  async function startInstance(id: string) {
+    try {
+      return await startAdapter(id)
+    } catch (cause) {
+      const packageId = adapters.value.find(item => item.id === id)?.packageId
+      if (!(cause instanceof ApiError) || cause.status !== 409 || !packageId) throw cause
+      await runAdapterPackage(packageId, 'start')
+      return await startAdapter(id)
+    }
   }
   async function runPackage(id: string, action: 'start' | 'stop' | 'reload') {
     if (!id || operation.value) return

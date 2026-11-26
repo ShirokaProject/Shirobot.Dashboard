@@ -7,17 +7,13 @@
       </div>
       <el-switch
         :model-value="adapter.loaded"
-        :disabled="busy || !packageEnabled"
+        :disabled="busy"
         :aria-label="adapter.loaded ? '停止实例' : '启动实例'"
         @change="(value: string | number | boolean) => emit('run', value ? 'start' : 'stop')"
       />
     </header>
 
     <!-- At most the things that need attention, most severe first -->
-    <div v-if="!packageEnabled" class="notice">
-      <MdIcon name="power_settings_new" class="notice-icon warning" />
-      <div><strong>适配器已关闭</strong><span>打开适配器后，此实例才能启动。</span></div>
-    </div>
     <div v-if="adapter.error" class="notice">
       <MdIcon name="error" class="notice-icon error" />
       <div><strong>运行出错</strong><span>{{ adapter.error }}</span></div>
@@ -74,7 +70,6 @@ defineProps<{
   packageName: string
   busy: boolean
   /** The package master switch; off keeps this instance from starting */
-  packageEnabled: boolean
   /** The action currently running on this adapter, if any */
   operation: string
 }>()

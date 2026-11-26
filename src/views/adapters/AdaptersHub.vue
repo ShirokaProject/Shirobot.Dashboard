@@ -87,7 +87,7 @@
                   <strong>{{ group.package.name }}</strong>
                   <small>{{ group.package.platform }} · v{{ group.package.version }}</small>
                 </span>
-                <span class="row-meta">{{ packageEnabled(group.package) ? '' : '已关闭 · ' }}{{ group.instances.length }} 个实例</span>
+                <span class="row-meta">{{ group.instances.length }} 个实例</span>
               </button>
               <!-- A package opens its instances in place, pushing the packages below down -->
               <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
@@ -263,7 +263,6 @@
           :adapter="installed.selected.value"
           :market-entry="selectedPackage ? marketEntryFor(selectedPackage) : marketEntryFor(installed.selected.value)"
           :package-name="selectedPackage?.name ?? installed.selected.value.packageId ?? ''"
-          :package-enabled="selectedPackage ? packageEnabled(selectedPackage) : true"
           :busy="Boolean(installed.operation.value) || Boolean(market.busyId.value)"
           :operation="currentOperation"
           @run="action => installed.run(installed.selectedId.value, action)"
@@ -276,7 +275,6 @@
           :instance-count="instancesOf(selectedPackage.id).length"
           :update="updateFor(selectedPackage)"
           :busy="Boolean(installed.operation.value) || Boolean(market.busyId.value)"
-          :enabled="packageEnabled(selectedPackage)"
           :controls="installed.packageControls.value"
           :operation="packageOperation"
           @update="prepareUpdate(selectedPackage)"
@@ -470,7 +468,6 @@ function selectAttention(item: { adapter: AdapterStatus; kind: string }) {
   } else installed.selectedId.value = item.adapter.id
 }
 // Older hosts report no package switch; treat the package as on there.
-const packageEnabled = (pkg: AdapterStatus) => !installed.packageControls.value || pkg.enabled !== false
 const packageOperation = computed(() => {
   const [id, action] = installed.operation.value.split(':')
   return selectedPackage.value && id === selectedPackage.value.id ? action ?? '' : ''

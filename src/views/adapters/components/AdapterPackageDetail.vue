@@ -3,15 +3,8 @@
     <header class="detail-head">
       <div class="detail-title">
         <h2>{{ pkg.name }}</h2>
-        <p>{{ pkg.platform }}<span class="sep">·</span>{{ controls ? (enabled ? '已打开' : '已关闭') : `${instanceCount} 个实例` }}</p>
+        <p>{{ pkg.platform }}<span class="sep">·</span>{{ instanceCount }} 个实例</p>
       </div>
-      <el-switch
-        v-if="controls"
-        :model-value="enabled"
-        :disabled="busy"
-        :aria-label="enabled ? '关闭适配器' : '打开适配器'"
-        @change="(value: string | number | boolean) => emit('run', value ? 'start' : 'stop')"
-      />
     </header>
 
     <p v-if="pkg.description" class="detail-desc">{{ pkg.description }}</p>
@@ -46,7 +39,7 @@
         v-if="controls"
         type="button"
         class="md-button tonal"
-        :disabled="(busy && operation !== 'package-reload') || !enabled"
+        :disabled="busy && operation !== 'package-reload'"
         :aria-busy="operation === 'package-reload'"
         @click="emit('run', 'reload')"
       >
@@ -78,16 +71,14 @@ defineProps<{
   /** Catalog entry offering a newer version, when there is one */
   update: AdapterMarketEntry | null
   busy: boolean
-  /** Package master switch state */
-  enabled: boolean
-  /** Whether the host supports package switch / reload */
+  /** Whether the host supports package reload */
   controls: boolean
   /** The action currently running on this package, if any */
   operation: string
 }>()
 
 const emit = defineEmits<{
-  run: [action: 'start' | 'stop' | 'reload']
+  run: [action: 'reload']
   update: []
   remove: []
 }>()
