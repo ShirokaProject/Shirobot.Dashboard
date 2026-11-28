@@ -202,6 +202,46 @@ export function useAdapterMarketPage() {
     }
   }
 
+  /**
+   * 全部更新: installs each newer release one after another without the per-package dialog. Each one replaces the
+   * installed package the way the dialog would, so instance settings are kept; a failure skips just that package.
+   */
+  const updatingAll = ref(false)
+  async function updateAll(updates: AdapterMarketEntry[]) {
+    if (updatingAll.value || busyId.value || !updates.length) return
+    updatingAll.value = true
+    const failed: string[] = []
+    let updated = 0
+    let restartMessage = ''
+    try {
+      for (const entry of updates) {
+        if (!entry.repository) continue
+        busyId.value = entry.id
+        let uploadId = ''
+        try {
+          const prepared = await prepareGithubAdapterInstall(entry.repository, entry.asset)
+          uploadId = prepared.uploadId
+          const response = await confirmAdapterUpload(prepared.uploadId, prepared.conflict)
+          uploadId = ''
+          updated++
+          if (response.restartRequired) restartMessage = response.message || '适配器已更新，需要重启宿主后完全生效。'
+        } catch (cause) {
+          failed.push(`${entry.name}：${getApiErrorMessage(cause, '更新失败')}`)
+          if (uploadId) try { await cancelAdapterUpload(uploadId) } catch { /* Cleanup is best effort. */ }
+        }
+      }
+    } finally {
+      busyId.value = ''
+      updatingAll.value = false
+    }
+    message.value = failed.length
+      ? `已更新 ${updated} 个适配器，${failed.length} 个失败：${failed.join('；')}`
+      : `已更新 ${updated} 个适配器${restartMessage ? '，需要重启宿主后完全生效' : ''}。`
+    messageType.value = failed.length ? 'error' : restartMessage ? 'warning' : 'success'
+    await load()
+    if (restartMessage) void offerRestartForStagedUpdate(restartMessage)
+  }
+
   async function close(visible: boolean) {
     installVisible.value = visible
     if (visible) return
@@ -223,6 +263,6 @@ export function useAdapterMarketPage() {
     preview, replace, installVisible, installBusy, installError,
     sources, activeSource, selectSource, addSource, removeSource,
     directEntries, addDirect, removeDirect, refresh,
-    load, prepare, confirm, close
+    load, prepare, confirm, close, updatingAll, updateAll
   }
 }

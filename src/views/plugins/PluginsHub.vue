@@ -59,7 +59,9 @@
             noun="插件"
             :update-count="pluginUpdateCount"
             :checking="market.loading.value"
+            :updating="market.updatingAll.value"
             @check="market.refreshMarketplacePlugins"
+            @update-all="updateAllPlugins"
           />
 
           <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
@@ -420,6 +422,14 @@ const installedMarketPlugin = computed(() => installed.selectedPlugin.value
 function preparePluginUpdate(plugin: Plugin) {
   const entry = findPluginMarketEntry(plugin, marketEntries.value)
   if (entry) void market.preparePluginInstall(entry)
+}
+
+function updateAllPlugins() {
+  const updates = installed.installedPlugins.value
+    .filter(plugin => withPluginUpdate(plugin, marketEntries.value).hasUpdate)
+    .map(plugin => findPluginMarketEntry(plugin, marketEntries.value))
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+  void market.updateAllPlugins(updates)
 }
 
 // Keep the selected market sort within each group, with installed plugins last.

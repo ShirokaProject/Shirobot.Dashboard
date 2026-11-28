@@ -331,6 +331,52 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
     }
   }
 
+  /**
+   * 全部更新: installs each newer release one after another without the per-plugin dialog. Each update replaces the
+   * installed copy and keeps it enabled or disabled as it was; a failure skips just that plugin.
+   */
+  const updatingAll = ref(false)
+  async function updateAllPlugins(updates: MarketplacePlugin[]) {
+    if (updatingAll.value || preparingPluginId.value || !updates.length) return
+    updatingAll.value = true
+    feedbackMessage.value = ''
+    const failed: string[] = []
+    let updated = 0
+    let restartMessage = ''
+    try {
+      for (const plugin of updates) {
+        if (!canInstallPlugin(plugin)) continue
+        preparingPluginId.value = plugin.id
+        let uploadId = ''
+        try {
+          const preview = await prepareGithubPluginInstall(plugin.repository, plugin.release.asset!)
+          uploadId = preview.upload_id
+          const response = await confirmPluginUpload(preview.upload_id, {
+            replace: Boolean(preview.conflict?.exists),
+            enable: preview.conflict?.installed_enabled ?? true
+          })
+          uploadId = ''
+          if (!response.success) throw new Error('插件安装失败')
+          updated++
+          if (response.pending_restart && response.message) restartMessage = response.message
+        } catch (error) {
+          failed.push(`${plugin.name}：${getApiErrorMessage(error, '更新失败')}`)
+          if (uploadId) try { await cancelPluginUpload(uploadId) } catch { /* Cleanup is best effort. */ }
+        }
+      }
+    } finally {
+      preparingPluginId.value = ''
+      updatingAll.value = false
+    }
+    feedbackType.value = failed.length ? 'error' : restartMessage ? 'warning' : 'success'
+    feedbackMessage.value = failed.length
+      ? `已更新 ${updated} 个插件，${failed.length} 个失败：${failed.join('；')}`
+      : `已更新 ${updated} 个插件${restartMessage ? '，部分需要重启宿主后生效' : ''}。`
+    if (updated) options.onInstalled?.()
+    await loadMarketplacePlugins()
+    if (restartMessage) void offerRestartForStagedUpdate(restartMessage)
+  }
+
   function formatAuthors(plugin: MarketplacePlugin) {
     return plugin.authors.map(author => author.name).join('、') || 'Unknown'
   }
@@ -448,6 +494,8 @@ export function usePluginMarketPage(options: { onInstalled?: () => void } = {}) 
     refreshMarketplacePlugins,
     showPluginDetails,
     preparePluginInstall,
+    updatingAll,
+    updateAllPlugins,
     setInstallDialogVisible,
     confirmMarketInstall,
     formatAuthors,

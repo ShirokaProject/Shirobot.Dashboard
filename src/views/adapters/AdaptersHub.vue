@@ -58,7 +58,9 @@
             noun="适配器"
             :update-count="adapterUpdateCount"
             :checking="market.loading.value"
+            :updating="market.updatingAll.value"
             @check="market.refresh"
+            @update-all="updateAllAdapters"
           />
 
           <Transition :css="false" @enter="rowEnter" @leave="rowLeave">
@@ -633,6 +635,12 @@ const tabs = computed(() => [
 ])
 
 const detailHasContent = computed(() => tab.value === 'installed' ? Boolean(installed.selected.value || selectedPackage.value) : Boolean(selectedEntry.value))
+
+async function updateAllAdapters() {
+  const updates = installed.packages.value.map(pkg => updateFor(pkg)).filter((entry): entry is AdapterMarketEntry => Boolean(entry))
+  await market.updateAll(updates)
+  await installed.loadAdapters()
+}
 
 async function confirmMarketInstall() {
   await market.confirm()

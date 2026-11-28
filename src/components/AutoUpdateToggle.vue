@@ -24,15 +24,27 @@
         <strong>{{ statusText }}</strong>
         <small v-if="checkedText">{{ checkedText }}</small>
       </span>
-      <button
-        type="button"
-        class="md-button tonal compact"
-        :aria-busy="checking"
-        :disabled="checking"
-        @click="emit('check')"
-      >
-        <MdIcon name="refresh" :class="{ spinning: checking }" />{{ checking ? '检查中' : '检查更新' }}
-      </button>
+      <span class="check-actions">
+        <button
+          type="button"
+          class="md-button tonal compact"
+          :aria-busy="checking"
+          :disabled="checking || updating"
+          @click="emit('check')"
+        >
+          <MdIcon name="refresh" :class="{ spinning: checking }" />{{ checking ? '检查中' : '检查更新' }}
+        </button>
+        <button
+          v-if="updateCount && !checking"
+          type="button"
+          class="md-button filled compact"
+          :aria-busy="updating"
+          :disabled="updating"
+          @click="emit('updateAll')"
+        >
+          <MdIcon :name="updating ? 'refresh' : 'download'" :class="{ spinning: updating }" />{{ updating ? '更新中' : '全部更新' }}
+        </button>
+      </span>
     </div>
   </div>
 </template>
@@ -52,15 +64,18 @@ const props = defineProps<{
   /** Installed items with a newer version; the check row shows only when this is given */
   updateCount?: number
   checking?: boolean
+  /** 全部更新 is running */
+  updating?: boolean
 }>()
 
-const emit = defineEmits<{ check: [] }>()
+const emit = defineEmits<{ check: []; updateAll: [] }>()
 
 const checkable = computed(() => typeof props.updateCount === 'number')
 const statusIcon = computed(() => props.checking ? 'refresh' : props.updateCount ? 'arrow_upward' : 'check_circle')
 const statusTone = computed(() => props.checking ? 'muted' : props.updateCount ? 'accent' : 'ok')
 const statusText = computed(() => {
   if (props.checking) return '正在检查更新…'
+  if (props.updating) return `正在更新 ${props.updateCount} 个${props.noun}…`
   return props.updateCount ? `${props.updateCount} 个${props.noun}可更新` : `${props.noun}都是最新版本`
 })
 
@@ -114,8 +129,12 @@ onMounted(() => loadAutoUpdate(true))
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.check-row .md-button {
+.check-actions {
   flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--md-space-2);
 }
 
 .auto-update-icon {
